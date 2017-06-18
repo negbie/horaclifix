@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -17,7 +18,12 @@ func checkError(err error) {
 
 func main() {
 
-	listener, err := net.Listen("tcp", ":4739")
+	var (
+		port = flag.String("port", ":4739", "Port to use to receive IPFIX packets")
+	)
+
+	flag.Parse()
+	listener, err := net.Listen("tcp", *port)
 	checkError(err)
 	for {
 		conn, err := listener.Accept()
