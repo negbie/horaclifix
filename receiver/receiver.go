@@ -134,7 +134,7 @@ func NewIPFIX(header []byte) *IPFIX {
 	return &ni
 }
 
-func NewSipRecUdp(header []byte) *IPFIX {
+func NewSendSipUDP(header []byte) *IPFIX {
 	var niu IPFIX
 	rniu := bytes.NewReader(header)
 
@@ -244,7 +244,7 @@ func SyncClient(conn net.Conn) {
 		n, err := conn.Read(b)
 		checkError(err)
 
-		data := NewSipRecUdp(b[:n])
+		data := NewSendSipUDP(b[:n])
 
 		/*		// Read IPFIX Messages delimited by newline
 				bytes, err := bufReader.ReadBytes('\n')
