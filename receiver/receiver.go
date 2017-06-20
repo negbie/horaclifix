@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
 	"os"
 )
@@ -28,6 +29,14 @@ import (
 //         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
 //
+
+var (
+	hep3ID           = []byte{0x48, 0x45, 0x50, 0x33}
+	iPProtocolFamily = []byte{0x02}
+	protocolType     = []byte{0x01}
+	captureAgentID   = []byte{0x07, 0xD1} //2001
+)
+
 type IpfixHeader struct {
 	Version       uint16
 	Length        uint16
@@ -36,17 +45,27 @@ type IpfixHeader struct {
 	ObservationID uint32
 }
 
-// SetHeader represents set header fields
-type SetHeader struct {
+// SetHeader represents the setheader fields
+type IpfixSetHeader struct {
 	ID     uint16
 	Length uint16
 }
 
+// DataSet holds multiple datasets with following SetID's:
+// HandShake: 	257
+// RecSipUDP: 	258
+// SendSipUDP: 	259
+// RecSipTCP: 	260
+// SendSipTCP: 	261
 type DataSet struct {
-	HandShake Hs
-	SIP       Su
+	HandShake  Hs
+	RecSipUDP  Rsu
+	SendSipUDP Ssu
+	RecSipTCP  Rst
+	SendSipTCP Sst
 }
 
+// Hs holds the HandShake dataset fields
 type Hs struct {
 	MaVer       uint16
 	MiVer       uint16
@@ -63,14 +82,41 @@ type Hs struct {
 	Hostname    []byte
 }
 
-// IPFIX is the Oracle IPFIX Handshake Message
+// IPFIX messages struct
 type IPFIX struct {
-	Header IpfixHeader
-	Set    SetHeader
-	Data   DataSet
+	Header    IpfixHeader
+	SetHeader IpfixSetHeader
+	Data      DataSet
 }
 
-type Su struct {
+// Rsu holds the RecSipUDP dataset fields
+type Rsu struct {
+	TimeSec   uint32
+	TimeMic   uint32
+	IntSlot   uint8
+	IntPort   uint8
+	IntVlan   uint16
+	CallIDEnd uint8
+	IPlen     uint16
+	VL        uint8
+	TOS       uint8
+	TLen      uint16
+	TID       uint16
+	TFlags    uint16
+	TTL       uint8
+	TProto    uint8
+	TPos      uint16
+	SrcIP     uint32
+	DstIP     uint32
+	DstPort   uint16
+	SrcPort   uint16
+	UDPlen    uint16
+	MsgLen    uint16
+	SipMsg    []byte
+}
+
+// Ssu holds the SendSipUDP dataset fields
+type Ssu struct {
 	TimeSec   uint32
 	TimeMic   uint32
 	IntSlot   uint8
@@ -78,6 +124,58 @@ type Su struct {
 	IntVlan   uint16
 	CallIDLen uint8
 	CallID    []byte
+	CallIDEnd uint8
+	IPlen     uint16
+	VL        uint8
+	TOS       uint8
+	TLen      uint16
+	TID       uint16
+	TFlags    uint16
+	TTL       uint8
+	TProto    uint8
+	TPos      uint16
+	SrcIP     uint32
+	DstIP     uint32
+	DstPort   uint16
+	SrcPort   uint16
+	UDPlen    uint16
+	MsgLen    uint16
+	SipMsg    []byte
+}
+
+// Rst holds the RecSipTCP dataset fields
+type Rst struct {
+	TimeSec   uint32
+	TimeMic   uint32
+	IntSlot   uint8
+	IntPort   uint8
+	IntVlan   uint16
+	CallIDEnd uint8
+	IPlen     uint16
+	VL        uint8
+	TOS       uint8
+	TLen      uint16
+	TID       uint16
+	TFlags    uint16
+	TTL       uint8
+	TProto    uint8
+	TPos      uint16
+	SrcIP     uint32
+	DstIP     uint32
+	DstPort   uint16
+	SrcPort   uint16
+	UDPlen    uint16
+	MsgLen    uint16
+	SipMsg    []byte
+}
+
+// Sst holds the SendSipTCP dataset fields
+type Sst struct {
+	TimeSec   uint32
+	TimeMic   uint32
+	IntSlot   uint8
+	IntPort   uint8
+	IntVlan   uint16
 	CallIDEnd uint8
 	IPlen     uint16
 	VL        uint8
@@ -106,104 +204,155 @@ func BufToInt8(b []byte) []int8 {
 	return bi
 }
 
-// NewIPFIX fills the IPFIX struct with structured binary data from r
-func NewIPFIX(header []byte) *IPFIX {
-	var ni IPFIX
-	rni := bytes.NewReader(header)
-	binary.Read(rni, binary.BigEndian, &ni.Header.Version)
-	binary.Read(rni, binary.BigEndian, &ni.Header.Length)
-	binary.Read(rni, binary.BigEndian, &ni.Header.ExportTime)
-	binary.Read(rni, binary.BigEndian, &ni.Header.SeqNum)
-	binary.Read(rni, binary.BigEndian, &ni.Header.ObservationID)
-	binary.Read(rni, binary.BigEndian, &ni.Set.ID)
-	binary.Read(rni, binary.BigEndian, &ni.Set.Length)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.MaVer)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.MiVer)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.CFlags1)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.CFlags2)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.SFlags)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.Timeout)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.SystemID)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.Product)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.SMaVer)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.SMiVer)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.Revision)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.HostnameLen)
-	ni.Data.HandShake.Hostname = make([]byte, ni.Data.HandShake.HostnameLen)
-	binary.Read(rni, binary.BigEndian, &ni.Data.HandShake.Hostname)
-	return &ni
+// NewHeader fills the IpfixHeader struct with structured binary data from r
+func NewHeader(header []byte) *IPFIX {
+	var ipfix IPFIX
+	r := bytes.NewReader(header)
+	binary.Read(r, binary.BigEndian, &ipfix.Header)
+	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
+	return &ipfix
+}
+
+// NewHandShake fills the IPFIX struct with structured binary data from r
+func NewHandShake(header []byte) *IPFIX {
+	var ipfix IPFIX
+	r := bytes.NewReader(header)
+	binary.Read(r, binary.BigEndian, &ipfix.Header)
+	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.MaVer)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.MiVer)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.CFlags1)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.CFlags2)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.SFlags)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.Timeout)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.SystemID)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.Product)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.SMaVer)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.SMiVer)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.Revision)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.HostnameLen)
+	ipfix.Data.HandShake.Hostname = make([]byte, ipfix.Data.HandShake.HostnameLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.Hostname)
+
+	fmt.Printf("Header: %#v", ipfix)
+	return &ipfix
+}
+
+func NewRecSipUDP(header []byte) *IPFIX {
+	var ipfix IPFIX
+	r := bytes.NewReader(header)
+
+	binary.Read(r, binary.BigEndian, &ipfix.Header)
+	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TimeSec)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TimeMic)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.IntSlot)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.IntPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.IntVlan)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.CallIDEnd)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.IPlen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.VL)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TOS)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TID)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TFlags)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TTL)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TProto)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TPos)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.SrcIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.DstIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.DstPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.SrcPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.UDPlen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.MsgLen)
+
+	/*	fmt.Println(r.Len())
+		fmt.Println("headerlen:", len(header))
+	*/
+	ipfix.Data.RecSipUDP.SipMsg = make([]byte, r.Len())
+	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.SipMsg)
+
+	return &ipfix
 }
 
 func NewSendSipUDP(header []byte) *IPFIX {
-	var niu IPFIX
-	rniu := bytes.NewReader(header)
+	var ipfix IPFIX
+	r := bytes.NewReader(header)
 
-	binary.Read(rniu, binary.BigEndian, &niu.Header.Version)
-	binary.Read(rniu, binary.BigEndian, &niu.Header.Length)
-	binary.Read(rniu, binary.BigEndian, &niu.Header.ExportTime)
-	binary.Read(rniu, binary.BigEndian, &niu.Header.SeqNum)
-	binary.Read(rniu, binary.BigEndian, &niu.Header.ObservationID)
-	binary.Read(rniu, binary.BigEndian, &niu.Set.ID)
-	binary.Read(rniu, binary.BigEndian, &niu.Set.Length)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.TimeSec)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.TimeMic)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.IntSlot)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.IntPort)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.IntVlan)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.CallIDLen)
-	niu.Data.SIP.CallID = make([]byte, niu.Data.SIP.CallIDLen)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.CallID)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.CallIDEnd)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.IPlen)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.VL)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.TOS)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.TLen)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.TID)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.TFlags)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.TTL)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.TProto)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.TPos)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.SrcIP)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.DstIP)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.DstPort)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.SrcPort)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.UDPlen)
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.MsgLen)
-	/*
-		fmt.Println(rniu.Len())
-		fmt.Println("headerlen:", len(header))
-	*/
-	niu.Data.SIP.SipMsg = make([]byte, rniu.Len())
-	binary.Read(rniu, binary.BigEndian, &niu.Data.SIP.SipMsg)
+	binary.Read(r, binary.BigEndian, &ipfix.Header)
+	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TimeSec)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TimeMic)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.IntSlot)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.IntPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.IntVlan)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.CallIDLen)
+	ipfix.Data.SendSipUDP.CallID = make([]byte, ipfix.Data.SendSipUDP.CallIDLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.CallID)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.CallIDEnd)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.IPlen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.VL)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TOS)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TID)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TFlags)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TTL)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TProto)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TPos)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.SrcIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.DstIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.DstPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.SrcPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.UDPlen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.MsgLen)
 
-	return &niu
+	/*	fmt.Println(r.Len())
+		fmt.Println("headerlen:", len(header))*/
+
+	ipfix.Data.SendSipUDP.SipMsg = make([]byte, r.Len())
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.SipMsg)
+
+	return &ipfix
 }
 
 // HandShake writes the binary IPFIX representation into the buffer
-func (fi *IPFIX) HandShake() []byte {
-	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.BigEndian, &fi.Header.Version)
-	binary.Write(buf, binary.BigEndian, &fi.Header.Length)
-	binary.Write(buf, binary.BigEndian, &fi.Header.ExportTime)
-	binary.Write(buf, binary.BigEndian, &fi.Header.SeqNum)
-	binary.Write(buf, binary.BigEndian, &fi.Header.ObservationID)
-	binary.Write(buf, binary.BigEndian, &fi.Set.ID)
-	binary.Write(buf, binary.BigEndian, &fi.Set.Length)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.MaVer)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.MiVer)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.CFlags1)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.CFlags2)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.SFlags)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.Timeout)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.SystemID)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.Product)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.SMaVer)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.SMiVer)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.Revision)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.HostnameLen)
-	binary.Write(buf, binary.BigEndian, &fi.Data.HandShake.Hostname)
+func (ipfix *IPFIX) SendHandShake() []byte {
+	b := new(bytes.Buffer)
+	binary.Write(b, binary.BigEndian, &ipfix.Header)
+	binary.Write(b, binary.BigEndian, &ipfix.SetHeader)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.MaVer)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.MiVer)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.CFlags1)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.CFlags2)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.SFlags)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.Timeout)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.SystemID)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.Product)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.SMaVer)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.SMiVer)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.Revision)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.HostnameLen)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.Hostname)
 
-	return buf.Bytes()
+	return b.Bytes()
+}
+
+func (ipfix *IPFIX) SendHep3() []byte {
+	b := new(bytes.Buffer)
+	binary.Write(b, binary.BigEndian, hep3ID)
+	binary.Write(b, binary.BigEndian, len(hep3ID)+len(iPProtocolFamily))
+	binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.TProto)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.SrcIP)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.DstIP)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.SrcPort)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.DstPort)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.TimeSec)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.TimeMic)
+	binary.Write(b, binary.BigEndian, protocolType)
+	binary.Write(b, binary.BigEndian, captureAgentID)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.SipMsg)
+
+	return b.Bytes()
 }
 
 func checkError(err error) {
@@ -213,45 +362,65 @@ func checkError(err error) {
 	}
 }
 
-func SyncClient(conn net.Conn) {
+func SyncClient(c net.Conn) {
 	fmt.Println("Handling new connection...")
+
+	hs := make([]byte, 512)
 
 	// Close connection when this function ends
 	defer func() {
 		fmt.Println("Closing connection...")
-		conn.Close()
+		c.Close()
 	}()
 
-	hs := make([]byte, 512)
-	n, err := conn.Read(hs)
-	checkError(err)
+	//c.SetReadDeadline(time.Now())
+	n, err := c.Read(hs)
+	if err == io.EOF {
+		fmt.Printf("EOF %v", err)
 
-	packet := NewIPFIX(hs[:n])
-	if packet.Set.ID == 256 {
-		packet.Set.ID++
+	} /*else {
+		//var zero time.Time
+		c.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+	}*/
+
+	s := NewHeader(hs[:n]).SetHeader.ID
+	hlen := NewHeader(hs[:n]).SetHeader.Length
+
+	if s == 256 && hlen > 20 {
+		h := NewHandShake(hs[:n])
+		h.SetHeader.ID++
+		// fmt.Printf("Write: %#v\n", BufToInt8(h.SendHandShake()))
+		binary.Write(c, binary.BigEndian, BufToInt8(h.SendHandShake()))
 	}
-
-	fmt.Printf("Write: %#v\n", BufToInt8(packet.HandShake()))
-
-	if packet.Set.ID == 257 && packet.Header.Length > 20 {
-		binary.Write(conn, binary.BigEndian, BufToInt8(packet.HandShake()))
-	}
-
 	//bufReader := bufio.NewReader(conn)
-
+	fmt.Println(s)
 	for {
 		b := make([]byte, 4096)
-		n, err := conn.Read(b)
-		checkError(err)
+		n, err := c.Read(b)
+		if err == io.EOF {
+			fmt.Printf("EOF %v", err)
+			break
 
-		data := NewSendSipUDP(b[:n])
+		}
+
+		set := NewHeader(b[:n]).SetHeader.ID
+		fmt.Println(set)
+
+		switch set {
+		case 258:
+			packet := NewRecSipUDP(b[:n])
+			fmt.Printf("%s", packet.Data.RecSipUDP)
+		case 259:
+			packet := NewSendSipUDP(b[:n])
+			fmt.Printf("%s", packet.Data.SendSipUDP)
+
+		}
 
 		/*		// Read IPFIX Messages delimited by newline
 				bytes, err := bufReader.ReadBytes('\n')
 				checkError(err)*/
 
 		//fmt.Printf("%s", (binary.BigEndian.Uint16(bytes)))
-		fmt.Printf("%s", data.Data.SIP)
 
 	}
 }
