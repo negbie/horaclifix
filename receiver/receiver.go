@@ -12,7 +12,7 @@ import (
 // Sync message from sbc
 // echo -ne '\x00\x0A\x00\x30\x59\x41\x37\x38\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x20\x00\x01\x00\x02\x00\xFC\x77\x31\x00\x00\x00\x1E\x00\x00\x00\x00\x43\x5A\x07\x03\x00\x06\x65\x63\x7A\x37\x33\x30' | nc localhost 4739
 
-// Iheader is the Oracle IPFIX Header
+// IPFIX holds the structure of one IPFIX packet
 //
 // Wire format:
 //
@@ -29,7 +29,6 @@ import (
 //         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
 //
-
 // IPFIX messages struct
 type IPFIX struct {
 	Header    IpfixHeader
@@ -80,7 +79,7 @@ type Hs struct {
 	Hostname    []byte
 }
 
-// SipUDP holds the SendSipUDP dataset fields
+// SipSet holds the SIP dataset fields
 type SipSet struct {
 	TimeSec   uint32
 	TimeMic   uint32
@@ -109,8 +108,8 @@ type SipSet struct {
 	SipMsg    []byte
 }
 
-// SendHandShake writes the binary Handshake representation into the buffer
-func SendHEP(msg []byte) []byte {
+// SendHEP writes the binary HEP representation into the buffer
+func NewHEPMsg(msg []byte) []byte {
 
 	b := bytes.NewBuffer(make([]byte, 6))
 	binary.Write(b, binary.BigEndian, msg)
@@ -121,8 +120,8 @@ func SendHEP(msg []byte) []byte {
 	return packet
 }
 
-// SendHandShake writes the binary Handshake representation into the buffer
-func (ipfix *IPFIX) NewHEP(ChunckVen uint16, ChunckType uint16) []byte {
+// NewHEP
+func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16) []byte {
 
 	b := bytes.NewBuffer(make([]byte, 6))
 	switch ChunckType {
@@ -154,7 +153,7 @@ func (ipfix *IPFIX) NewHEP(ChunckVen uint16, ChunckType uint16) []byte {
 		binary.Write(b, binary.BigEndian, 0x01)
 
 	case 0x000c:
-		binary.Write(b, binary.BigEndian, 0x000000E4)
+		binary.Write(b, binary.BigEndian, 0x000007D1)
 
 	case 0x000f:
 		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
@@ -369,6 +368,24 @@ func NewSendSipTCP(header []byte) *IPFIX {
 	return &ipfix
 }
 
+func SendHEP(p *IPFIX, c net.Conn) {
+	bhep := new(bytes.Buffer)
+	bhep.Write(p.NewHEPChunck(0x0000, 0x0001))
+	bhep.Write(p.NewHEPChunck(0x0000, 0x0002))
+	bhep.Write(p.NewHEPChunck(0x0000, 0x0003))
+	bhep.Write(p.NewHEPChunck(0x0000, 0x0004))
+	bhep.Write(p.NewHEPChunck(0x0000, 0x0007))
+	bhep.Write(p.NewHEPChunck(0x0000, 0x0008))
+	bhep.Write(p.NewHEPChunck(0x0000, 0x0009))
+	bhep.Write(p.NewHEPChunck(0x0000, 0x000a))
+	bhep.Write(p.NewHEPChunck(0x0000, 0x000b))
+	bhep.Write(p.NewHEPChunck(0x0000, 0x000c))
+	bhep.Write(p.NewHEPChunck(0x0000, 0x000f))
+
+	fmt.Printf("HEEEP: %v\n", NewHEPMsg(bhep.Bytes()))
+	c.Write(NewHEPMsg(bhep.Bytes()))
+}
+
 func checkError(err error) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
@@ -433,6 +450,7 @@ func SyncClient(c net.Conn) {
 			packet := NewRecSipUDP(b[:n])
 			fmt.Printf("%#v\n\n", packet.Data)
 			fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
+			SendHEP(packet, con)
 		case 259:
 			if n-int(set.Length) > 16 {
 				fmt.Println("SetHeader<<<< Packetlen!!!!!!!!!!!")
@@ -444,24 +462,14 @@ func SyncClient(c net.Conn) {
 				packet = NewSendSipUDP(b[int(set.Length)+16 : n])
 				fmt.Printf("%#v\n\n", packet.Data)
 				fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
+				SendHEP(packet, con)
 
 			} else {
 				packet := NewSendSipUDP(b[:n])
+				fmt.Printf("%#v\n\n", packet.Data)
 				fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
-				bhep := new(bytes.Buffer)
-				bhep.Write(packet.NewHEP(0x0000, 0x0001))
-				bhep.Write(packet.NewHEP(0x0000, 0x0002))
-				bhep.Write(packet.NewHEP(0x0000, 0x0003))
-				bhep.Write(packet.NewHEP(0x0000, 0x0004))
-				bhep.Write(packet.NewHEP(0x0000, 0x0007))
-				bhep.Write(packet.NewHEP(0x0000, 0x0008))
-				bhep.Write(packet.NewHEP(0x0000, 0x0009))
-				bhep.Write(packet.NewHEP(0x0000, 0x000a))
-				bhep.Write(packet.NewHEP(0x0000, 0x000b))
-				bhep.Write(packet.NewHEP(0x0000, 0x000c))
-				bhep.Write(packet.NewHEP(0x0000, 0x000f))
-				//fmt.Printf("HEEEP: %v\n", SendHEP(bhep.Bytes()))
-				con.Write(SendHEP(bhep.Bytes()))
+
+				SendHEP(packet, con)
 
 			}
 		case 260:
