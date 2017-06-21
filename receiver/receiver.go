@@ -59,11 +59,8 @@ type IpfixSetHeader struct {
 // RecSipTCP: 	260
 // SendSipTCP: 	261
 type DataSet struct {
-	HandShake  Hs
-	RecSipUDP  SipUDP
-	SendSipUDP SipUDP
-	RecSipTCP  SipTCP
-	SendSipTCP SipTCP
+	HandShake Hs
+	SIP       SipSet
 }
 
 // Hs holds the HandShake dataset fields
@@ -84,7 +81,7 @@ type Hs struct {
 }
 
 // SipUDP holds the SendSipUDP dataset fields
-type SipUDP struct {
+type SipSet struct {
 	TimeSec   uint32
 	TimeMic   uint32
 	IntSlot   uint8
@@ -106,77 +103,11 @@ type SipUDP struct {
 	DstIP     uint32
 	DstPort   uint16
 	SrcPort   uint16
+	Context   uint32
 	UDPlen    uint16
 	MsgLen    uint16
 	SipMsg    []byte
 }
-
-// Rst holds the RecSipTCP dataset fields
-type SipTCP struct {
-	TimeSec   uint32
-	TimeMic   uint32
-	IntSlot   uint8
-	IntPort   uint8
-	IntVlan   uint16
-	CallIDLen uint8
-	CallID    []byte
-	CallIDEnd uint8
-	IPlen     uint16
-	VL        uint8
-	TOS       uint8
-	TLen      uint16
-	TID       uint16
-	TFlags    uint16
-	TTL       uint8
-	TProto    uint8
-	TPos      uint16
-	SrcIP     uint32
-	DstIP     uint32
-	DstPort   uint16
-	SrcPort   uint16
-	UDPlen    uint16
-	MsgLen    uint16
-	SipMsg    []byte
-}
-
-type HEPHeader struct {
-	HEPID      uint32
-	PayloadLen uint16
-}
-
-type CUst struct {
-	Timestamp  SipUDP
-	PayloadLen uint16
-}
-
-/*type HEP3 struct {
-	Header                HEPHeader
-	IPProtocolFamily      Chunck01
-	IPProtocolID          Chunck02
-	IP4SourceAddress      Chunck03
-	IP4DestinationAddress Chunck04
-	SourcePort            Chunck07
-	DestinationPort       Chunck08
-	Timestamp             Chunck09
-	TimestampMicro        Chunck0a
-	ProtocolType          Chunck0b
-	CaptureAgentID        Chunck0c
-	SipMsg                Chunck0f
-}*/
-
-/*type HEP struct {
-	IPProtocolFamily      uint8
-	IPProtocolID          uint8
-	IP4SourceAddress      IpfixHeader
-	IP4DestinationAddress SipUDP.DstIP
-	SourcePort            SipUDP.SrcPort
-	DestinationPort       SipUDP.DstPort
-	Timestamp             SipUDP.TimeSec
-	TimestampMicro        SipUDP.TimeMic
-	ProtocolType          uint8
-	CaptureAgentID        uint32
-	SipMsg                SipUDP.SipMsg
-}*/
 
 // SendHandShake writes the binary Handshake representation into the buffer
 func SendHEP(msg []byte) []byte {
@@ -184,7 +115,7 @@ func SendHEP(msg []byte) []byte {
 	b := bytes.NewBuffer(make([]byte, 6))
 	binary.Write(b, binary.BigEndian, msg)
 	packet := b.Bytes()
-	binary.BigEndian.PutUint32(packet, uint32(0x48455033))
+	binary.BigEndian.PutUint32(packet, uint32(0x48455033)) // ASCII "HEP3"
 	binary.BigEndian.PutUint16(packet[4:], uint16(len(packet)))
 
 	return packet
@@ -202,22 +133,22 @@ func (ipfix *IPFIX) NewHEP(ChunckVen uint16, ChunckType uint16) []byte {
 		binary.Write(b, binary.BigEndian, 0x11)
 
 	case 0x0003:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.SrcIP)
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.SrcIP)
 
 	case 0x0004:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.DstIP)
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.DstIP)
 
 	case 0x0007:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.SrcPort)
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.SrcPort)
 
 	case 0x0008:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.DstPort)
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.DstPort)
 
 	case 0x0009:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.TimeSec)
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.TimeSec)
 
 	case 0x000a:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.TimeMic)
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.TimeMic)
 
 	case 0x000b:
 		binary.Write(b, binary.BigEndian, 0x01)
@@ -226,7 +157,7 @@ func (ipfix *IPFIX) NewHEP(ChunckVen uint16, ChunckType uint16) []byte {
 		binary.Write(b, binary.BigEndian, 0x000000E4)
 
 	case 0x000f:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SendSipUDP.SipMsg)
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
 
 	}
 	packet := b.Bytes()
@@ -308,33 +239,33 @@ func NewRecSipUDP(header []byte) *IPFIX {
 
 	binary.Read(r, binary.BigEndian, &ipfix.Header)
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TimeSec)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TimeMic)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.IntSlot)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.IntPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.IntVlan)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.CallIDEnd)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.IPlen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.VL)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TOS)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TLen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TID)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TFlags)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TTL)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TProto)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.TPos)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.SrcIP)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.DstIP)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.DstPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.SrcPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.UDPlen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.MsgLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeSec)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeMic)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntSlot)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntVlan)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDEnd)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IPlen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.VL)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TOS)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TID)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TFlags)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TTL)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TProto)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TPos)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SrcIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.DstIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.DstPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SrcPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.UDPlen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.MsgLen)
 
 	/*	fmt.Println(r.Len())
 		fmt.Println("headerlen:", len(header))
 	*/
-	ipfix.Data.RecSipUDP.SipMsg = make([]byte, r.Len())
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.SipMsg)
+	ipfix.Data.SIP.SipMsg = make([]byte, r.Len())
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
 
 	return &ipfix
 }
@@ -345,36 +276,36 @@ func NewSendSipUDP(header []byte) *IPFIX {
 
 	binary.Read(r, binary.BigEndian, &ipfix.Header)
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TimeSec)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TimeMic)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.IntSlot)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.IntPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.IntVlan)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.CallIDLen)
-	ipfix.Data.SendSipUDP.CallID = make([]byte, ipfix.Data.SendSipUDP.CallIDLen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.CallID)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.CallIDEnd)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.IPlen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.VL)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TOS)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TLen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TID)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TFlags)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TTL)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TProto)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.TPos)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.SrcIP)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.DstIP)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.DstPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.SrcPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.UDPlen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.MsgLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeSec)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeMic)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntSlot)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntVlan)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDLen)
+	ipfix.Data.SIP.CallID = make([]byte, ipfix.Data.SIP.CallIDLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallID)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDEnd)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IPlen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.VL)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TOS)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TID)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TFlags)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TTL)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TProto)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TPos)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SrcIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.DstIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.DstPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SrcPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.UDPlen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.MsgLen)
 
 	/*	fmt.Println(r.Len())
 		fmt.Println("headerlen:", len(header))*/
 
-	ipfix.Data.SendSipUDP.SipMsg = make([]byte, r.Len())
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.SipMsg)
+	ipfix.Data.SIP.SipMsg = make([]byte, r.Len())
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
 
 	return &ipfix
 }
@@ -385,33 +316,24 @@ func NewRecSipTCP(header []byte) *IPFIX {
 
 	binary.Read(r, binary.BigEndian, &ipfix.Header)
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.TimeSec)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.TimeMic)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.IntSlot)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.IntPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.IntVlan)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.CallIDEnd)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.IPlen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.VL)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.TOS)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.TLen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.TID)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.TFlags)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.TTL)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.TProto)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.TPos)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.SrcIP)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.DstIP)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.DstPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.SrcPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.UDPlen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipTCP.MsgLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeSec)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeMic)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntSlot)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntVlan)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.DstIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SrcIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.DstPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SrcPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.Context)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDEnd)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.MsgLen)
 
 	/*	fmt.Println(r.Len())
 		fmt.Println("headerlen:", len(header))
 	*/
-	ipfix.Data.RecSipUDP.SipMsg = make([]byte, r.Len())
-	binary.Read(r, binary.BigEndian, &ipfix.Data.RecSipUDP.SipMsg)
+	ipfix.Data.SIP.SipMsg = make([]byte, r.Len())
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
 
 	return &ipfix
 }
@@ -422,33 +344,27 @@ func NewSendSipTCP(header []byte) *IPFIX {
 
 	binary.Read(r, binary.BigEndian, &ipfix.Header)
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.TimeSec)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.TimeMic)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.IntSlot)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.IntPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.IntVlan)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.CallIDEnd)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.IPlen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.VL)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.TOS)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.TLen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.TID)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.TFlags)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.TTL)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.TProto)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.TPos)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.SrcIP)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.DstIP)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.DstPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.SrcPort)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.UDPlen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipTCP.MsgLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeSec)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeMic)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntSlot)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntVlan)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.DstIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SrcIP)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.DstPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SrcPort)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.Context)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDLen)
+	ipfix.Data.SIP.CallID = make([]byte, ipfix.Data.SIP.CallIDLen)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallID)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDEnd)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.MsgLen)
 
 	/*	fmt.Println(r.Len())
 		fmt.Println("headerlen:", len(header))*/
 
-	ipfix.Data.SendSipUDP.SipMsg = make([]byte, r.Len())
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SendSipUDP.SipMsg)
+	ipfix.Data.SIP.SipMsg = make([]byte, r.Len())
+	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
 
 	return &ipfix
 }
@@ -515,20 +431,23 @@ func SyncClient(c net.Conn) {
 		switch set.ID {
 		case 258:
 			packet := NewRecSipUDP(b[:n])
-			fmt.Printf("%s\n", packet.Data.RecSipUDP.SipMsg)
+			fmt.Printf("%#v\n\n", packet.Data)
+			fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
 		case 259:
 			if n-int(set.Length) > 16 {
 				fmt.Println("SetHeader<<<< Packetlen!!!!!!!!!!!")
 
 				packet := NewSendSipUDP(b[:int(set.Length)+15])
-				fmt.Printf("%s\n", packet.Data.SendSipUDP.SipMsg)
+				fmt.Printf("%#v\n\n", packet.Data)
+				fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
 
 				packet = NewSendSipUDP(b[int(set.Length)+16 : n])
-				fmt.Printf("%s\n", packet.Data.SendSipUDP.SipMsg)
+				fmt.Printf("%#v\n\n", packet.Data)
+				fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
 
 			} else {
 				packet := NewSendSipUDP(b[:n])
-				fmt.Printf("%s\n", packet.Data.SendSipUDP.SipMsg)
+				fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
 				bhep := new(bytes.Buffer)
 				bhep.Write(packet.NewHEP(0x0000, 0x0001))
 				bhep.Write(packet.NewHEP(0x0000, 0x0002))
@@ -541,21 +460,18 @@ func SyncClient(c net.Conn) {
 				bhep.Write(packet.NewHEP(0x0000, 0x000b))
 				bhep.Write(packet.NewHEP(0x0000, 0x000c))
 				bhep.Write(packet.NewHEP(0x0000, 0x000f))
-
-				fmt.Printf("HEEEP: %v\n", SendHEP(bhep.Bytes()))
+				//fmt.Printf("HEEEP: %v\n", SendHEP(bhep.Bytes()))
 				con.Write(SendHEP(bhep.Bytes()))
 
 			}
-
 		case 260:
 			packet := NewRecSipTCP(b[:n])
-			fmt.Printf("%s\n", packet.Data.RecSipTCP.SipMsg)
+			fmt.Printf("%#v\n\n", packet.Data)
+			fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
 		case 261:
 			packet := NewSendSipTCP(b[:n])
-			fmt.Printf("%s\n", packet.Data.SendSipTCP.SipMsg)
-		default:
-			packet := NewSendSipUDP(b[:n])
-			fmt.Printf("%s\n", packet.Data.SendSipUDP.SipMsg)
+			fmt.Printf("%#v\n\n", packet.Data)
+			fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
 
 		}
 	}
