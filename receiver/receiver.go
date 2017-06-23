@@ -3,6 +3,7 @@ package receiver
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net"
@@ -64,19 +65,19 @@ type DataSet struct {
 
 // Hs holds the HandShake dataset fields
 type Hs struct {
-	MaVer       uint16
-	MiVer       uint16
-	CFlags1     uint16
-	CFlags2     uint16
-	SFlags      uint16
-	Timeout     uint16
-	SystemID    uint32
-	Product     uint16
-	SMaVer      uint8
-	SMiVer      uint8
-	Revision    uint8
-	HostnameLen uint8
-	Hostname    []byte
+	MaVer    uint16
+	MiVer    uint16
+	CFlags1  uint16
+	CFlags2  uint16
+	SFlags   uint16
+	Timeout  uint16
+	SystemID uint32
+	Product  uint16
+	SMaVer   uint8
+	SMiVer   uint8
+	Revision uint8
+	//HostnameLen uint8
+	//Hostname    []byte
 }
 
 // SipSet holds the SIP dataset fields
@@ -108,74 +109,6 @@ type SipSet struct {
 	SipMsg    []byte
 }
 
-// SendHEP writes the binary HEP representation into the buffer
-func NewHEPMsg(msg []byte) []byte {
-
-	b := bytes.NewBuffer(make([]byte, 6))
-	binary.Write(b, binary.BigEndian, msg)
-	packet := b.Bytes()
-	binary.BigEndian.PutUint32(packet, uint32(0x48455033)) // ASCII "HEP3"
-	binary.BigEndian.PutUint16(packet[4:], uint16(len(packet)))
-
-	return packet
-}
-
-// NewHEP
-func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16) []byte {
-
-	b := bytes.NewBuffer(make([]byte, 6))
-	switch ChunckType {
-	case 0x0001:
-		binary.Write(b, binary.BigEndian, 0x02)
-
-	case 0x0002:
-		binary.Write(b, binary.BigEndian, 0x11)
-
-	case 0x0003:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.SrcIP)
-
-	case 0x0004:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.DstIP)
-
-	case 0x0007:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.SrcPort)
-
-	case 0x0008:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.DstPort)
-
-	case 0x0009:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.TimeSec)
-
-	case 0x000a:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.TimeMic)
-
-	case 0x000b:
-		binary.Write(b, binary.BigEndian, 0x01)
-
-	case 0x000c:
-		binary.Write(b, binary.BigEndian, 0x000007D1)
-
-	case 0x000f:
-		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
-
-	}
-	packet := b.Bytes()
-	binary.BigEndian.PutUint16(packet, ChunckVen)
-	binary.BigEndian.PutUint16(packet[2:4], ChunckType)
-	binary.BigEndian.PutUint16(packet[4:], uint16(len(packet)))
-
-	return packet
-}
-
-// BufToInt8 casts []byte to []int8
-func BufToInt8(b []byte) []int8 {
-	bi := make([]int8, len(b))
-	for i, v := range b {
-		bi[i] = int8(v)
-	}
-	return bi
-}
-
 // NewHeader fills the IpfixHeader struct with structured binary data from r
 func NewHeader(header []byte) *IPFIX {
 	var ipfix IPFIX
@@ -191,20 +124,7 @@ func NewHandShake(header []byte) *IPFIX {
 	r := bytes.NewReader(header)
 	binary.Read(r, binary.BigEndian, &ipfix.Header)
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.MaVer)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.MiVer)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.CFlags1)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.CFlags2)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.SFlags)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.Timeout)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.SystemID)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.Product)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.SMaVer)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.SMiVer)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.Revision)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.HostnameLen)
-	ipfix.Data.HandShake.Hostname = make([]byte, ipfix.Data.HandShake.HostnameLen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake.Hostname)
+	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake)
 
 	fmt.Printf("Header: %#v", ipfix)
 	return &ipfix
@@ -215,19 +135,7 @@ func (ipfix *IPFIX) SendHandShake() []byte {
 	b := new(bytes.Buffer)
 	binary.Write(b, binary.BigEndian, &ipfix.Header)
 	binary.Write(b, binary.BigEndian, &ipfix.SetHeader)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.MaVer)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.MiVer)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.CFlags1)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.CFlags2)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.SFlags)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.Timeout)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.SystemID)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.Product)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.SMaVer)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.SMiVer)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.Revision)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.HostnameLen)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake.Hostname)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake)
 
 	return b.Bytes()
 }
@@ -368,6 +276,74 @@ func NewSendSipTCP(header []byte) *IPFIX {
 	return &ipfix
 }
 
+// BufToInt8 casts []byte to []int8
+func BufToInt8(b []byte) []int8 {
+	bi := make([]int8, len(b))
+	for i, v := range b {
+		bi[i] = int8(v)
+	}
+	return bi
+}
+
+// SendHEP writes the binary HEP representation into the buffer
+func NewHEPMsg(msg []byte) []byte {
+
+	b := bytes.NewBuffer(make([]byte, 6))
+	binary.Write(b, binary.BigEndian, msg)
+	packet := b.Bytes()
+	binary.BigEndian.PutUint32(packet, uint32(0x48455033)) // ASCII "HEP3"
+	binary.BigEndian.PutUint16(packet[4:], uint16(len(packet)))
+
+	return packet
+}
+
+// NewHEP
+func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16) []byte {
+
+	b := bytes.NewBuffer(make([]byte, 6))
+	switch ChunckType {
+	case 0x0001:
+		binary.Write(b, binary.BigEndian, 0x02)
+
+	case 0x0002:
+		binary.Write(b, binary.BigEndian, 0x11)
+
+	case 0x0003:
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.SrcIP)
+
+	case 0x0004:
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.DstIP)
+
+	case 0x0007:
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.SrcPort)
+
+	case 0x0008:
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.DstPort)
+
+	case 0x0009:
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.TimeSec)
+
+	case 0x000a:
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.TimeMic)
+
+	case 0x000b:
+		binary.Write(b, binary.BigEndian, 0x01)
+
+	case 0x000c:
+		binary.Write(b, binary.BigEndian, 0x000007D1)
+
+	case 0x000f:
+		binary.Write(b, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
+
+	}
+	packet := b.Bytes()
+	binary.BigEndian.PutUint16(packet, ChunckVen)
+	binary.BigEndian.PutUint16(packet[2:4], ChunckType)
+	binary.BigEndian.PutUint16(packet[4:], uint16(len(packet)))
+
+	return packet
+}
+
 func SendHEP(p *IPFIX, c net.Conn) {
 	bhep := new(bytes.Buffer)
 	bhep.Write(p.NewHEPChunck(0x0000, 0x0001))
@@ -382,7 +358,7 @@ func SendHEP(p *IPFIX, c net.Conn) {
 	bhep.Write(p.NewHEPChunck(0x0000, 0x000c))
 	bhep.Write(p.NewHEPChunck(0x0000, 0x000f))
 
-	fmt.Printf("HEEEP: %v\n", NewHEPMsg(bhep.Bytes()))
+	//fmt.Printf("HEEEP: %v\n", NewHEPMsg(bhep.Bytes()))
 	c.Write(NewHEPMsg(bhep.Bytes()))
 }
 
@@ -406,78 +382,116 @@ func SyncClient(c net.Conn) {
 		c.Close()
 	}()
 
-	n, err := c.Read(hs)
+	plen, err := c.Read(hs)
 	if err == io.EOF {
 		fmt.Printf("EOF %v", err)
 
 	}
 
-	s := NewHeader(hs[:n]).SetHeader.ID
-	hlen := NewHeader(hs[:n]).SetHeader.Length
+	s := NewHeader(hs[:plen]).SetHeader.ID
+	hlen := NewHeader(hs[:plen]).SetHeader.Length
 
 	if s == 256 && hlen > 20 {
-		h := NewHandShake(hs[:n])
+		h := NewHandShake(hs[:plen])
 		h.SetHeader.ID++
-		// fmt.Printf("Write: %#v\n", BufToInt8(h.SendHandShake()))
+		// Disable timeout
+		h.Data.HandShake.Timeout = 0
 		binary.Write(c, binary.BigEndian, BufToInt8(h.SendHandShake()))
 	}
 	//bufReader := bufio.NewReader(conn)
 	fmt.Println(s)
 	for {
-		/*		buf := bufio.NewReader(c)
-				//Read IPFIX Messages delimited by newline
-				_, err := buf.ReadBytes('\n')
-				bi := new(bytes.Buffer)
-				bi.ReadFrom(buf)
-				b := bi.Bytes()
-				n := len(b)
-		*/
-
 		b := make([]byte, 4096)
-		n, err := c.Read(b)
+		dlen, err := c.Read(b)
 
 		if err == io.EOF {
 			fmt.Printf("EOF %v", err)
 			break
 		}
+		fmt.Printf("%s", hex.Dump(b[:dlen]))
+		set := NewHeader(b[:dlen])
+		//Keepalive messages
+		/*		if set.Length == 4 {
+				continue
+			}*/
 
-		set := NewHeader(b[:n]).SetHeader
+		//fmt.Println(set.SetHeader.ID)
 
-		fmt.Println(set.ID)
+		switch set.SetHeader.ID {
 
-		switch set.ID {
+		case 0:
+			// Timeout packets
 		case 258:
-			packet := NewRecSipUDP(b[:n])
-			fmt.Printf("%#v\n\n", packet.Data)
-			fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
-			SendHEP(packet, con)
-		case 259:
-			if n-int(set.Length) > 16 {
-				fmt.Println("SetHeader<<<< Packetlen!!!!!!!!!!!")
+			fmt.Println(set.SetHeader.ID)
+			if dlen > int(set.Header.Length) {
+				fmt.Printf("Header length: %d < Packet length: %d !!!", dlen, int(set.Header.Length))
+				i := int(NewHeader(b[:dlen]).Header.Length)
+				x := 0
+				n := dlen
 
-				packet := NewSendSipUDP(b[:int(set.Length)+15])
-				fmt.Printf("%#v\n\n", packet.Data)
-				fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
+				for n > i {
+					//fmt.Printf("Packet length %d\n\n", n)
+					i = int(NewHeader(b[x : x+20-1]).Header.Length)
+					//fmt.Printf("Header length%d\n\n", i)
 
-				packet = NewSendSipUDP(b[int(set.Length)+16 : n])
-				fmt.Printf("%#v\n\n", packet.Data)
-				fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
-				SendHEP(packet, con)
+					packet := NewRecSipUDP(b[x : x+i-1])
+					//fmt.Println("NEW SET ID: ", packet.SetHeader.ID)
 
+					x = i + x
+					//fmt.Printf("X length%d\n\n", x)
+
+					n = n - i
+					//fmt.Printf("New Packet length: n%d - i%d\n\n", n, i)
+
+					SendHEP(packet, con)
+					//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+
+				}
 			} else {
-				packet := NewSendSipUDP(b[:n])
-				fmt.Printf("%#v\n\n", packet.Data)
+				packet := NewRecSipUDP(b[:dlen])
 				fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
-
 				SendHEP(packet, con)
 
 			}
+		case 259:
+			fmt.Println(set.SetHeader.ID)
+			if dlen > int(set.Header.Length) {
+				fmt.Println("SetHeader<<<< Packetlen!!!!!!!!!!!")
+				i := int(NewHeader(b[:dlen]).Header.Length)
+				x := 0
+				n := dlen
+
+				for n > i {
+					//fmt.Printf("Packet length %d\n\n", n)
+					i = int(NewHeader(b[x : x+20-1]).Header.Length)
+					//fmt.Printf("Header length%d\n\n", i)
+
+					packet := NewSendSipUDP(b[x : x+i-1])
+					//fmt.Println("NEW SET ID: ", packet.SetHeader.ID)
+
+					x = i + x
+					//fmt.Printf("X length%d\n\n", x)
+
+					n = n - i
+					//fmt.Printf("New Packet length: n%d - i%d\n\n", n, i)
+
+					SendHEP(packet, con)
+
+				}
+			} else {
+				packet := NewSendSipUDP(b[:dlen])
+				fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+				SendHEP(packet, con)
+
+			}
+
 		case 260:
-			packet := NewRecSipTCP(b[:n])
+			fmt.Println(set.SetHeader.ID)
+			packet := NewRecSipTCP(b[:dlen])
 			fmt.Printf("%#v\n\n", packet.Data)
 			fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
 		case 261:
-			packet := NewSendSipTCP(b[:n])
+			packet := NewSendSipTCP(b[:dlen])
 			fmt.Printf("%#v\n\n", packet.Data)
 			fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
 
