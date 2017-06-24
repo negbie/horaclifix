@@ -372,8 +372,6 @@ func checkError(err error) {
 func SyncClient(c net.Conn) {
 	fmt.Println("Handling new connection...")
 
-	hs := make([]byte, 512)
-
 	con, _ := net.Dial("udp", "127.0.0.1:9060")
 
 	// Close connection when this function ends
@@ -382,119 +380,72 @@ func SyncClient(c net.Conn) {
 		c.Close()
 	}()
 
-	plen, err := c.Read(hs)
-	if err == io.EOF {
-		fmt.Printf("EOF %v", err)
-
-	}
-
-	s := NewHeader(hs[:plen]).SetHeader.ID
-	hlen := NewHeader(hs[:plen]).SetHeader.Length
-
-	if s == 256 && hlen > 20 {
-		h := NewHandShake(hs[:plen])
-		h.SetHeader.ID++
-		// Disable timeout
-		h.Data.HandShake.Timeout = 0
-		binary.Write(c, binary.BigEndian, BufToInt8(h.SendHandShake()))
-	}
-	//bufReader := bufio.NewReader(conn)
-	fmt.Println(s)
 	for {
-		b := make([]byte, 4096)
+		b := make([]byte, 65536)
 		dlen, err := c.Read(b)
 
 		if err == io.EOF {
 			fmt.Printf("EOF %v", err)
 			break
 		}
-		fmt.Printf("%s", hex.Dump(b[:dlen]))
-		set := NewHeader(b[:dlen])
-		//Keepalive messages
-		/*		if set.Length == 4 {
-				continue
-			}*/
+		b = b[:dlen]
 
-		//fmt.Println(set.SetHeader.ID)
+		if int(uint16(b[2])<<8+uint16(b[3])) == 256 {
+			h := NewHandShake(b)
+			h.SetHeader.ID++
+			// Disable timeout
+			h.Data.HandShake.Timeout = 0
+			binary.Write(c, binary.BigEndian, BufToInt8(h.SendHandShake()))
+			continue
+		}
 
-		switch set.SetHeader.ID {
+		for len(b) > 20 {
 
-		case 0:
-			// Timeout packets
-		case 258:
-			fmt.Println(set.SetHeader.ID)
-			if dlen > int(set.Header.Length) {
-				fmt.Printf("Header length: %d < Packet length: %d !!!", dlen, int(set.Header.Length))
-				i := int(NewHeader(b[:dlen]).Header.Length)
-				x := 0
-				n := dlen
+			msglen := int(uint16(b[2])<<8 + uint16(b[3]))
+			msg := b[0:msglen]
+			b = b[msglen:]
 
-				for n > i {
-					//fmt.Printf("Packet length %d\n\n", n)
-					i = int(NewHeader(b[x : x+20-1]).Header.Length)
-					//fmt.Printf("Header length%d\n\n", i)
+			fmt.Println("LEN B:", b)
+			fmt.Printf("%s\n\n", hex.Dump(msg))
 
-					packet := NewRecSipUDP(b[x : x+i-1])
-					//fmt.Println("NEW SET ID: ", packet.SetHeader.ID)
+			setID := int(uint16(msg[16])<<8 + uint16(msg[17]))
 
-					x = i + x
-					//fmt.Printf("X length%d\n\n", x)
+			switch setID {
 
-					n = n - i
-					//fmt.Printf("New Packet length: n%d - i%d\n\n", n, i)
+			case 0:
+				// Timeout packets
+			case 258:
+				fmt.Println(setID)
+				packet := NewRecSipUDP(msg[:])
+				fmt.Printf("%#v\n\n", packet.Data)
+				fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
 
-					SendHEP(packet, con)
-					//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+				SendHEP(packet, con)
+			case 259:
+				fmt.Println(setID)
+				packet := NewSendSipUDP(msg[:])
+				fmt.Printf("%#v\n\n", packet.Data)
+				fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
 
-				}
-			} else {
-				packet := NewRecSipUDP(b[:dlen])
-				fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+				SendHEP(packet, con)
+			case 260:
+				fmt.Println(setID)
+				packet := NewRecSipTCP(msg[:])
+				fmt.Printf("%#v\n\n", packet.Data)
+				fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
+
+				SendHEP(packet, con)
+			case 261:
+				fmt.Println(setID)
+				packet := NewSendSipTCP(msg[:])
+				fmt.Printf("%#v\n\n", packet.Data)
+				fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
+
 				SendHEP(packet, con)
 
 			}
-		case 259:
-			fmt.Println(set.SetHeader.ID)
-			if dlen > int(set.Header.Length) {
-				fmt.Println("SetHeader<<<< Packetlen!!!!!!!!!!!")
-				i := int(NewHeader(b[:dlen]).Header.Length)
-				x := 0
-				n := dlen
-
-				for n > i {
-					//fmt.Printf("Packet length %d\n\n", n)
-					i = int(NewHeader(b[x : x+20-1]).Header.Length)
-					//fmt.Printf("Header length%d\n\n", i)
-
-					packet := NewSendSipUDP(b[x : x+i-1])
-					//fmt.Println("NEW SET ID: ", packet.SetHeader.ID)
-
-					x = i + x
-					//fmt.Printf("X length%d\n\n", x)
-
-					n = n - i
-					//fmt.Printf("New Packet length: n%d - i%d\n\n", n, i)
-
-					SendHEP(packet, con)
-
-				}
-			} else {
-				packet := NewSendSipUDP(b[:dlen])
-				fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
-				SendHEP(packet, con)
-
-			}
-
-		case 260:
-			fmt.Println(set.SetHeader.ID)
-			packet := NewRecSipTCP(b[:dlen])
-			fmt.Printf("%#v\n\n", packet.Data)
-			fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
-		case 261:
-			packet := NewSendSipTCP(b[:dlen])
-			fmt.Printf("%#v\n\n", packet.Data)
-			fmt.Printf("%s\n\n", packet.Data.SIP.SipMsg)
 
 		}
+
 	}
 }
