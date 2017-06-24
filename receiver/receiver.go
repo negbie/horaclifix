@@ -3,7 +3,6 @@ package receiver
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"net"
@@ -371,9 +370,16 @@ func Start(c net.Conn) {
 			fmt.Printf("EOF %v", err)
 			break
 		}
+
 		b = b[:dlen]
 
-		if int(uint16(b[2])<<8+uint16(b[3])) == 256 {
+		set := NewHeader(b)
+
+		msglen := int(set.Header.Length)
+		setID := int(set.SetHeader.ID)
+		msg := b
+
+		if setID == 256 {
 			h := NewHandShake(b)
 			h.SetHeader.ID++
 			// Disable timeout
@@ -383,15 +389,16 @@ func Start(c net.Conn) {
 		}
 
 		for len(b) > 20 && len(b) >= int(uint16(b[2])<<8+uint16(b[3])) {
-			msglen := int(uint16(b[2])<<8 + uint16(b[3]))
-			msg := b[0:msglen]
-			setID := int(uint16(msg[16])<<8 + uint16(msg[17]))
-			fmt.Println("####################################################################")
-			fmt.Printf("Length of incoming packet: %d\n", len(b))
-			fmt.Printf("Length from header: %d\n", msglen)
-			fmt.Printf("SetID: %d\n\n", setID)
-			fmt.Printf("%s\n", hex.Dump(msg))
-
+			msglen = int(uint16(b[2])<<8 + uint16(b[3]))
+			msg = b[0:msglen]
+			setID = int(uint16(msg[16])<<8 + uint16(msg[17]))
+			/*
+				fmt.Println("####################################################################")
+				fmt.Printf("Length of incoming packet: %d\n", len(b))
+				fmt.Printf("Length from header: %d\n", msglen)
+				fmt.Printf("SetID: %d\n\n", setID)
+				fmt.Printf("%s\n", hex.Dump(msg))
+			*/
 			b = b[msglen:]
 
 			switch setID {
@@ -400,22 +407,22 @@ func Start(c net.Conn) {
 				// Timeout packets
 			case 258:
 				packet := NewRecSipUDP(msg[:])
-				fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+				//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
 
 				SendHEP(packet, con)
 			case 259:
 				packet := NewSendSipUDP(msg[:])
-				fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+				//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
 
 				SendHEP(packet, con)
 			case 260:
 				packet := NewRecSipTCP(msg[:])
-				fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+				//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
 
 				SendHEP(packet, con)
 			case 261:
 				packet := NewSendSipTCP(msg[:])
-				fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+				//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
 
 				SendHEP(packet, con)
 

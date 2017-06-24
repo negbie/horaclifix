@@ -19,11 +19,21 @@ func checkError(err error) {
 func main() {
 
 	var (
-		port = flag.String("port", ":4739", "Port to use to receive IPFIX packets")
+		addr = flag.String("addr", ":4739", "Port to use to receive IPFIX packets")
 	)
 
 	flag.Parse()
-	listener, err := net.Listen("tcp", *port)
+
+	laddr, err := net.ResolveTCPAddr("tcp", *addr)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	listener, err := net.ListenTCP("tcp", laddr)
+	if err != nil {
+		os.Exit(1)
+	}
+
 	checkError(err)
 	for {
 		conn, err := listener.Accept()
