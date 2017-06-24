@@ -28,6 +28,6 @@ func main() {
 	for {
 		conn, err := listener.Accept()
 		checkError(err)
-		go receiver.SyncClient(conn)
+		go receiver.Start(conn)
 	}
 }
