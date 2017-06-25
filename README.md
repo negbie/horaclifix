@@ -1,4 +1,4 @@
-![horaclifix](https://user-images.githubusercontent.com/20154956/27518946-16f569c0-59eb-11e7-86e4-458e024460ef.png)
+![horaclifix](https://user-images.githubusercontent.com/20154956/27519118-9a0720a4-59ed-11e7-95ba-f0e9ce529624.png)
 
 # horaclifix
 horaclifix sends IPFIX messages from Oracle SBC's into Homer
