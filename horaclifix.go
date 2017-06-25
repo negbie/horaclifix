@@ -1,12 +1,20 @@
-package receiver
+package main
 
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
+	"flag"
 	"fmt"
 	"io"
 	"net"
 	"os"
+)
+
+var (
+	addr  = flag.String("h", ":4739", "Host ipfix listen address")
+	haddr = flag.String("H", "127.0.0.1:9060", "Homer server address")
+	debug = flag.Bool("d", false, "Debug output to stdout")
 )
 
 // Sync message from sbc
@@ -125,15 +133,6 @@ func NewHandShake(header []byte) *IPFIX {
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake)
 	return &ipfix
-}
-
-// SendHandShake writes the binary Handshake representation into the buffer
-func (ipfix *IPFIX) SendHandShake() []byte {
-	b := new(bytes.Buffer)
-	binary.Write(b, binary.BigEndian, &ipfix.Header)
-	binary.Write(b, binary.BigEndian, &ipfix.SetHeader)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake)
-	return b.Bytes()
 }
 
 func NewRecSipUDP(header []byte) *IPFIX {
@@ -256,6 +255,15 @@ func NewSendSipTCP(header []byte) *IPFIX {
 	return &ipfix
 }
 
+// HandShake writes the binary Handshake representation into the buffer
+func (ipfix *IPFIX) SendHandShake() []byte {
+	b := new(bytes.Buffer)
+	binary.Write(b, binary.BigEndian, &ipfix.Header)
+	binary.Write(b, binary.BigEndian, &ipfix.SetHeader)
+	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake)
+	return b.Bytes()
+}
+
 // BufToInt8 casts []byte to []int8
 func BufToInt8(b []byte) []int8 {
 	bi := make([]int8, len(b))
@@ -350,85 +358,148 @@ func checkError(err error) {
 }
 
 // Start handles incoming packets
-func Start(c net.Conn) {
+func Start(conn *net.TCPConn, haddr string, debug bool) {
 	fmt.Println("Handling new connection...")
 
-	con, _ := net.Dial("udp", "127.0.0.1:9060")
+	hconn, _ := net.Dial("udp", haddr)
 
 	// Close connection when this function ends
 	defer func() {
 		fmt.Println("Closing connection...")
-		c.Close()
+		conn.Close()
 	}()
 
 	for {
-
-		b := make([]byte, 65536)
-		dlen, err := c.Read(b)
+		byts := make([]byte, 32768)
+		blen, err := conn.Read(byts)
 
 		if err == io.EOF {
 			fmt.Printf("EOF %v", err)
 			break
 		}
 
-		b = b[:dlen]
+		b := make([]byte, blen)
+		copy(b, byts)
+		if len(b) > 20 {
 
-		set := NewHeader(b)
+			set := NewHeader(b)
 
-		msglen := int(set.Header.Length)
-		setID := int(set.SetHeader.ID)
-		msg := b
+			msglen := int(set.Header.Length)
+			setID := int(set.SetHeader.ID)
 
-		if setID == 256 {
-			h := NewHandShake(b)
-			h.SetHeader.ID++
-			// Disable timeout
-			h.Data.HandShake.Timeout = 0
-			binary.Write(c, binary.BigEndian, BufToInt8(h.SendHandShake()))
-			continue
-		}
+			for len(b) >= msglen && setID > 255 && setID < 270 {
+				msglen = int(uint16(b[2])<<8 + uint16(b[3]))
+				msg := b[:msglen]
+				b = b[msglen:]
 
-		for len(b) > 20 && len(b) >= int(uint16(b[2])<<8+uint16(b[3])) {
-			msglen = int(uint16(b[2])<<8 + uint16(b[3]))
-			msg = b[0:msglen]
-			setID = int(uint16(msg[16])<<8 + uint16(msg[17]))
-			/*
-				fmt.Println("####################################################################")
-				fmt.Printf("Length of incoming packet: %d\n", len(b))
-				fmt.Printf("Length from header: %d\n", msglen)
-				fmt.Printf("SetID: %d\n\n", setID)
-				fmt.Printf("%s\n", hex.Dump(msg))
-			*/
-			b = b[msglen:]
+				if debug {
+					fmt.Println("####################################################################")
+					fmt.Printf("Length of incoming packet: %d\n", len(msg))
+					fmt.Printf("Length from header: %d\n", msglen)
+					fmt.Printf("SetID: %d\n\n", setID)
+					fmt.Printf("%s\n", hex.Dump(msg))
+				}
+				setID = int(uint16(msg[16])<<8 + uint16(msg[17]))
+				switch setID {
 
-			switch setID {
-
-			case 0:
-				// Timeout packets
-			case 258:
-				packet := NewRecSipUDP(msg[:])
-				//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
-
-				SendHEP(packet, con)
-			case 259:
-				packet := NewSendSipUDP(msg[:])
-				//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
-
-				SendHEP(packet, con)
-			case 260:
-				packet := NewRecSipTCP(msg[:])
-				//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
-
-				SendHEP(packet, con)
-			case 261:
-				packet := NewSendSipTCP(msg[:])
-				//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
-
-				SendHEP(packet, con)
+				case 0:
+					// Timeout packets
+				case 256:
+					h := NewHandShake(b)
+					h.SetHeader.ID++
+					// Disable timeout
+					h.Data.HandShake.Timeout = 0
+					binary.Write(conn, binary.BigEndian, BufToInt8(h.SendHandShake()))
+				case 258:
+					packet := NewRecSipUDP(msg[:])
+					//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+					SendHEP(packet, hconn)
+				case 259:
+					packet := NewSendSipUDP(msg[:])
+					//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+					SendHEP(packet, hconn)
+				case 260:
+					packet := NewRecSipTCP(msg[:])
+					//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+					SendHEP(packet, hconn)
+				case 261:
+					packet := NewSendSipTCP(msg[:])
+					//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
+					SendHEP(packet, hconn)
+				}
 
 			}
-
 		}
 
+	}
+}
+
+/*
+func handleConn(in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
+	for conn := range in {
+		receiver.Start(conn, *haddr, *debug)
+		out <- conn
+	}
+}
+
+func closeConn(in <-chan *net.TCPConn) {
+	for conn := range in {
+		conn.Close()
+	}
+}
+
+func main() {
+	flag.Parse()
+
+	fmt.Printf("Listening for IPFIX at: %v\n Send to Homer at: %v\n\n", *addr, *haddr)
+
+	addr, err := net.ResolveTCPAddr("tcp", *addr)
+	if err != nil {
+		panic(err)
+	}
+
+	listener, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		panic(err)
+	}
+
+	pending, complete := make(chan *net.TCPConn), make(chan *net.TCPConn)
+
+	for i := 0; i < 5; i++ {
+		go handleConn(pending, complete)
+	}
+	go closeConn(complete)
+
+	for {
+		conn, err := listener.AcceptTCP()
+		if err != nil {
+			panic(err)
+		}
+		pending <- conn
+	}
+}
+*/
+
+func main() {
+
+	flag.Parse()
+	fmt.Printf("Listening for IPFIX at: %v\nSend to Homer at: %v\n\n", *addr, *haddr)
+
+	laddr, err := net.ResolveTCPAddr("tcp", *addr)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	listener, err := net.ListenTCP("tcp", laddr)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	for {
+		conn, err := listener.AcceptTCP()
+		if err != nil {
+			os.Exit(1)
+		}
+		go Start(conn, *haddr, *debug)
 	}
 }
