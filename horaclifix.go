@@ -17,9 +17,6 @@ var (
 	debug = flag.Bool("d", false, "Debug output to stdout")
 )
 
-// Sync message from sbc
-// echo -ne '\x00\x0A\x00\x30\x59\x41\x37\x38\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x20\x00\x01\x00\x02\x00\xFC\x77\x31\x00\x00\x00\x1E\x00\x00\x00\x00\x43\x5A\x07\x03\x00\x06\x65\x63\x7A\x37\x33\x30' | nc localhost 4739
-
 // IPFIX holds the structure of one IPFIX packet
 //
 // Wire format:
@@ -29,13 +26,16 @@ var (
 //         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //         |             Version (uint16)          |            Length (uint16)            |
 //         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//         |                                   ExportTime (unit32)                         |
+//         |                                 ExportTime     (unit32)                       |
 //         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //         |                                 SequenceNumber (uint32)                       |
 //         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//         |                                 ObservationID (uint32)                        |
+//         |                                 ObservationID  (uint32)                       |
 //         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//
+//         |           SetHeader ID (uint16)       |       SetHeader Length (uint16)       |
+//         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//         |                                 Dataset..................                     |
+//         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
 // IPFIX messages struct
 type IPFIX struct {
@@ -370,64 +370,81 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 	}()
 
 	for {
+		// Create a bytes holder and read in the bytes from the network
 		byts := make([]byte, 32768)
 		blen, err := conn.Read(byts)
 
+		// Check for EOF and go out of this loop. Don't cut the connection. Mby we just rebooted the sbc
 		if err == io.EOF {
-			fmt.Printf("EOF %v", err)
+			fmt.Printf("EOF %v\n", err)
 			break
 		}
 
-		b := make([]byte, blen)
-		copy(b, byts)
-		if len(b) > 20 {
+		// Create a new bytes holder with the actual packet size
+		packet := make([]byte, blen)
+		copy(packet, byts)
 
-			set := NewHeader(b)
-
-			msglen := int(set.Header.Length)
+		// Check if we have atleast the bytes needed to parse the header
+		if len(packet) > 20 {
+			// Create a new header struct to get the header length & ID
+			set := NewHeader(packet)
+			dataLen := int(set.Header.Length)
 			setID := int(set.SetHeader.ID)
 
-			for len(b) >= msglen && setID > 255 && setID < 270 {
-				msglen = int(uint16(b[2])<<8 + uint16(b[3]))
-				msg := b[:msglen]
-				b = b[msglen:]
+			// Check if the packet is larger than the header length. If so we have multiple datasets inside one packet
+			// Check for known setID's only
+			for len(packet) >= dataLen && setID > 255 && setID < 270 {
+				// Get the header length from the packet at position 2&3
+				dataLen = int(uint16(packet[2])<<8 + uint16(packet[3]))
+				// Create a new packet with the header length. This is our first dataset
+				data := packet[:dataLen]
+				// Cut the first dataset from the original packet
+				packet = packet[dataLen:]
 
 				if debug {
 					fmt.Println("####################################################################")
-					fmt.Printf("Length of incoming packet: %d\n", len(msg))
-					fmt.Printf("Length from header: %d\n", msglen)
+					fmt.Printf("Length of incoming packet: %d\n", len(data))
+					fmt.Printf("Length from header: %d\n", dataLen)
 					fmt.Printf("SetID: %d\n\n", setID)
-					fmt.Printf("%s\n", hex.Dump(msg))
+					fmt.Printf("%s\n", hex.Dump(data))
 				}
-				setID = int(uint16(msg[16])<<8 + uint16(msg[17]))
+				// Go through the set's and fill the right structs
+				setID = int(uint16(data[16])<<8 + uint16(data[17]))
 				switch setID {
 
 				case 0:
 					// Timeout packets
 				case 256:
-					h := NewHandShake(b)
+					h := NewHandShake(data)
 					h.SetHeader.ID++
 					// Disable timeout
 					h.Data.HandShake.Timeout = 0
 					binary.Write(conn, binary.BigEndian, BufToInt8(h.SendHandShake()))
 				case 258:
-					packet := NewRecSipUDP(msg[:])
-					//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
-					SendHEP(packet, hconn)
+					dataSet := NewRecSipUDP(data)
+					if debug {
+						fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
+					}
+					SendHEP(dataSet, hconn)
 				case 259:
-					packet := NewSendSipUDP(msg[:])
-					//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
-					SendHEP(packet, hconn)
+					dataSet := NewSendSipUDP(data)
+					if debug {
+						fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
+					}
+					SendHEP(dataSet, hconn)
 				case 260:
-					packet := NewRecSipTCP(msg[:])
-					//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
-					SendHEP(packet, hconn)
+					dataSet := NewRecSipTCP(data)
+					if debug {
+						fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
+					}
+					SendHEP(dataSet, hconn)
 				case 261:
-					packet := NewSendSipTCP(msg[:])
-					//fmt.Printf("%s\n", packet.Data.SIP.SipMsg)
-					SendHEP(packet, hconn)
+					dataSet := NewSendSipTCP(data)
+					if debug {
+						fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
+					}
+					SendHEP(dataSet, hconn)
 				}
-
 			}
 		}
 
