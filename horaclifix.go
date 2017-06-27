@@ -120,13 +120,13 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 				}
 				SendHEP(dataSet, hconn)
 			case 260:
-				dataSet := NewRecSipTCP(data[20:])
+				dataSet := NewRecSipTCP(data)
 				if debug {
 					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
 				}
 				SendHEP(dataSet, hconn)
 			case 261:
-				dataSet := NewSendSipTCP(data[20:])
+				dataSet := NewSendSipTCP(data)
 				if debug {
 					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
 				}
@@ -152,9 +152,9 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 
 			case 268:
 				// GOTCHA!!!!
-				dataSet := NewCallQualityStats(data[20:])
+				dataSet := NewCallQualityStats(data)
 
-				fmt.Printf("%#v\n", dataSet)
+				fmt.Printf("%+v\n", dataSet)
 				fmt.Printf("%d\n", dataSet.OutMos)
 				fmt.Printf("%d\n", dataSet.IncMos)
 				fmt.Printf("%s\n", dataSet.IncCallID)
