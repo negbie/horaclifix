@@ -21,7 +21,9 @@ go install github.com/negbie/horaclifix
   -H string
         Homer server address (default "127.0.0.1:9060")
   -d    Debug output to stdout
-  -h string
+  -g string
+        Graylog server address (default "127.0.0.1:4488")
+  -l string
         Host ipfix listen address (default ":4739")
 
         
