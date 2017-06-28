@@ -51,6 +51,7 @@ type IpfixSetHeader struct {
 type DataSet struct {
 	HandShake Hs
 	SIP       SipSet
+	QOS       CallStats
 }
 
 // Hs holds the HandShake dataset fields
@@ -67,8 +68,11 @@ type Hs struct {
 	SMiVer   uint8
 	Revision uint8
 	//HostnameLen uint8
-	//Hostname    []byte
+	//Hostname    ByteString
 }
+
+// Use custom type to get strings instead base64 when calling json.Marshal
+type ByteString []byte
 
 // SipSet holds the SIP dataset fields
 type SipSet struct {
@@ -78,7 +82,7 @@ type SipSet struct {
 	IntPort   uint8
 	IntVlan   uint16
 	CallIDLen uint8
-	CallID    []byte
+	CallID    ByteString
 	CallIDEnd uint8
 	IPlen     uint16
 	VL        uint8
@@ -96,7 +100,7 @@ type SipSet struct {
 	Context   uint32
 	UDPlen    uint16
 	MsgLen    uint16
-	SipMsg    []byte
+	SipMsg    ByteString
 }
 
 type CallStats struct {
@@ -173,17 +177,17 @@ type CallStats struct {
 	Seperator uint8
 
 	IncRealmLen uint16
-	IncRealm    []byte
+	IncRealm    ByteString
 	IncRealmEnd uint8
 
 	OutRealmLen uint16
-	OutRealm    []byte
+	OutRealm    ByteString
 	OutRealmEnd uint8
 
 	IncCallIDLen uint16
-	IncCallID    []byte
+	IncCallID    ByteString
 	IncCallIDEnd uint8
 
 	OutCallIDLen uint16
-	OutCallID    []byte
+	OutCallID    ByteString
 }

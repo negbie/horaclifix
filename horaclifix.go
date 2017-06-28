@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	addr  = flag.String("h", ":4739", "Host ipfix listen address")
-	haddr = flag.String("H", "127.0.0.1:9060", "Homer server address")
-	debug = flag.Bool("d", false, "Debug output to stdout")
+	addr        = flag.String("l", ":4739", "Host ipfix listen address")
+	haddr       = flag.String("H", "127.0.0.1:9060", "Homer server address")
+	debug       = flag.Bool("d", false, "Debug output to stdout")
+	graylogAddr = flag.String("g", "127.0.0.1:4488", "Graylog server address")
 )
 
 func checkError(err error) {
@@ -23,6 +24,14 @@ func checkError(err error) {
 		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
 		os.Exit(1)
 	}
+}
+
+func toString(bs []byte) string {
+	b := make([]byte, len(bs))
+	for i, v := range bs {
+		b[i] = byte(v)
+	}
+	return string(b)
 }
 
 // BufToInt8 casts []byte to []int8
@@ -37,6 +46,7 @@ func BufToInt8(b []byte) []int8 {
 // Start handles incoming packets
 func Start(conn *net.TCPConn, haddr string, debug bool) {
 	fmt.Println("Handling new connection...")
+	NewGelfLogger()
 	// UDP connection to Homer
 	hconn, _ := net.Dial("udp", haddr)
 
@@ -64,39 +74,41 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 			break
 		}
 
-		// Check if we have atleast the bytes needed to parse the header
-
 		// Create a new header struct to get the header length & ID
 		set := NewHeader(packet)
 		dataLen := int(set.Header.Length)
 		setLen := int(set.SetHeader.Length)
 		setID := int(set.SetHeader.ID)
 
-		// Check if the packet is larger than the header length. If so we have multiple datasets inside one packet
-		// Check for known setID's only
-		for len(packet) >= dataLen && setID > 255 && setID < 280 && dataLen-setLen == 16 {
+		for len(packet) > 20 && len(packet) >= dataLen && setID > 255 && setID < 280 && dataLen-setLen == 16 {
 
 			// Get the header length from the packet at position 2&3
 			dataLen = int(uint16(packet[2])<<8 + uint16(packet[3]))
 			setLen = int(uint16(packet[18])<<8 + uint16(packet[19]))
 
+			if debug {
+				fmt.Println("####################################################################")
+				fmt.Printf("Length of incoming packet: %d\n", len(packet))
+				fmt.Printf("Length of following Data: %d\n", dataLen)
+			}
+
 			if len(packet) < dataLen {
+				fmt.Println("If this happen we are out of sync!")
 				dataLen = len(packet)
 			}
 			// Create a new packet with the header length. This is our first dataset
 			data := packet[:dataLen]
 			// Cut the first dataset from the original packet
 			packet = packet[dataLen:]
-
+			setID = int(uint16(data[16])<<8 + uint16(data[17]))
 			if debug {
-				fmt.Println("####################################################################")
 				fmt.Printf("Length of incoming packet: %d\n", len(data))
 				fmt.Printf("Length from header: %d\n", dataLen)
 				fmt.Printf("SetID: %d\n\n", setID)
 				fmt.Printf("%s\n", hex.Dump(data))
 			}
 			// Go through the set's and fill the right structs
-			setID = int(uint16(data[16])<<8 + uint16(data[17]))
+
 			switch setID {
 
 			case 0:
@@ -113,12 +125,14 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
 				}
 				SendHEP(dataSet, hconn)
+				LogSip(dataSet)
 			case 259:
 				dataSet := NewSendSipUDP(data)
 				if debug {
 					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
 				}
 				SendHEP(dataSet, hconn)
+				LogSip(dataSet)
 			case 260:
 				dataSet := NewRecSipTCP(data)
 				if debug {
@@ -152,13 +166,8 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 
 			case 268:
 				// GOTCHA!!!!
-				dataSet := NewCallQualityStats(data)
-
-				fmt.Printf("%+v\n", dataSet)
-				fmt.Printf("%d\n", dataSet.OutMos)
-				fmt.Printf("%d\n", dataSet.IncMos)
-				fmt.Printf("%s\n", dataSet.IncCallID)
-				fmt.Printf("%s\n", dataSet.OutCallID)
+				dataSet := NewQosStats(data)
+				LogQos(dataSet)
 
 			case 269:
 				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
