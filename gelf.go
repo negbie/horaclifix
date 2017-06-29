@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 
@@ -44,7 +43,7 @@ func LogSip(i *IPFIX) {
 
 	sLog, _ := json.Marshal(s)
 	log.Printf("%s\n", sLog)
-	fmt.Printf("%s\n", sLog)
+	//fmt.Printf("%s\n", sLog)
 
 }
 
@@ -55,6 +54,6 @@ func LogQos(i *IPFIX) {
 
 	qLog, _ := json.Marshal(q)
 	log.Printf("%s\n", qLog)
-	fmt.Printf("%s\n", qLog)
+	//fmt.Printf("%s\n", qLog)
 
 }

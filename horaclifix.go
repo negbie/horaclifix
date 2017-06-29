@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"encoding/binary"
 	"encoding/hex"
 	"flag"
 	"fmt"
@@ -26,23 +25,6 @@ func checkError(err error) {
 	}
 }
 
-func toString(bs []byte) string {
-	b := make([]byte, len(bs))
-	for i, v := range bs {
-		b[i] = byte(v)
-	}
-	return string(b)
-}
-
-// BufToInt8 casts []byte to []int8
-func BufToInt8(b []byte) []int8 {
-	bi := make([]int8, len(b))
-	for i, v := range b {
-		bi[i] = int8(v)
-	}
-	return bi
-}
-
 // Start handles incoming packets
 func Start(conn *net.TCPConn, haddr string, debug bool) {
 	fmt.Println("Handling new connection...")
@@ -56,13 +38,11 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 		conn.Close()
 	}()
 
-	byts := make([]byte, 65535)
+	byts := make([]byte, 32768)
 	r := bufio.NewReader(conn)
 
 	for {
-		// Create a bytes holder and read in the bytes from the network
 		blen, err := r.Read(byts)
-
 		buf := new(bytes.Buffer)
 		buf.Write(byts[:blen])
 		// Create a new buffer with the actual packet
@@ -74,51 +54,42 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 			break
 		}
 
-		// Create a new header struct to get the header length & ID
 		set := NewHeader(packet)
+		version := int(set.Header.Version)
 		dataLen := int(set.Header.Length)
-		setLen := int(set.SetHeader.Length)
 		setID := int(set.SetHeader.ID)
+		if setID == 256 {
+			SendHandshake(conn, packet)
+		}
 
-		for len(packet) > 20 && len(packet) >= dataLen && setID > 255 && setID < 280 && dataLen-setLen == 16 {
-
-			// Get the header length from the packet at position 2&3
+		for len(packet) > 200 {
+			version = int(uint16(packet[0])<<8 + uint16(packet[1]))
 			dataLen = int(uint16(packet[2])<<8 + uint16(packet[3]))
-			setLen = int(uint16(packet[18])<<8 + uint16(packet[19]))
+			setID = int(uint16(packet[16])<<8 + uint16(packet[17]))
 
-			if debug {
-				fmt.Println("####################################################################")
-				fmt.Printf("Length of incoming packet: %d\n", len(packet))
-				fmt.Printf("Length of following Data: %d\n", dataLen)
+			if setID > 280 || setID < 258 || version != 10 {
+				break
 			}
 
 			if len(packet) < dataLen {
 				fmt.Println("If this happen we are out of sync!")
 				dataLen = len(packet)
 			}
+
 			// Create a new packet with the header length. This is our first dataset
+			//fmt.Printf("%s\n", hex.Dump(packet))
 			data := packet[:dataLen]
-			// Cut the first dataset from the original packet
-			packet = packet[dataLen:]
-			setID = int(uint16(data[16])<<8 + uint16(data[17]))
 			if debug {
-				fmt.Printf("Length of incoming packet: %d\n", len(data))
-				fmt.Printf("Length from header: %d\n", dataLen)
-				fmt.Printf("SetID: %d\n\n", setID)
 				fmt.Printf("%s\n", hex.Dump(data))
 			}
+
+			// Cut the first dataset from the original packet
+			packet = packet[dataLen:]
+
+			//fmt.Printf("%s\n", hex.Dump(packet))
+
 			// Go through the set's and fill the right structs
-
 			switch setID {
-
-			case 0:
-				// Timeout packets
-			case 256:
-				h := NewHandShake(data)
-				h.SetHeader.ID++
-				// Disable timeout
-				h.Data.HandShake.Timeout = 0
-				binary.Write(conn, binary.BigEndian, BufToInt8(h.SendHandShake()))
 			case 258:
 				dataSet := NewRecSipUDP(data)
 				if debug {
@@ -167,6 +138,9 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 			case 268:
 				// GOTCHA!!!!
 				dataSet := NewQosStats(data)
+				if debug {
+					fmt.Printf("%s\n", dataSet.Data.QOS.IncCallID)
+				}
 				LogQos(dataSet)
 
 			case 269:
@@ -208,6 +182,7 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
 			}
+
 		}
 
 	}
@@ -216,7 +191,7 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 /*
 func handleConn(in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
 	for conn := range in {
-		receiver.Start(conn, *haddr, *debug)
+		Start(conn, *haddr, *debug)
 		out <- conn
 	}
 }
