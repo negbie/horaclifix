@@ -7,15 +7,20 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net"
+	"net/http"
 	"os"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
-	addr        = flag.String("l", ":4739", "Host ipfix listen address")
-	haddr       = flag.String("H", "127.0.0.1:9060", "Homer server address")
-	debug       = flag.Bool("d", false, "Debug output to stdout")
-	graylogAddr = flag.String("g", "127.0.0.1:4488", "Graylog server address")
+	addr  = flag.String("l", ":4739", "Host ipfix listen address")
+	haddr = flag.String("H", "127.0.0.1:9060", "Homer server address")
+	debug = flag.Bool("d", false, "Debug output to stdout")
+	gaddr = flag.String("g", "", "Graylog server address")
 )
 
 func checkError(err error) {
@@ -25,10 +30,14 @@ func checkError(err error) {
 	}
 }
 
+func init() {
+	prometheus.MustRegister(packetsTotal)
+}
+
 // Start handles incoming packets
-func Start(conn *net.TCPConn, haddr string, debug bool) {
+func Start(conn *net.TCPConn, haddr string) {
 	fmt.Println("Handling new connection...")
-	NewGelfLogger()
+	NewGelfLogger(*gaddr)
 	// UDP connection to Homer
 	hconn, _ := net.Dial("udp", haddr)
 
@@ -48,6 +57,10 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 		// Create a new buffer with the actual packet
 		packet := buf.Bytes()
 
+		allpackets := string(packet)
+
+		packetsTotal.WithLabelValues(allpackets).Inc()
+
 		// Check for EOF and go out of this loop. Don't cut the connection. Mby we just rebooted the sbc
 		if err == io.EOF {
 			fmt.Printf("EOF %v\n", err)
@@ -58,7 +71,8 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 		version := int(set.Header.Version)
 		dataLen := int(set.Header.Length)
 		setID := int(set.SetHeader.ID)
-		if setID == 256 {
+
+		if setID == 256 && version == 10 && dataLen > 20 {
 			SendHandshake(conn, packet)
 		}
 
@@ -67,169 +81,83 @@ func Start(conn *net.TCPConn, haddr string, debug bool) {
 			dataLen = int(uint16(packet[2])<<8 + uint16(packet[3]))
 			setID = int(uint16(packet[16])<<8 + uint16(packet[17]))
 
+			if *debug {
+				fmt.Println("########################################################################################################################################")
+				fmt.Printf("Inc: len(packet): %d, datalen: %d, setID: %d, version: %d\n", len(packet), dataLen, setID, version)
+			}
+
 			if setID > 280 || setID < 258 || version != 10 {
 				break
 			}
 
 			if len(packet) < dataLen {
-				fmt.Println("If this happen we are out of sync!")
+				if *debug {
+					fmt.Printf("Out of sync: len(packet): %d, datalen: %d, setID: %d, version: %d\n", len(packet), dataLen, setID, version)
+				}
 				dataLen = len(packet)
 			}
 
-			// Create a new packet with the header length. This is our first dataset
-			//fmt.Printf("%s\n", hex.Dump(packet))
+			// Create a new data packet with the header length. This is our first dataset
 			data := packet[:dataLen]
-			if debug {
-				fmt.Printf("%s\n", hex.Dump(data))
-			}
-
 			// Cut the first dataset from the original packet
 			packet = packet[dataLen:]
 
-			//fmt.Printf("%s\n", hex.Dump(packet))
+			if *debug {
+				fmt.Printf("Out: len(packet): %d\n\n", len(packet))
+				fmt.Println("Hexdump output:")
+				fmt.Printf("%s\n", hex.Dump(data))
+			}
 
 			// Go through the set's and fill the right structs
 			switch setID {
 			case 258:
 				dataSet := NewRecSipUDP(data)
-				if debug {
+				if *debug {
+					fmt.Println("SIP output:")
 					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
 				}
 				SendHEP(dataSet, hconn)
 				LogSip(dataSet)
 			case 259:
 				dataSet := NewSendSipUDP(data)
-				if debug {
+				if *debug {
+					fmt.Println("SIP output:")
 					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
 				}
 				SendHEP(dataSet, hconn)
 				LogSip(dataSet)
 			case 260:
 				dataSet := NewRecSipTCP(data)
-				if debug {
+				if *debug {
+					fmt.Println("SIP output:")
 					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
 				}
 				SendHEP(dataSet, hconn)
+				LogSip(dataSet)
 			case 261:
 				dataSet := NewSendSipTCP(data)
-				if debug {
+				if *debug {
+					fmt.Println("SIP output:")
 					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
 				}
 				SendHEP(dataSet, hconn)
-			case 262:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-			case 263:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-			case 264:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-			case 265:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-			case 266:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-			case 267:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-
+				LogSip(dataSet)
 			case 268:
-				// GOTCHA!!!!
 				dataSet := NewQosStats(data)
-				if debug {
-					fmt.Printf("%s\n", dataSet.Data.QOS.IncCallID)
-				}
 				LogQos(dataSet)
 
-			case 269:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-
-			case 271:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-
-			case 272:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-
-			case 273:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-
-			case 274:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-
-			case 275:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-
-			case 276:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-
-			case 277:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-			case 278:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
-
-			case 279:
-				// Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				fmt.Printf("Unkown battlefield!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n%s\n", hex.Dump(data))
 			}
-
 		}
 
 	}
 }
 
-/*
-func handleConn(in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
-	for conn := range in {
-		Start(conn, *haddr, *debug)
-		out <- conn
-	}
-}
-func closeConn(in <-chan *net.TCPConn) {
-	for conn := range in {
-		conn.Close()
-	}
-}
-func main() {
-	flag.Parse()
-	fmt.Printf("Listening for IPFIX at: %v\n Send to Homer at: %v\n\n", *addr, *haddr)
-	addr, err := net.ResolveTCPAddr("tcp", *addr)
-	if err != nil {
-		panic(err)
-	}
-	listener, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	pending, complete := make(chan *net.TCPConn), make(chan *net.TCPConn)
-	for i := 0; i < 5; i++ {
-		go handleConn(pending, complete)
-	}
-	go closeConn(complete)
-	for {
-		conn, err := listener.AcceptTCP()
-		if err != nil {
-			panic(err)
-		}
-		pending <- conn
-	}
-}
-*/
-
 func main() {
 
+	httpListenAddress := ":8080"
+
 	flag.Parse()
-	fmt.Printf("Listening for IPFIX at: %v\nSend to Homer at: %v\n\n", *addr, *haddr)
+	fmt.Printf("IPFIX IP %v\nHomer IP %v\nGraylog IP %v\n", *addr, *haddr, *gaddr)
 
 	laddr, err := net.ResolveTCPAddr("tcp", *addr)
 	if err != nil {
@@ -240,12 +168,17 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-
-	for {
-		conn, err := listener.AcceptTCP()
-		if err != nil {
-			os.Exit(1)
+	go func() {
+		for {
+			conn, err := listener.AcceptTCP()
+			if err != nil {
+				os.Exit(1)
+			}
+			go Start(conn, *haddr)
 		}
-		go Start(conn, *haddr, *debug)
-	}
+
+	}()
+
+	http.Handle("/metrics", promhttp.Handler())
+	log.Fatal(http.ListenAndServe(httpListenAddress, nil))
 }

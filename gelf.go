@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 
@@ -20,15 +21,15 @@ func (s *ByteString) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-func NewGelfLogger() {
-	if *graylogAddr != "" {
-		gelfWriter, err := gelf.NewWriter(*graylogAddr)
+func NewGelfLogger(graylogAddr string) {
+	if graylogAddr != "" {
+		gelfWriter, err := gelf.NewWriter(graylogAddr)
 		if err != nil {
 			log.Fatalf("gelf.NewWriter: %s", err)
 		}
 		// log to both stderr and graylog2
 		//log.SetOutput(io.MultiWriter(os.Stderr, gelfWriter))
-		//log.Printf("logging to stderr & graylog2@'%s'", *graylogAddr)
+		//log.Printf("logging to stderr & graylog2@'%s'", graylogAddr)
 
 		log.SetOutput(io.MultiWriter(gelfWriter))
 		// Sine we use json extractor in graylog we dont wont to prefix the log output with timestamps
@@ -43,8 +44,11 @@ func LogSip(i *IPFIX) {
 
 	sLog, _ := json.Marshal(s)
 	log.Printf("%s\n", sLog)
-	//fmt.Printf("%s\n", sLog)
 
+	if *debug {
+		fmt.Println("Json output:")
+		fmt.Printf("%s\n\n\n", sLog)
+	}
 }
 
 func LogQos(i *IPFIX) {
@@ -54,6 +58,9 @@ func LogQos(i *IPFIX) {
 
 	qLog, _ := json.Marshal(q)
 	log.Printf("%s\n", qLog)
-	//fmt.Printf("%s\n", qLog)
 
+	if *debug {
+		fmt.Println("Json output:")
+		fmt.Printf("%s\n\n\n", qLog)
+	}
 }
