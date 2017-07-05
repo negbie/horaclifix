@@ -149,7 +149,12 @@ func Start(conn *net.TCPConn) {
 				}
 			case 268:
 				msg := NewQosStats(data)
-				SendQosHEP(msg)
+				/*
+					SendQosHEPincRTP(msg)
+					SendQosHEPincRTCP(msg)
+					SendQosHEPoutRTP(msg)
+					SendQosHEPoutRTCP(msg)
+				*/
 				if *gaddr != "" {
 					LogQOS(msg)
 				}

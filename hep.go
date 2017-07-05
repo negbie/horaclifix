@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"net"
 )
 
@@ -13,9 +15,8 @@ func NewHEPMsg(msg []byte) []byte {
 	packet = make([]byte, len(msg)+6)
 
 	copy(packet[6:], msg)
-
-	binary.BigEndian.PutUint32(packet[0:4], uint32(0x48455033)) // ASCII "HEP3"
-	binary.BigEndian.PutUint16(packet[4:6], uint16(len(packet)))
+	binary.BigEndian.PutUint32(packet[0:4], uint32(0x48455033))  // ASCII "HEP3"
+	binary.BigEndian.PutUint16(packet[4:6], uint16(len(packet))) // Total packet length
 
 	return packet
 }
@@ -26,15 +27,17 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 	var packet []byte
 
 	switch ChunckType {
+	// Chunk IP protocol family (0x02=IPv4)
 	case 0x0001:
-
 		packet = make([]byte, 7)
 		packet[6] = 0x02
 
+	// Chunk IP protocol ID (0x11=UDP)
 	case 0x0002:
 		packet = make([]byte, 7)
 		packet[6] = 0x11
 
+	// Chunk IPv4 source address
 	case 0x0003:
 		packet = make([]byte, 6+4)
 		switch payloadType {
@@ -50,6 +53,7 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.CalleeIncSrcIP)
 		}
 
+	// Chunk IPv4 destination address
 	case 0x0004:
 		packet = make([]byte, 6+4)
 		switch payloadType {
@@ -65,6 +69,13 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.CalleeIncDstIP)
 		}
 
+	// Chunk IPv6 source address
+	// case 0x0005:
+
+	// Chunk IPv6 destination address
+	// case 0x0006:
+
+	// Chunk protocol source port
 	case 0x0007:
 		packet = make([]byte, 6+2)
 		switch payloadType {
@@ -80,6 +91,7 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 			binary.BigEndian.PutUint16(packet[6:], ipfix.Data.QOS.CalleeIncSrcPort)
 		}
 
+	// Chunk destination source port
 	case 0x0008:
 		packet = make([]byte, 6+2)
 		switch payloadType {
@@ -95,6 +107,7 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 			binary.BigEndian.PutUint16(packet[6:], ipfix.Data.QOS.CalleeIncDstPort)
 		}
 
+	// Chunk unix timestamp, seconds
 	case 0x0009:
 		packet = make([]byte, 6+4)
 		switch payloadType {
@@ -108,9 +121,9 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.BeginTimeSec)
 		case "outRTCP":
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.BeginTimeSec)
-
 		}
 
+	// Chunk unix timestamp, microseconds offset
 	case 0x000a:
 		packet = make([]byte, 6+4)
 		switch payloadType {
@@ -126,25 +139,34 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.BeginTimeMic)
 		}
 
+	// Chunk protocol type (SIP/H323/RTP/MGCP/M2UA)
 	case 0x000b:
 		packet = make([]byte, 7)
 		switch payloadType {
 		case "SIP":
 			packet[6] = 1
 		case "incRTP":
-			packet[6] = 35
+			packet[6] = 34
 		case "outRTP":
-			packet[6] = 35
+			packet[6] = 34
 		case "incRTCP":
 			packet[6] = 35
 		case "outRTCP":
 			packet[6] = 35
 		}
 
+	// Chunk capture agent ID
 	case 0x000c:
 		packet = make([]byte, 6+4)
 		binary.BigEndian.PutUint32(packet[6:], 0x00000BEE) // Node homer01:3054
 
+	// case 0x000d:
+	// Chunk keep alive timer
+
+	// case 0x000e:
+	// Chunk authenticate key (plain text / TLS connection)
+
+	// Chunk captured packet payload
 	case 0x000f:
 		packet = make([]byte, len(ipfix.Data.SIP.SipMsg)+6)
 		switch payloadType {
@@ -164,9 +186,14 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 			copy(packet[6:], payload)
 		}
 
+	// case 0x0010:
+	// Chunk captured compressed payload (gzip/inflate)
+
+	// Chunk internal correlation id
 	case 0x0011:
 		packet = make([]byte, len(ipfix.Data.QOS.IncCallID)+6)
 		copy(packet[6:], ipfix.Data.QOS.IncCallID)
+		fmt.Printf("Case 0x0011 Packet: %s", ipfix.Data.QOS.IncCallID)
 
 	}
 
@@ -184,6 +211,7 @@ func SendSipHEP(i *IPFIX) {
 	checkErr(err)
 	defer hconn.Close()
 	bhep := new(bytes.Buffer)
+
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "SIP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0002, "SIP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0003, "SIP"))
@@ -200,12 +228,13 @@ func SendSipHEP(i *IPFIX) {
 	hconn.Write(NewHEPMsg(bhep.Bytes()))
 }
 
-func SendQosHEP(i *IPFIX) {
+func SendQosHEPincRTP(i *IPFIX) {
 	// UDP connection to Homer
 	hconn, err := net.Dial("udp", *haddr)
 	checkErr(err)
 	defer hconn.Close()
 	bhep := new(bytes.Buffer)
+
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "incRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0002, "incRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0003, "incRTP"))
@@ -218,8 +247,17 @@ func SendQosHEP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "incRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "incRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "incRTP"))
+
+	fmt.Printf("%s\n", hex.Dump(bhep.Bytes()))
 	hconn.Write(NewHEPMsg(bhep.Bytes()))
-	bhep.Reset()
+}
+
+func SendQosHEPoutRTP(i *IPFIX) {
+	// UDP connection to Homer
+	hconn, err := net.Dial("udp", *haddr)
+	checkErr(err)
+	defer hconn.Close()
+	bhep := new(bytes.Buffer)
 
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "outRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0002, "outRTP"))
@@ -233,8 +271,17 @@ func SendQosHEP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "outRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "outRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "outRTP"))
+
+	fmt.Printf("%s\n", hex.Dump(bhep.Bytes()))
 	hconn.Write(NewHEPMsg(bhep.Bytes()))
-	bhep.Reset()
+}
+
+func SendQosHEPincRTCP(i *IPFIX) {
+	// UDP connection to Homer
+	hconn, err := net.Dial("udp", *haddr)
+	checkErr(err)
+	defer hconn.Close()
+	bhep := new(bytes.Buffer)
 
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "incRTCP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0002, "incRTCP"))
@@ -248,8 +295,16 @@ func SendQosHEP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "incRTCP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "incRTCP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "incRTCP"))
+
+	fmt.Printf("%s\n", hex.Dump(bhep.Bytes()))
 	hconn.Write(NewHEPMsg(bhep.Bytes()))
-	bhep.Reset()
+}
+func SendQosHEPoutRTCP(i *IPFIX) {
+	// UDP connection to Homer
+	hconn, err := net.Dial("udp", *haddr)
+	checkErr(err)
+	defer hconn.Close()
+	bhep := new(bytes.Buffer)
 
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "outRTCP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0002, "outRTCP"))
@@ -264,8 +319,9 @@ func SendQosHEP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "outRTCP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "outRTCP"))
 
-	//fmt.Printf("%s\n", hex.Dump(bhep.Bytes()))
+	fmt.Printf("%s\n", hex.Dump(bhep.Bytes()))
 	hconn.Write(NewHEPMsg(bhep.Bytes()))
+
 }
 
 // PrepIncRtp
@@ -311,7 +367,7 @@ func (ipfix *IPFIX) PrepIncRtp() ([]byte, error) {
 	}
 	j, err := json.Marshal(mapIncRtp)
 
-	//fmt.Printf("%s\n", j)
+	fmt.Printf("%s\n", j)
 
 	return j, err
 
@@ -358,7 +414,11 @@ func (ipfix *IPFIX) PrepOutRtp() ([]byte, error) {
 		"TYPE":            "PERIODIC",
 	}
 
-	return json.Marshal(mapOutRtp)
+	j, err := json.Marshal(mapOutRtp)
+
+	fmt.Printf("%s\n", j)
+
+	return j, err
 
 }
 
