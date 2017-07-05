@@ -245,12 +245,3 @@ func NewQosStats(header []byte) *IPFIX {
 
 	return &ipfix
 }
-
-// SendHandShake writes the binary Handshake representation into the buffer
-func (ipfix *IPFIX) SendHandShake() []byte {
-	b := new(bytes.Buffer)
-	binary.Write(b, binary.BigEndian, &ipfix.Header)
-	binary.Write(b, binary.BigEndian, &ipfix.SetHeader)
-	binary.Write(b, binary.BigEndian, &ipfix.Data.HandShake)
-	return b.Bytes()
-}
