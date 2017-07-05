@@ -69,9 +69,11 @@ func NewSendSipUDP(header []byte) *IPFIX {
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntPort)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IntVlan)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDLen)
-	ipfix.Data.SIP.CallID = make([]byte, ipfix.Data.SIP.CallIDLen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallID)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDEnd)
+	if ipfix.Data.SIP.CallIDLen != 0xff {
+		ipfix.Data.SIP.CallID = make([]byte, ipfix.Data.SIP.CallIDLen)
+		binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallID)
+		binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDEnd)
+	}
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.IPlen)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.VL)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TOS)
@@ -134,9 +136,11 @@ func NewSendSipTCP(header []byte) *IPFIX {
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SrcPort)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.Context)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDLen)
-	ipfix.Data.SIP.CallID = make([]byte, ipfix.Data.SIP.CallIDLen)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallID)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDEnd)
+	if ipfix.Data.SIP.CallIDLen != 0xff {
+		ipfix.Data.SIP.CallID = make([]byte, ipfix.Data.SIP.CallIDLen)
+		binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallID)
+		binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.CallIDEnd)
+	}
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.MsgLen)
 	ipfix.Data.SIP.SipMsg = make([]byte, r.Len())
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SipMsg)

@@ -7,13 +7,9 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"net"
-	"net/http"
+	_ "net/http/pprof"
 	"os"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
@@ -23,23 +19,22 @@ var (
 	gaddr = flag.String("g", "", "Graylog server address")
 )
 
-func checkError(err error) {
+func checkErr(err error) {
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
+		fmt.Println("ERROR:", err)
 	}
 }
 
-func init() {
-	prometheus.MustRegister(packetsTotal)
+func check(err error, message string) {
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s\n", message)
 }
 
 // Start handles incoming packets
-func Start(conn *net.TCPConn, haddr string) {
+func Start(conn *net.TCPConn) {
 	fmt.Println("Handling new connection...")
-	NewGelfLogger(*gaddr)
-	// UDP connection to Homer
-	hconn, _ := net.Dial("udp", haddr)
 
 	// Close connection when this function ends
 	defer func() {
@@ -57,10 +52,6 @@ func Start(conn *net.TCPConn, haddr string) {
 		// Create a new buffer with the actual packet
 		packet := buf.Bytes()
 
-		allpackets := string(packet)
-
-		packetsTotal.WithLabelValues(allpackets).Inc()
-
 		// Check for EOF and go out of this loop. Don't cut the connection. Mby we just rebooted the sbc
 		if err == io.EOF {
 			fmt.Printf("EOF %v\n", err)
@@ -70,16 +61,18 @@ func Start(conn *net.TCPConn, haddr string) {
 		set := NewHeader(packet)
 		version := int(set.Header.Version)
 		dataLen := int(set.Header.Length)
+		setLen := int(set.SetHeader.Length)
 		setID := int(set.SetHeader.ID)
 
 		if setID == 256 && version == 10 && dataLen > 20 {
 			SendHandshake(conn, packet)
 		}
 
-		for len(packet) > 200 {
+		for len(packet) > 200 && dataLen-setLen == 16 {
 			version = int(uint16(packet[0])<<8 + uint16(packet[1]))
 			dataLen = int(uint16(packet[2])<<8 + uint16(packet[3]))
 			setID = int(uint16(packet[16])<<8 + uint16(packet[17]))
+			setLen = int(uint16(packet[18])<<8 + uint16(packet[19]))
 
 			if *debug {
 				fmt.Println("########################################################################################################################################")
@@ -102,6 +95,12 @@ func Start(conn *net.TCPConn, haddr string) {
 			// Cut the first dataset from the original packet
 			packet = packet[dataLen:]
 
+			/*	version = int(uint16(data[0])<<8 + uint16(data[1]))
+				dataLen = int(uint16(data[2])<<8 + uint16(data[3]))
+				setID = int(uint16(data[16])<<8 + uint16(data[17]))
+				setLen = int(uint16(data[18])<<8 + uint16(data[19]))
+			*/
+
 			if *debug {
 				fmt.Printf("Out: len(packet): %d\n\n", len(packet))
 				fmt.Println("Hexdump output:")
@@ -111,41 +110,56 @@ func Start(conn *net.TCPConn, haddr string) {
 			// Go through the set's and fill the right structs
 			switch setID {
 			case 258:
-				dataSet := NewRecSipUDP(data)
-				if *debug {
-					fmt.Println("SIP output:")
-					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
-				}
-				SendHEP(dataSet, hconn)
-				LogSip(dataSet)
-			case 259:
-				dataSet := NewSendSipUDP(data)
-				if *debug {
-					fmt.Println("SIP output:")
-					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
-				}
-				SendHEP(dataSet, hconn)
-				LogSip(dataSet)
-			case 260:
-				dataSet := NewRecSipTCP(data)
-				if *debug {
-					fmt.Println("SIP output:")
-					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
-				}
-				SendHEP(dataSet, hconn)
-				LogSip(dataSet)
-			case 261:
-				dataSet := NewSendSipTCP(data)
-				if *debug {
-					fmt.Println("SIP output:")
-					fmt.Printf("%s\n", dataSet.Data.SIP.SipMsg)
-				}
-				SendHEP(dataSet, hconn)
-				LogSip(dataSet)
-			case 268:
-				dataSet := NewQosStats(data)
-				LogQos(dataSet)
+				msg := NewRecSipUDP(data)
+				SendSipHEP(msg)
 
+				if *gaddr != "" {
+					LogSIP(msg)
+				}
+				if *debug {
+					fmt.Println("SIP output:")
+					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
+				}
+
+			case 259:
+				msg := NewSendSipUDP(data)
+				SendSipHEP(msg)
+
+				if *gaddr != "" {
+					LogSIP(msg)
+				}
+				if *debug {
+					fmt.Println("SIP output:")
+					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
+				}
+			case 260:
+				msg := NewRecSipTCP(data)
+				SendSipHEP(msg)
+
+				if *gaddr != "" {
+					LogSIP(msg)
+				}
+				if *debug {
+					fmt.Println("SIP output:")
+					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
+				}
+			case 261:
+				msg := NewSendSipTCP(data)
+				SendSipHEP(msg)
+
+				if *gaddr != "" {
+					LogSIP(msg)
+				}
+				if *debug {
+					fmt.Println("SIP output:")
+					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
+				}
+			case 268:
+				msg := NewQosStats(data)
+				SendQosHEP(msg)
+				if *gaddr != "" {
+					LogQOS(msg)
+				}
 			}
 		}
 
@@ -153,8 +167,6 @@ func Start(conn *net.TCPConn, haddr string) {
 }
 
 func main() {
-
-	httpListenAddress := ":8080"
 
 	flag.Parse()
 	fmt.Printf("IPFIX IP %v\nHomer IP %v\nGraylog IP %v\n", *addr, *haddr, *gaddr)
@@ -168,17 +180,13 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	go func() {
-		for {
-			conn, err := listener.AcceptTCP()
-			if err != nil {
-				os.Exit(1)
-			}
-			go Start(conn, *haddr)
+
+	for {
+		conn, err := listener.AcceptTCP()
+		if err != nil {
+			os.Exit(1)
 		}
+		go Start(conn)
+	}
 
-	}()
-
-	http.Handle("/metrics", promhttp.Handler())
-	log.Fatal(http.ListenAndServe(httpListenAddress, nil))
 }
