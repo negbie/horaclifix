@@ -1,3 +1,10 @@
+package main
+
+import (
+	"bytes"
+	"encoding/binary"
+)
+
 func NewQosStats(header []byte) *IPFIX {
 	var ipfix IPFIX
 	r := bytes.NewReader(header)
