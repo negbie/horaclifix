@@ -39,11 +39,11 @@ func LogQOS(i *IPFIX) {
 	//qLog, _ := json.Marshal(&i.Data.QOS)
 	//gconn.Write(qLog)
 
-	json.NewEncoder(gconn).Encode(&i.Data.SIP)
+	json.NewEncoder(gconn).Encode(&i.Data.QOS)
 }
 
 /*
-func LogSip(ipfix *IPFIX) {
+func LogSIP(ipfix *IPFIX) {
 	gconn, err := net.Dial("udp", *gaddr)
 	checkErr(err)
 	defer gconn.Close()
