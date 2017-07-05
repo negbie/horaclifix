@@ -9,6 +9,7 @@ import (
 func NewHeader(header []byte) *IPFIX {
 	var ipfix IPFIX
 	r := bytes.NewReader(header)
+
 	binary.Read(r, binary.BigEndian, &ipfix.Header)
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
 	return &ipfix
@@ -18,6 +19,7 @@ func NewHeader(header []byte) *IPFIX {
 func NewHandShake(header []byte) *IPFIX {
 	var ipfix IPFIX
 	r := bytes.NewReader(header)
+
 	binary.Read(r, binary.BigEndian, &ipfix.Header)
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake)
@@ -151,6 +153,7 @@ func NewSendSipTCP(header []byte) *IPFIX {
 func NewQosStats(header []byte) *IPFIX {
 	var ipfix IPFIX
 	r := bytes.NewReader(header)
+
 	binary.Read(r, binary.BigEndian, &ipfix.Header)
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.IncRtpBytes)
