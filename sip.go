@@ -15,17 +15,6 @@ func NewHeader(header []byte) *IPFIX {
 	return &ipfix
 }
 
-// NewHandShake fills the IPFIX struct with structured binary data from r
-func NewHandShake(header []byte) *IPFIX {
-	var ipfix IPFIX
-	r := bytes.NewReader(header)
-
-	binary.Read(r, binary.BigEndian, &ipfix.Header)
-	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake)
-	return &ipfix
-}
-
 func NewRecSipUDP(header []byte) *IPFIX {
 	var ipfix IPFIX
 	r := bytes.NewReader(header)
