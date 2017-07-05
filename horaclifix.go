@@ -25,13 +25,6 @@ func checkErr(err error) {
 	}
 }
 
-func check(err error, message string) {
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("%s\n", message)
-}
-
 // Start handles incoming packets
 func Start(conn *net.TCPConn) {
 	fmt.Println("Handling new connection...")
@@ -95,7 +88,8 @@ func Start(conn *net.TCPConn) {
 			// Cut the first dataset from the original packet
 			packet = packet[dataLen:]
 
-			/*	version = int(uint16(data[0])<<8 + uint16(data[1]))
+			/*
+				version = int(uint16(data[0])<<8 + uint16(data[1]))
 				dataLen = int(uint16(data[2])<<8 + uint16(data[3]))
 				setID = int(uint16(data[16])<<8 + uint16(data[17]))
 				setLen = int(uint16(data[18])<<8 + uint16(data[19]))
