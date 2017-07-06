@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"encoding/hex"
 	"flag"
-	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
 )
@@ -20,17 +20,17 @@ var (
 
 func checkErr(err error) {
 	if err != nil {
-		fmt.Println("ERROR:", err)
+		log.Println("ERROR:", err)
 	}
 }
 
 // Start handles incoming packets
 func Start(conn *net.TCPConn) {
-	fmt.Println("Handling new connection...")
+	log.Println("Handling new connection...")
 
 	// Close connection when this function ends
 	defer func() {
-		fmt.Println("Closing connection...")
+		log.Println("Closing connection...")
 		conn.Close()
 	}()
 
@@ -46,117 +46,120 @@ func Start(conn *net.TCPConn) {
 
 		// Check for EOF and go out of this loop. Don't cut the connection. Mby we just rebooted the sbc
 		if err == io.EOF {
-			fmt.Printf("EOF %v\n", err)
+			log.Printf("EOF %v\n", err)
 			break
 		}
 
-		set := NewHeader(packet)
-		version := int(set.Header.Version)
-		dataLen := int(set.Header.Length)
-		setLen := int(set.SetHeader.Length)
-		setID := int(set.SetHeader.ID)
+		if len(packet) > 20 {
 
-		if setID == 256 && version == 10 && dataLen > 20 {
-			SendHandshake(conn, packet)
-		}
+			set := NewHeader(packet)
+			version := int(set.Header.Version)
+			dataLen := int(set.Header.Length)
+			setLen := int(set.SetHeader.Length)
+			setID := int(set.SetHeader.ID)
 
-		for len(packet) > 200 && dataLen-setLen == 16 {
-			version = int(uint16(packet[0])<<8 + uint16(packet[1]))
-			dataLen = int(uint16(packet[2])<<8 + uint16(packet[3]))
-			setID = int(uint16(packet[16])<<8 + uint16(packet[17]))
-			setLen = int(uint16(packet[18])<<8 + uint16(packet[19]))
-
-			if *debug {
-				fmt.Println("########################################################################################################################################")
-				fmt.Printf("Inc: len(packet): %d, datalen: %d, setID: %d, version: %d\n", len(packet), dataLen, setID, version)
+			if setID == 256 && version == 10 && dataLen > 20 {
+				SendHandshake(conn, packet)
 			}
 
-			if setID > 280 || setID < 258 || version != 10 {
-				break
-			}
+			for len(packet) > 200 && dataLen-setLen == 16 && version == 10 {
+				version = int(uint16(packet[0])<<8 + uint16(packet[1]))
+				dataLen = int(uint16(packet[2])<<8 + uint16(packet[3]))
+				setID = int(uint16(packet[16])<<8 + uint16(packet[17]))
+				setLen = int(uint16(packet[18])<<8 + uint16(packet[19]))
 
-			if len(packet) < dataLen {
 				if *debug {
-					fmt.Printf("Out of sync: len(packet): %d, datalen: %d, setID: %d, version: %d\n", len(packet), dataLen, setID, version)
-				}
-				dataLen = len(packet)
-			}
-
-			// Create a new data packet with the header length. This is our first dataset
-			data := packet[:dataLen]
-			// Cut the first dataset from the original packet
-			packet = packet[dataLen:]
-
-			/*
-				version = int(uint16(data[0])<<8 + uint16(data[1]))
-				dataLen = int(uint16(data[2])<<8 + uint16(data[3]))
-				setID = int(uint16(data[16])<<8 + uint16(data[17]))
-				setLen = int(uint16(data[18])<<8 + uint16(data[19]))
-			*/
-
-			if *debug {
-				fmt.Printf("Out: len(packet): %d\n\n", len(packet))
-				fmt.Println("Hexdump output:")
-				fmt.Printf("%s\n", hex.Dump(data))
-			}
-
-			// Go through the set's and fill the right structs
-			switch setID {
-			case 258:
-				msg := NewRecSipUDP(data)
-				SendSipHEP(msg)
-
-				if *gaddr != "" {
-					LogSIP(msg)
-				}
-				if *debug {
-					fmt.Println("SIP output:")
-					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
+					log.Println("########################################################################################################################################")
+					log.Printf("Inc: len(packet): %d, datalen: %d, setID: %d, version: %d\n", len(packet), dataLen, setID, version)
 				}
 
-			case 259:
-				msg := NewSendSipUDP(data)
-				SendSipHEP(msg)
+				if setID > 280 || setID < 258 || version != 10 {
+					break
+				}
 
-				if *gaddr != "" {
-					LogSIP(msg)
+				if len(packet) < dataLen {
+					if *debug {
+						log.Printf("Out of sync: len(packet): %d, datalen: %d, setID: %d, version: %d\n", len(packet), dataLen, setID, version)
+					}
+					dataLen = len(packet)
 				}
-				if *debug {
-					fmt.Println("SIP output:")
-					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
-				}
-			case 260:
-				msg := NewRecSipTCP(data)
-				SendSipHEP(msg)
 
-				if *gaddr != "" {
-					LogSIP(msg)
-				}
-				if *debug {
-					fmt.Println("SIP output:")
-					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
-				}
-			case 261:
-				msg := NewSendSipTCP(data)
-				SendSipHEP(msg)
+				// Create a new data packet with the header length. This is our first dataset
+				data := packet[:dataLen]
+				// Cut the first dataset from the original packet
+				packet = packet[dataLen:]
 
-				if *gaddr != "" {
-					LogSIP(msg)
-				}
-				if *debug {
-					fmt.Println("SIP output:")
-					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
-				}
-			case 268:
-				msg := NewQosStats(data)
 				/*
-					SendQosHEPincRTP(msg)
-					SendQosHEPincRTCP(msg)
-					SendQosHEPoutRTP(msg)
-					SendQosHEPoutRTCP(msg)
+					version = int(uint16(data[0])<<8 + uint16(data[1]))
+					dataLen = int(uint16(data[2])<<8 + uint16(data[3]))
+					setID = int(uint16(data[16])<<8 + uint16(data[17]))
+					setLen = int(uint16(data[18])<<8 + uint16(data[19]))
 				*/
-				if *gaddr != "" {
-					LogQOS(msg)
+
+				if *debug {
+					log.Printf("Out: len(packet): %d\n\n", len(packet))
+					log.Println("Hexdump output:")
+					log.Printf("%s\n", hex.Dump(data))
+				}
+
+				// Go through the set's and fill the right structs
+				switch setID {
+				case 258:
+					msg := NewRecSipUDP(data)
+					SendSipHEP(msg)
+
+					if *gaddr != "" {
+						LogSIP(msg)
+					}
+					if *debug {
+						log.Println("SIP output:")
+						log.Printf("%s\n", msg.Data.SIP.SipMsg)
+					}
+
+				case 259:
+					msg := NewSendSipUDP(data)
+					SendSipHEP(msg)
+
+					if *gaddr != "" {
+						LogSIP(msg)
+					}
+					if *debug {
+						log.Println("SIP output:")
+						log.Printf("%s\n", msg.Data.SIP.SipMsg)
+					}
+				case 260:
+					msg := NewRecSipTCP(data)
+					SendSipHEP(msg)
+
+					if *gaddr != "" {
+						LogSIP(msg)
+					}
+					if *debug {
+						log.Println("SIP output:")
+						log.Printf("%s\n", msg.Data.SIP.SipMsg)
+					}
+				case 261:
+					msg := NewSendSipTCP(data)
+					SendSipHEP(msg)
+
+					if *gaddr != "" {
+						LogSIP(msg)
+					}
+					if *debug {
+						log.Println("SIP output:")
+						log.Printf("%s\n", msg.Data.SIP.SipMsg)
+					}
+				case 268:
+					msg := NewQosStats(data)
+					/*
+						SendQosHEPincRTP(msg)
+						SendQosHEPincRTCP(msg)
+						SendQosHEPoutRTP(msg)
+						SendQosHEPoutRTCP(msg)
+					*/
+					if *gaddr != "" {
+						LogQOS(msg)
+					}
 				}
 			}
 		}
@@ -165,9 +168,15 @@ func Start(conn *net.TCPConn) {
 }
 
 func main() {
+	f, err := os.OpenFile("/var/log/horaclifix.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	log.SetOutput(f)
 
 	flag.Parse()
-	fmt.Printf("IPFIX IP %v\nHomer IP %v\nGraylog IP %v\n", *addr, *haddr, *gaddr)
+	log.Printf("Start horaclifix interfaces IPFIX:%v Homer:%v Graylog:%v\n", *addr, *haddr, *gaddr)
 
 	laddr, err := net.ResolveTCPAddr("tcp", *addr)
 	if err != nil {

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"log"
 	"net"
 )
 
@@ -11,16 +12,22 @@ func SendHandshake(c *net.TCPConn, hs []byte) {
 
 	var ipfix IPFIX
 	r := bytes.NewReader(hs)
-	binary.Read(r, binary.BigEndian, &ipfix.Header)
-	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
-	binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake)
+	err := binary.Read(r, binary.BigEndian, &ipfix.Header)
+	err = binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
+	err = binary.Read(r, binary.BigEndian, &ipfix.Data.HandShake)
+	if err != nil {
+		log.Println("binary.Read failed:", err)
+	}
 	ipfix.SetHeader.ID++
 	ipfix.Data.HandShake.Timeout = 0
 
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.BigEndian, &ipfix.Header)
-	binary.Write(buf, binary.BigEndian, &ipfix.SetHeader)
-	binary.Write(buf, binary.BigEndian, &ipfix.Data.HandShake)
+	err = binary.Write(buf, binary.BigEndian, &ipfix.Header)
+	err = binary.Write(buf, binary.BigEndian, &ipfix.SetHeader)
+	err = binary.Write(buf, binary.BigEndian, &ipfix.Data.HandShake)
+	if err != nil {
+		log.Println("binary.Write failed:", err)
+	}
 
 	b := buf.Bytes()
 	bi := make([]int8, len(b))
@@ -28,5 +35,8 @@ func SendHandshake(c *net.TCPConn, hs []byte) {
 		bi[i] = int8(v)
 	}
 
-	binary.Write(c, binary.BigEndian, bi)
+	err = binary.Write(c, binary.BigEndian, bi)
+	if err != nil {
+		log.Println("binary.Write failed:", err)
+	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net"
 )
 
@@ -9,6 +10,10 @@ func (s *ByteString) MarshalJSON() ([]byte, error) {
 	bytes, err := json.Marshal(string(*s))
 	return bytes, err
 }
+
+/*func (i *ByteIP) MarshalJSON() ([]byte, error) {
+	return json.Marshal(net.IP(*i).String())
+}*/
 
 func (s *ByteString) UnmarshalJSON(data []byte) error {
 	var x string
@@ -29,7 +34,10 @@ func LogSIP(i *IPFIX) {
 	//sLog, _ := json.Marshal(&i.Data.SIP)
 	//gconn.Write(sLog)
 
-	json.NewEncoder(gconn).Encode(&i.Data.SIP)
+	err = json.NewEncoder(gconn).Encode(&i.Data.SIP)
+	if err != nil {
+		log.Println("LogSIP json.NewEncoder failed:", err)
+	}
 }
 
 func LogQOS(i *IPFIX) {
@@ -39,7 +47,10 @@ func LogQOS(i *IPFIX) {
 	//qLog, _ := json.Marshal(&i.Data.QOS)
 	//gconn.Write(qLog)
 
-	json.NewEncoder(gconn).Encode(&i.Data.QOS)
+	err = json.NewEncoder(gconn).Encode(&i.Data.QOS)
+	if err != nil {
+		log.Println("LogQOS json.NewEncoder failed:", err)
+	}
 }
 
 /*
@@ -76,8 +87,8 @@ func LogSIP(ipfix *IPFIX) {
 	gconn.Write(sLog)
 
 	if *debug {
-		fmt.Println("Json output:")
-		fmt.Printf("%s\n\n\n", sLog)
+		log.Println("Json output:")
+		log.Printf("%s\n\n\n", sLog)
 	}
 }
 */

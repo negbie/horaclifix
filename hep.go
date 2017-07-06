@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
+	"log"
 	"net"
 )
 
@@ -193,7 +193,7 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 	case 0x0011:
 		packet = make([]byte, len(ipfix.Data.QOS.IncCallID)+6)
 		copy(packet[6:], ipfix.Data.QOS.IncCallID)
-		fmt.Printf("Case 0x0011 Packet: %s", ipfix.Data.QOS.IncCallID)
+		log.Printf("Case 0x0011 Packet: %s", ipfix.Data.QOS.IncCallID)
 
 	}
 
@@ -224,8 +224,11 @@ func SendSipHEP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "SIP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "SIP"))
 
-	//fmt.Printf("%s\n", hex.Dump(bhep.Bytes()))
-	hconn.Write(NewHEPMsg(bhep.Bytes()))
+	//log.Printf("%s\n", hex.Dump(bhep.Bytes()))
+	_, err = hconn.Write(NewHEPMsg(bhep.Bytes()))
+	if err != nil {
+		log.Println("hconn.Write failed:", err)
+	}
 }
 
 func SendQosHEPincRTP(i *IPFIX) {
@@ -248,7 +251,7 @@ func SendQosHEPincRTP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "incRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "incRTP"))
 
-	fmt.Printf("%s\n", hex.Dump(bhep.Bytes()))
+	log.Printf("%s\n", hex.Dump(bhep.Bytes()))
 	hconn.Write(NewHEPMsg(bhep.Bytes()))
 }
 
@@ -272,7 +275,7 @@ func SendQosHEPoutRTP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "outRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "outRTP"))
 
-	fmt.Printf("%s\n", hex.Dump(bhep.Bytes()))
+	log.Printf("%s\n", hex.Dump(bhep.Bytes()))
 	hconn.Write(NewHEPMsg(bhep.Bytes()))
 }
 
@@ -296,7 +299,7 @@ func SendQosHEPincRTCP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "incRTCP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "incRTCP"))
 
-	fmt.Printf("%s\n", hex.Dump(bhep.Bytes()))
+	log.Printf("%s\n", hex.Dump(bhep.Bytes()))
 	hconn.Write(NewHEPMsg(bhep.Bytes()))
 }
 func SendQosHEPoutRTCP(i *IPFIX) {
@@ -319,7 +322,7 @@ func SendQosHEPoutRTCP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "outRTCP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "outRTCP"))
 
-	fmt.Printf("%s\n", hex.Dump(bhep.Bytes()))
+	log.Printf("%s\n", hex.Dump(bhep.Bytes()))
 	hconn.Write(NewHEPMsg(bhep.Bytes()))
 
 }
@@ -367,7 +370,7 @@ func (ipfix *IPFIX) PrepIncRtp() ([]byte, error) {
 	}
 	j, err := json.Marshal(mapIncRtp)
 
-	fmt.Printf("%s\n", j)
+	log.Printf("%s\n", j)
 
 	return j, err
 
@@ -376,8 +379,8 @@ func (ipfix *IPFIX) PrepIncRtp() ([]byte, error) {
 func (ipfix *IPFIX) PrepOutRtp() ([]byte, error) {
 	mapOutRtp := map[string]interface{}{
 
-		"CORRELATION_ID":  ipfix.Data.QOS.OutCallID,
-		"RTP_SIP_CALL_ID": ipfix.Data.QOS.OutCallID,
+		"CORRELATION_ID":  string(ipfix.Data.QOS.OutCallID),
+		"RTP_SIP_CALL_ID": string(ipfix.Data.QOS.OutCallID),
 		"REPORT_TS":       ipfix.Data.QOS.BeginTimeSec,
 		"TL_BYTE":         ipfix.Data.QOS.OutRtpBytes,
 		"SKEW":            0.000,
@@ -409,14 +412,14 @@ func (ipfix *IPFIX) PrepOutRtp() ([]byte, error) {
 		"CLOCK":           8000,
 		"CODEC_NAME":      ipfix.Data.QOS.Type,
 		"DIR":             0,
-		"REPORT_NAME":     ipfix.Data.QOS.OutRealm,
+		"REPORT_NAME":     string(ipfix.Data.QOS.OutRealm),
 		"PARTY":           1,
 		"TYPE":            "PERIODIC",
 	}
 
 	j, err := json.Marshal(mapOutRtp)
 
-	fmt.Printf("%s\n", j)
+	log.Printf("%s\n", j)
 
 	return j, err
 
@@ -425,8 +428,8 @@ func (ipfix *IPFIX) PrepOutRtp() ([]byte, error) {
 func (ipfix *IPFIX) PrepIncRtcp() ([]byte, error) {
 	mapIncRtcp := map[string]interface{}{
 
-		"CORRELATION_ID":  ipfix.Data.QOS.IncCallID,
-		"RTP_SIP_CALL_ID": ipfix.Data.QOS.IncCallID,
+		"CORRELATION_ID":  string(ipfix.Data.QOS.IncCallID),
+		"RTP_SIP_CALL_ID": string(ipfix.Data.QOS.IncCallID),
 		"REPORT_TS":       ipfix.Data.QOS.BeginTimeSec,
 		"TL_BYTE":         ipfix.Data.QOS.IncRtcpBytes,
 		"SKEW":            0.000,
@@ -458,7 +461,7 @@ func (ipfix *IPFIX) PrepIncRtcp() ([]byte, error) {
 		"CLOCK":           8000,
 		"CODEC_NAME":      ipfix.Data.QOS.Type,
 		"DIR":             0,
-		"REPORT_NAME":     ipfix.Data.QOS.IncRealm,
+		"REPORT_NAME":     string(ipfix.Data.QOS.IncRealm),
 		"PARTY":           0,
 		"TYPE":            "PERIODIC",
 	}
@@ -470,8 +473,8 @@ func (ipfix *IPFIX) PrepIncRtcp() ([]byte, error) {
 func (ipfix *IPFIX) PrepOutRtcp() ([]byte, error) {
 	mapOutRtcp := map[string]interface{}{
 
-		"CORRELATION_ID":  ipfix.Data.QOS.OutCallID,
-		"RTP_SIP_CALL_ID": ipfix.Data.QOS.OutCallID,
+		"CORRELATION_ID":  string(ipfix.Data.QOS.OutCallID),
+		"RTP_SIP_CALL_ID": string(ipfix.Data.QOS.OutCallID),
 		"REPORT_TS":       ipfix.Data.QOS.BeginTimeSec,
 		"TL_BYTE":         ipfix.Data.QOS.OutRtcpBytes,
 		"SKEW":            0.000,
@@ -503,7 +506,7 @@ func (ipfix *IPFIX) PrepOutRtcp() ([]byte, error) {
 		"CLOCK":           8000,
 		"CODEC_NAME":      ipfix.Data.QOS.Type,
 		"DIR":             0,
-		"REPORT_NAME":     ipfix.Data.QOS.OutRealm,
+		"REPORT_NAME":     string(ipfix.Data.QOS.OutRealm),
 		"PARTY":           1,
 		"TYPE":            "PERIODIC",
 	}
