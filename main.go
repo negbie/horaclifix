@@ -20,17 +20,23 @@ var (
 
 func checkErr(err error) {
 	if err != nil {
-		log.Println("ERROR:", err)
+		log.Println("Warning:", err)
+	}
+}
+
+func checkCritErr(err error) {
+	if err != nil {
+		log.Fatalf("Fatal error: %v\n", err)
 	}
 }
 
 // Start handles incoming packets
 func Start(conn *net.TCPConn) {
-	log.Println("Handling new connection...")
+	log.Printf("Handling new connection under %v\n", *addr)
 
 	// Close connection when this function ends
 	defer func() {
-		log.Println("Closing connection...")
+		log.Printf("Closing connection under %v\n", *addr)
 		conn.Close()
 	}()
 
@@ -39,16 +45,16 @@ func Start(conn *net.TCPConn) {
 
 	for {
 		blen, err := r.Read(byts)
-		buf := new(bytes.Buffer)
-		buf.Write(byts[:blen])
-		// Create a new buffer with the actual packet
-		packet := buf.Bytes()
-
+		checkErr(err)
 		// Check for EOF and go out of this loop. Don't cut the connection. Mby we just rebooted the sbc
 		if err == io.EOF {
-			log.Printf("EOF %v\n", err)
 			break
 		}
+		buf := new(bytes.Buffer)
+		_, err = buf.Write(byts[:blen])
+		checkErr(err)
+		// Create a new buffer with the actual packet
+		packet := buf.Bytes()
 
 		if len(packet) > 20 {
 
@@ -168,31 +174,30 @@ func Start(conn *net.TCPConn) {
 }
 
 func main() {
-	f, err := os.OpenFile("/var/log/horaclifix.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-	log.SetOutput(f)
-
 	flag.Parse()
+	if !*debug {
+		f, err := os.OpenFile("/var/log/horaclifix.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		checkCritErr(err)
+		defer f.Close()
+		log.SetOutput(f)
+	} else {
+		f, err := os.OpenFile("/var/log/horaclifix.debug", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		checkCritErr(err)
+		defer f.Close()
+		log.SetOutput(f)
+	}
+
 	log.Printf("Start horaclifix interfaces IPFIX:%v Homer:%v Graylog:%v\n", *addr, *haddr, *gaddr)
 
 	laddr, err := net.ResolveTCPAddr("tcp", *addr)
-	if err != nil {
-		os.Exit(1)
-	}
+	checkCritErr(err)
 
 	listener, err := net.ListenTCP("tcp", laddr)
-	if err != nil {
-		os.Exit(1)
-	}
+	checkCritErr(err)
 
 	for {
 		conn, err := listener.AcceptTCP()
-		if err != nil {
-			os.Exit(1)
-		}
+		checkCritErr(err)
 		go Start(conn)
 	}
 
