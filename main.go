@@ -45,7 +45,6 @@ func Start(conn *net.TCPConn) {
 
 	for {
 		blen, err := r.Read(byts)
-		checkErr(err)
 		// Check for EOF and go out of this loop. Don't cut the connection. Mby we just rebooted the sbc
 		if err == io.EOF {
 			break
