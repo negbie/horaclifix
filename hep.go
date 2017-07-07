@@ -9,7 +9,7 @@ import (
 	"net"
 )
 
-// NewHEPMsg writes the binary HEP representation into the buffer
+// NewHEPMsg writes the final HEP packet into the buffer
 func NewHEPMsg(msg []byte) []byte {
 	var packet []byte
 	packet = make([]byte, len(msg)+6)
@@ -29,12 +29,12 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 	switch ChunckType {
 	// Chunk IP protocol family (0x02=IPv4)
 	case 0x0001:
-		packet = make([]byte, 7)
+		packet = make([]byte, 6+1)
 		packet[6] = 0x02
 
 	// Chunk IP protocol ID (0x11=UDP)
 	case 0x0002:
-		packet = make([]byte, 7)
+		packet = make([]byte, 6+1)
 		packet[6] = 0x11
 
 	// Chunk IPv4 source address
@@ -141,7 +141,7 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 
 	// Chunk protocol type (SIP/H323/RTP/MGCP/M2UA)
 	case 0x000b:
-		packet = make([]byte, 7)
+		packet = make([]byte, 6+1)
 		switch payloadType {
 		case "SIP":
 			packet[6] = 1

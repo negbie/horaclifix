@@ -57,11 +57,10 @@ func Start(conn *net.TCPConn) {
 
 		if len(packet) > 20 {
 
-			set := NewHeader(packet)
-			version := int(set.Header.Version)
-			dataLen := int(set.Header.Length)
-			setLen := int(set.SetHeader.Length)
-			setID := int(set.SetHeader.ID)
+			version := int(uint16(packet[0])<<8 + uint16(packet[1]))
+			dataLen := int(uint16(packet[2])<<8 + uint16(packet[3]))
+			setID := int(uint16(packet[16])<<8 + uint16(packet[17]))
+			setLen := int(uint16(packet[18])<<8 + uint16(packet[19]))
 
 			if setID == 256 && version == 10 && dataLen > 20 {
 				SendHandshake(conn, packet)
@@ -93,13 +92,6 @@ func Start(conn *net.TCPConn) {
 				data := packet[:dataLen]
 				// Cut the first dataset from the original packet
 				packet = packet[dataLen:]
-
-				/*
-					version = int(uint16(data[0])<<8 + uint16(data[1]))
-					dataLen = int(uint16(data[2])<<8 + uint16(data[3]))
-					setID = int(uint16(data[16])<<8 + uint16(data[17]))
-					setLen = int(uint16(data[18])<<8 + uint16(data[19]))
-				*/
 
 				if *debug {
 					log.Printf("Out: len(packet): %d\n\n", len(packet))
@@ -174,17 +166,16 @@ func Start(conn *net.TCPConn) {
 
 func main() {
 	flag.Parse()
+	var err error
+	var f *os.File
 	if !*debug {
-		f, err := os.OpenFile("/var/log/horaclifix.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-		checkCritErr(err)
-		defer f.Close()
-		log.SetOutput(f)
+		f, err = os.OpenFile("horaclifix.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	} else {
-		f, err := os.OpenFile("/var/log/horaclifix.debug", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-		checkCritErr(err)
-		defer f.Close()
-		log.SetOutput(f)
+		f, err = os.OpenFile("horaclifix.debug", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	}
+	checkCritErr(err)
+	defer f.Close()
+	log.SetOutput(f)
 
 	log.Printf("Start horaclifix interfaces IPFIX:%v Homer:%v Graylog:%v\n", *addr, *haddr, *gaddr)
 
