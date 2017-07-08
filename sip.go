@@ -7,6 +7,11 @@ import (
 )
 
 func NewRecSipUDP(header []byte) *IPFIX {
+	/*	t := time.Now()
+		defer func() {
+			StatTime("NewRecSipUDP.timetaken", time.Since(t))
+		}()
+	*/
 	var ipfix IPFIX
 
 	ipfix.Header.Version = binary.BigEndian.Uint16(header[:2])
@@ -44,6 +49,11 @@ func NewRecSipUDP(header []byte) *IPFIX {
 }
 
 func NewSendSipUDP(header []byte) *IPFIX {
+	/*	t := time.Now()
+		defer func() {
+			StatTime("NewSendSipUDP.timetaken", time.Since(t))
+		}()
+	*/
 	var ipfix IPFIX
 	r := bytes.NewReader(header)
 

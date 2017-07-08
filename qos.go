@@ -7,6 +7,11 @@ import (
 )
 
 func NewQosStats(header []byte) *IPFIX {
+	/*	t := time.Now()
+		defer func() {
+			StatTime("NewQosStats.timetaken", time.Since(t))
+		}()
+	*/
 	var ipfix IPFIX
 	r := bytes.NewReader(header)
 
@@ -42,8 +47,12 @@ func NewQosStats(header []byte) *IPFIX {
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.OutRtcpMaxJitter)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.OutRtcpAvgLat)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.OutRtcpMaxLat)
+
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.OutrVal)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.OutMos)
+	StatGauge("MOS", int(ipfix.Data.QOS.IncMos))
+
+	StatGauge("MOS", int(ipfix.Data.QOS.OutMos))
 
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.Type)
 

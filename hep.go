@@ -3,22 +3,24 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"log"
 	"net"
 )
 
-// NewHEPMsg writes the final HEP packet into the buffer
-func NewHEPMsg(msg []byte) []byte {
+// SendHEPMsg writes the final HEP packet into the buffer
+func SendHEPMsg(msg []byte) {
 	var packet []byte
 	packet = make([]byte, len(msg)+6)
 
 	copy(packet[6:], msg)
-	binary.BigEndian.PutUint32(packet[0:4], uint32(0x48455033))  // ASCII "HEP3"
+	binary.BigEndian.PutUint32(packet[:4], uint32(0x48455033))   // ASCII "HEP3"
 	binary.BigEndian.PutUint16(packet[4:6], uint16(len(packet))) // Total packet length
 
-	return packet
+	if conn, err := net.Dial("udp", *haddr); err == nil {
+		conn.Write(packet)
+		conn.Close()
+	}
 }
 
 // NewHEPChunck constructs the HEP chunck
@@ -197,7 +199,7 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 
 	}
 
-	binary.BigEndian.PutUint16(packet[0:2], ChunckVen)
+	binary.BigEndian.PutUint16(packet[:2], ChunckVen)
 	binary.BigEndian.PutUint16(packet[2:4], ChunckType)
 	binary.BigEndian.PutUint16(packet[4:6], uint16(len(packet)))
 
@@ -205,11 +207,7 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 }
 
 // SendHEP sends the HEP message
-func SendSipHEP(i *IPFIX) {
-	// UDP connection to Homer
-	hconn, err := net.Dial("udp", *haddr)
-	checkErr(err)
-	defer hconn.Close()
+func NewSipHEP(i *IPFIX) {
 	bhep := new(bytes.Buffer)
 
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "SIP"))
@@ -223,19 +221,10 @@ func SendSipHEP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000b, "SIP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "SIP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "SIP"))
-
-	//log.Printf("%s\n", hex.Dump(bhep.Bytes()))
-	_, err = hconn.Write(NewHEPMsg(bhep.Bytes()))
-	if err != nil {
-		log.Println("hconn.Write failed:", err)
-	}
+	SendHEPMsg(bhep.Bytes())
 }
 
-func SendQosHEPincRTP(i *IPFIX) {
-	// UDP connection to Homer
-	hconn, err := net.Dial("udp", *haddr)
-	checkErr(err)
-	defer hconn.Close()
+func NewQosHEPincRTP(i *IPFIX) {
 	bhep := new(bytes.Buffer)
 
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "incRTP"))
@@ -250,16 +239,11 @@ func SendQosHEPincRTP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "incRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "incRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "incRTP"))
+	SendHEPMsg(bhep.Bytes())
 
-	log.Printf("%s\n", hex.Dump(bhep.Bytes()))
-	hconn.Write(NewHEPMsg(bhep.Bytes()))
 }
 
-func SendQosHEPoutRTP(i *IPFIX) {
-	// UDP connection to Homer
-	hconn, err := net.Dial("udp", *haddr)
-	checkErr(err)
-	defer hconn.Close()
+func NewQosHEPoutRTP(i *IPFIX) {
 	bhep := new(bytes.Buffer)
 
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "outRTP"))
@@ -274,16 +258,11 @@ func SendQosHEPoutRTP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "outRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "outRTP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "outRTP"))
+	SendHEPMsg(bhep.Bytes())
 
-	log.Printf("%s\n", hex.Dump(bhep.Bytes()))
-	hconn.Write(NewHEPMsg(bhep.Bytes()))
 }
 
-func SendQosHEPincRTCP(i *IPFIX) {
-	// UDP connection to Homer
-	hconn, err := net.Dial("udp", *haddr)
-	checkErr(err)
-	defer hconn.Close()
+func NewQosHEPincRTCP(i *IPFIX) {
 	bhep := new(bytes.Buffer)
 
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "incRTCP"))
@@ -298,15 +277,10 @@ func SendQosHEPincRTCP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "incRTCP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "incRTCP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "incRTCP"))
+	SendHEPMsg(bhep.Bytes())
 
-	log.Printf("%s\n", hex.Dump(bhep.Bytes()))
-	hconn.Write(NewHEPMsg(bhep.Bytes()))
 }
-func SendQosHEPoutRTCP(i *IPFIX) {
-	// UDP connection to Homer
-	hconn, err := net.Dial("udp", *haddr)
-	checkErr(err)
-	defer hconn.Close()
+func NewQosHEPoutRTCP(i *IPFIX) {
 	bhep := new(bytes.Buffer)
 
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "outRTCP"))
@@ -321,9 +295,7 @@ func SendQosHEPoutRTCP(i *IPFIX) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "outRTCP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "outRTCP"))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "outRTCP"))
-
-	log.Printf("%s\n", hex.Dump(bhep.Bytes()))
-	hconn.Write(NewHEPMsg(bhep.Bytes()))
+	SendHEPMsg(bhep.Bytes())
 
 }
 

@@ -14,6 +14,7 @@ import (
 var (
 	addr  = flag.String("l", ":4739", "Host ipfix listen address")
 	haddr = flag.String("H", "127.0.0.1:9060", "Homer server address")
+	saddr = flag.String("s", "127.0.0.1:8125", "StatsD server address")
 	debug = flag.Bool("d", false, "Debug output to stdout")
 	gaddr = flag.String("g", "", "Graylog server address")
 )
@@ -45,6 +46,8 @@ func Start(conn *net.TCPConn) {
 
 	for {
 		blen, err := r.Read(byts)
+		StatCount("Packets", blen)
+
 		// Check for EOF and go out of this loop. Don't cut the connection. Mby we just rebooted the sbc
 		if err == io.EOF {
 			break
@@ -71,6 +74,7 @@ func Start(conn *net.TCPConn) {
 				dataLen = int(uint16(packet[2])<<8 + uint16(packet[3]))
 				setID = int(uint16(packet[16])<<8 + uint16(packet[17]))
 				setLen = int(uint16(packet[18])<<8 + uint16(packet[19]))
+				StatGauge("SetID", int(setID))
 
 				if *debug {
 					log.Println("########################################################################################################################################")
@@ -103,7 +107,7 @@ func Start(conn *net.TCPConn) {
 				switch setID {
 				case 258:
 					msg := NewRecSipUDP(data)
-					SendSipHEP(msg)
+					NewSipHEP(msg)
 
 					if *gaddr != "" {
 						LogSIP(msg)
@@ -115,7 +119,7 @@ func Start(conn *net.TCPConn) {
 
 				case 259:
 					msg := NewSendSipUDP(data)
-					SendSipHEP(msg)
+					NewSipHEP(msg)
 
 					if *gaddr != "" {
 						LogSIP(msg)
@@ -126,7 +130,7 @@ func Start(conn *net.TCPConn) {
 					}
 				case 260:
 					msg := NewRecSipTCP(data)
-					SendSipHEP(msg)
+					NewSipHEP(msg)
 
 					if *gaddr != "" {
 						LogSIP(msg)
@@ -137,7 +141,7 @@ func Start(conn *net.TCPConn) {
 					}
 				case 261:
 					msg := NewSendSipTCP(data)
-					SendSipHEP(msg)
+					NewSipHEP(msg)
 
 					if *gaddr != "" {
 						LogSIP(msg)
@@ -149,10 +153,10 @@ func Start(conn *net.TCPConn) {
 				case 268:
 					msg := NewQosStats(data)
 					/*
-						SendQosHEPincRTP(msg)
-						SendQosHEPincRTCP(msg)
-						SendQosHEPoutRTP(msg)
-						SendQosHEPoutRTCP(msg)
+						NewQosHEPincRTP(msg)
+						NewQosHEPincRTCP(msg)
+						NewQosHEPoutRTP(msg)
+						NewQosHEPoutRTCP(msg)
 					*/
 					if *gaddr != "" {
 						LogQOS(msg)
@@ -172,6 +176,7 @@ func main() {
 		f, err = os.OpenFile("horaclifix.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	} else {
 		f, err = os.OpenFile("horaclifix.debug", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+
 	}
 	checkCritErr(err)
 	defer f.Close()
