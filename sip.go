@@ -57,7 +57,7 @@ func NewSendSipUDP(header []byte) *IPFIX {
 	var ipfix IPFIX
 	r := bytes.NewReader(header)
 
-	err := binary.Read(r, binary.BigEndian, &ipfix.Header)
+	binary.Read(r, binary.BigEndian, &ipfix.Header)
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeSec)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeMic)
@@ -86,7 +86,7 @@ func NewSendSipUDP(header []byte) *IPFIX {
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.UDPlen)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.MsgLen)
 	ipfix.Data.SIP.SipMsg = make([]byte, r.Len())
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
+	err := binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
 	if err != nil {
 		log.Println("NewSendSipUDP binary.Read failed:", err, r)
 	}
@@ -127,7 +127,7 @@ func NewSendSipTCP(header []byte) *IPFIX {
 	var ipfix IPFIX
 	r := bytes.NewReader(header)
 
-	err := binary.Read(r, binary.BigEndian, &ipfix.Header)
+	binary.Read(r, binary.BigEndian, &ipfix.Header)
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeSec)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.TimeMic)
@@ -147,7 +147,7 @@ func NewSendSipTCP(header []byte) *IPFIX {
 	}
 	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.MsgLen)
 	ipfix.Data.SIP.SipMsg = make([]byte, r.Len())
-	binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
+	err := binary.Read(r, binary.BigEndian, &ipfix.Data.SIP.SipMsg)
 	if err != nil {
 		log.Println("NewSendSipTCP binary.Read failed:", err, r)
 	}

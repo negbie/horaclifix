@@ -17,6 +17,7 @@ func NewQosStats(header []byte) *IPFIX {
 
 	err := binary.Read(r, binary.BigEndian, &ipfix.Header)
 	binary.Read(r, binary.BigEndian, &ipfix.SetHeader)
+
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.IncRtpBytes)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.IncRtpPackets)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.IncRtpLostPackets)
@@ -50,9 +51,6 @@ func NewQosStats(header []byte) *IPFIX {
 
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.OutrVal)
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.OutMos)
-	StatGauge("MOS", int(ipfix.Data.QOS.IncMos))
-
-	StatGauge("MOS", int(ipfix.Data.QOS.OutMos))
 
 	binary.Read(r, binary.BigEndian, &ipfix.Data.QOS.Type)
 
