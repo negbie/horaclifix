@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -61,20 +60,12 @@ func start(conn *net.TCPConn) {
 			parse(conn, byts[:blen])
 		}
 		buffers.Put(byts)
-		fmt.Println(byts)
 	}
 }
 
 func main() {
 	flag.Parse()
-	var err error
-	var f *os.File
-	if !*debug {
-		f, err = os.OpenFile("horaclifix.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	} else {
-		f, err = os.OpenFile("horaclifix.debug", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-
-	}
+	f, err := os.OpenFile("horaclifix.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	checkCritErr(err)
 	defer f.Close()
 	log.SetOutput(f)

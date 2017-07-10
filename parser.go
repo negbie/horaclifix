@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	"log"
 	"net"
 )
 
@@ -18,18 +17,15 @@ func parse(conn *net.TCPConn, packet []byte) {
 		SendHandshake(conn, packet)
 	}
 
-	fmt.Println("out of loop", len(packet))
-
 	for len(packet) > 200 && dataLen-setLen == 16 && version == 10 {
-		fmt.Println("in loop", len(packet))
 		version = int(uint16(packet[0])<<8 + uint16(packet[1]))
 		dataLen = int(uint16(packet[2])<<8 + uint16(packet[3]))
 		setID = int(uint16(packet[16])<<8 + uint16(packet[17]))
 		setLen = int(uint16(packet[18])<<8 + uint16(packet[19]))
 
 		if *debug {
-			log.Println("########################################################################################################################################")
-			log.Printf("Inc: len(packet): %d, datalen: %d, setID: %d, version: %d\n", len(packet), dataLen, setID, version)
+			fmt.Println("################################################################################################")
+			fmt.Printf("Inc: len(packet): %d, datalen: %d, setID: %d, version: %d\n", len(packet), dataLen, setID, version)
 		}
 
 		if setID > 280 || setID < 258 || version != 10 {
@@ -38,7 +34,7 @@ func parse(conn *net.TCPConn, packet []byte) {
 
 		if len(packet) < dataLen {
 			if *debug {
-				log.Printf("Out of sync: len(packet): %d, datalen: %d, setID: %d, version: %d\n", len(packet), dataLen, setID, version)
+				fmt.Printf("Out of sync: len(packet): %d, datalen: %d, setID: %d, version: %d\n", len(packet), dataLen, setID, version)
 			}
 			dataLen = len(packet)
 		}
@@ -49,9 +45,9 @@ func parse(conn *net.TCPConn, packet []byte) {
 		packet = packet[dataLen:]
 
 		if *debug {
-			log.Printf("Out: len(packet): %d\n\n", len(packet))
-			log.Println("Hexdump output:")
-			log.Printf("%s\n", hex.Dump(data))
+			fmt.Printf("Out: len(packet): %d\n\n", len(packet))
+			fmt.Println("Hexdump output:")
+			fmt.Printf("%s\n", hex.Dump(data))
 		}
 
 		// Go through the set's and fill the right structs
@@ -64,8 +60,8 @@ func parse(conn *net.TCPConn, packet []byte) {
 				LogSIP(msg)
 			}
 			if *debug {
-				log.Println("SIP output:")
-				log.Printf("%s\n", msg.Data.SIP.SipMsg)
+				fmt.Println("SIP output:")
+				fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
 			}
 
 		case 259:
@@ -76,8 +72,8 @@ func parse(conn *net.TCPConn, packet []byte) {
 				LogSIP(msg)
 			}
 			if *debug {
-				log.Println("SIP output:")
-				log.Printf("%s\n", msg.Data.SIP.SipMsg)
+				fmt.Println("SIP output:")
+				fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
 			}
 		case 260:
 			msg := NewRecSipTCP(data)
@@ -87,8 +83,8 @@ func parse(conn *net.TCPConn, packet []byte) {
 				LogSIP(msg)
 			}
 			if *debug {
-				log.Println("SIP output:")
-				log.Printf("%s\n", msg.Data.SIP.SipMsg)
+				fmt.Println("SIP output:")
+				fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
 			}
 		case 261:
 			msg := NewSendSipTCP(data)
@@ -98,8 +94,8 @@ func parse(conn *net.TCPConn, packet []byte) {
 				LogSIP(msg)
 			}
 			if *debug {
-				log.Println("SIP output:")
-				log.Printf("%s\n", msg.Data.SIP.SipMsg)
+				fmt.Println("SIP output:")
+				fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
 			}
 		case 268:
 			msg := NewQosStats(data)
@@ -109,6 +105,7 @@ func parse(conn *net.TCPConn, packet []byte) {
 				NewQosHEPoutRTP(msg)
 				NewQosHEPoutRTCP(msg)
 			*/
+			msg.SendStatsd("QOS")
 			if *gaddr != "" {
 				LogQOS(msg)
 			}

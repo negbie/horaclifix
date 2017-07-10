@@ -4,9 +4,56 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"time"
+	"strings"
 )
 
+func (i *IPFIX) SendStatsd(s string) {
+	var sb []string
+	var sm map[string]interface{}
+	switch s {
+	case "SIP":
+
+	case "QOS":
+		sm = map[string]interface{}{
+			"QOS.IncMos": i.Data.QOS.IncMos,
+			"QOS.OutMos": i.Data.QOS.OutMos,
+
+			"QOS.IncRtpAvgJitter": i.Data.QOS.IncRtpAvgJitter,
+			"QOS.OutRtpAvgJitter": i.Data.QOS.OutRtpAvgJitter,
+
+			"QOS.IncRtpMaxJitter": i.Data.QOS.IncRtpMaxJitter,
+			"QOS.OutRtpMaxJitter": i.Data.QOS.OutRtpMaxJitter,
+
+			"QOS.IncRtcpAvgJitter": i.Data.QOS.IncRtcpAvgJitter,
+			"QOS.OutRtcpAvgJitter": i.Data.QOS.OutRtcpAvgJitter,
+
+			"QOS.IncRtcpMaxJitter": i.Data.QOS.IncRtcpMaxJitter,
+			"QOS.OutRtcpMaxJitter": i.Data.QOS.OutRtcpMaxJitter,
+
+			"QOS.IncRtpLostPackets": i.Data.QOS.IncRtpLostPackets,
+			"QOS.OutRtpLostPackets": i.Data.QOS.OutRtpLostPackets,
+
+			"QOS.IncRtcpLostPackets": i.Data.QOS.IncRtcpLostPackets,
+			"QOS.OutRtcpLostPackets": i.Data.QOS.OutRtcpLostPackets,
+
+			"QOS.IncRtcpAvgLat": i.Data.QOS.IncRtcpAvgLat,
+			"QOS.OutRtcpAvgLat": i.Data.QOS.OutRtcpAvgLat,
+		}
+
+	}
+
+	for metric, value := range sm {
+		sb = append(sb, fmt.Sprintf("%s:%d|h", metric, value))
+	}
+	stats := strings.Join(sb, "\n")
+
+	if conn, err := net.Dial("udp", *saddr); err == nil {
+		io.WriteString(conn, stats)
+		conn.Close()
+	}
+}
+
+/*
 var queue = make(chan string, 200)
 
 func init() {
@@ -64,3 +111,4 @@ func statsdSender() {
 		}
 	}
 }
+*/
