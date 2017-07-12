@@ -14,6 +14,8 @@ Or:
 go install github.com/negbie/horaclifix
 ```
 
+### Stats:
+![netdata_qos](https://user-images.githubusercontent.com/20154956/28118829-01909016-6713-11e7-9b54-80e626af7222.jpeg)
 
 ### Usage of ./horaclifix:
 

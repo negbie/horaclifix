@@ -2,20 +2,22 @@ package main
 
 import (
 	"bufio"
+	"encoding/hex"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
-	"sync"
 )
 
 var (
-	addr  = flag.String("l", ":4739", "Host ipfix listen address")
-	haddr = flag.String("H", "127.0.0.1:9060", "Homer server address")
-	saddr = flag.String("s", "127.0.0.1:8125", "StatsD server address")
-	debug = flag.Bool("d", false, "Debug output to stdout")
-	gaddr = flag.String("g", "", "Graylog server address")
+	addr    = flag.String("l", ":4739", "Host ipfix listen address")
+	haddr   = flag.String("H", "127.0.0.1:9060", "Homer server address")
+	saddr   = flag.String("s", "127.0.0.1:8125", "StatsD server address")
+	debug   = flag.Bool("d", false, "Debug output to stdout")
+	verbose = flag.Bool("v", false, "Debug output to stdout")
+	gaddr   = flag.String("g", "", "Graylog server address")
 )
 
 func checkErr(err error) {
@@ -30,11 +32,16 @@ func checkCritErr(err error) {
 	}
 }
 
+/*
+// Template for a sync.Pool buffer
 var buffers = &sync.Pool{
 	New: func() interface{} {
 		return make([]byte, 65536)
 	},
 }
+packet := buffers.Get().([]byte)
+buffers.Put(packet)
+*/
 
 // start handles incoming packets
 func start(conn *net.TCPConn) {
@@ -46,20 +53,105 @@ func start(conn *net.TCPConn) {
 		conn.Close()
 	}()
 
-	byts := buffers.Get().([]byte)
+	r := bufio.NewReader(conn)
+	header := make([]byte, 20)
+	var (
+		version int
+		dataLen int
+		setID   int
+		dataSet []byte
+	)
 
 	for {
-		blen, err := bufio.NewReader(conn).Read(byts)
-		// Check for EOF and go out of this loop. Don't cut the connection. Mby we just rebooted the sbc
-		if err == io.EOF {
-			break
-		}
-		checkErr(err)
+		if _, err := io.ReadFull(r, header); err == nil {
+			version = int(uint16(header[0])<<8 + uint16(header[1]))
+			dataLen = int(uint16(header[2])<<8 + uint16(header[3]))
+			setID = int(uint16(header[16])<<8 + uint16(header[17]))
+			dataSet = make([]byte, dataLen-len(header))
 
-		if blen > 20 {
-			parse(conn, byts[:blen])
+		} else {
+			checkErr(err)
 		}
-		buffers.Put(byts)
+		if _, err := io.ReadFull(r, dataSet); err == nil {
+			data := append(header, dataSet...)
+
+			if *verbose {
+				fmt.Println("########################################################################")
+				fmt.Printf("Headerversion: %d, Headerlength: %d, SetID: %d\n", version, dataLen, setID)
+				fmt.Println("Header in raw:", header)
+			}
+			if *debug {
+				fmt.Println("Hexdump output:")
+				fmt.Printf("%s\n", hex.Dump(data))
+			}
+			switch setID {
+			case 256:
+				SendHandshake(conn, data)
+			case 258:
+				msg := NewRecSipUDP(data)
+				NewSipHEP(msg)
+				if *gaddr != "" {
+					msg.SendLog("SIP")
+				}
+				if *debug {
+					fmt.Println("SIP output:")
+					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
+				}
+			case 259:
+				msg := NewSendSipUDP(data)
+				NewSipHEP(msg)
+				if *gaddr != "" {
+					msg.SendLog("SIP")
+				}
+				if *debug {
+					fmt.Println("SIP output:")
+					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
+				}
+			case 260:
+				msg := NewRecSipTCP(data)
+				NewSipHEP(msg)
+
+				if *gaddr != "" {
+					msg.SendLog("SIP")
+				}
+				if *debug {
+					fmt.Println("SIP output:")
+					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
+				}
+			case 261:
+				msg := NewSendSipTCP(data)
+				NewSipHEP(msg)
+
+				if *gaddr != "" {
+					msg.SendLog("SIP")
+				}
+				if *debug {
+					fmt.Println("SIP output:")
+					fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
+				}
+			case 268:
+				msg := NewQosStats(data)
+				/*
+					NewQosHEPincRTP(msg)
+					NewQosHEPincRTCP(msg)
+					NewQosHEPoutRTP(msg)
+					NewQosHEPoutRTCP(msg)
+				*/
+
+				if *saddr != "" {
+					if msg.Data.QOS.IncMos >= 100 && msg.Data.QOS.OutMos >= 100 {
+						msg.SendStatsd("QOS")
+					}
+				}
+				if *gaddr != "" {
+					msg.SendLog("QOS")
+				}
+			}
+
+		} else {
+			checkErr(err)
+		}
+
 	}
 }
 

@@ -27,29 +27,25 @@ func (ipfix *IPFIX) MarshalJSON() ([]byte, error) {
 	return bytes, err
 }
 
-func LogSIP(i *IPFIX) {
+func (i *IPFIX) SendLog(s string) {
 	gconn, err := net.Dial("udp", *gaddr)
 	checkErr(err)
 	defer gconn.Close()
-	//sLog, _ := json.Marshal(&i.Data.SIP)
-	//gconn.Write(sLog)
 
-	err = json.NewEncoder(gconn).Encode(&i.Data.SIP)
-	if err != nil {
-		log.Println("LogSIP json.NewEncoder failed:", err)
-	}
-}
+	switch s {
+	case "SIP":
+		//sLog, err := json.Marshal(&i.Data.SIP)
+		err = json.NewEncoder(gconn).Encode(&i.Data.SIP)
+		if err != nil {
+			log.Println("SIP json.NewEncoder failed:", err)
+		}
 
-func LogQOS(i *IPFIX) {
-	gconn, err := net.Dial("udp", *gaddr)
-	checkErr(err)
-	defer gconn.Close()
-	//qLog, _ := json.Marshal(&i.Data.QOS)
-	//gconn.Write(qLog)
-
-	err = json.NewEncoder(gconn).Encode(&i.Data.QOS)
-	if err != nil {
-		log.Println("LogQOS json.NewEncoder failed:", err)
+	case "QOS":
+		//qLog, err := json.Marshal(&i.Data.QOS)
+		err = json.NewEncoder(gconn).Encode(&i.Data.QOS)
+		if err != nil {
+			log.Println("QOS json.NewEncoder failed:", err)
+		}
 	}
 }
 
