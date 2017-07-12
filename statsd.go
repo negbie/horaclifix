@@ -8,13 +8,14 @@ import (
 )
 
 func (i *IPFIX) SendStatsd(s string) {
-	var sb []string
-	var sm map[string]interface{}
+	var metrics []string
+	var qosRtpMap map[string]interface{}
+	var qosCallsMap map[string]interface{}
 	switch s {
 	case "SIP":
 
 	case "QOS":
-		sm = map[string]interface{}{
+		qosRtpMap = map[string]interface{}{
 			"QOS.IncMos": i.Data.QOS.IncMos,
 			"QOS.OutMos": i.Data.QOS.OutMos,
 
@@ -38,14 +39,24 @@ func (i *IPFIX) SendStatsd(s string) {
 
 			"QOS.IncRtcpAvgLat": i.Data.QOS.IncRtcpAvgLat,
 			"QOS.OutRtcpAvgLat": i.Data.QOS.OutRtcpAvgLat,
+
+			"QOS.IncRtpPackets": i.Data.QOS.IncRtpPackets,
+			"QOS.OutRtpPackets": i.Data.QOS.OutRtpPackets,
+		}
+
+		qosCallsMap = map[string]interface{}{
+			"QOS.IncCallID": i.Data.QOS.IncCallID,
 		}
 
 	}
 
-	for metric, value := range sm {
-		sb = append(sb, fmt.Sprintf("%s:%d|h", metric, value))
+	for metric, value := range qosRtpMap {
+		metrics = append(metrics, fmt.Sprintf("%s:%d|h", metric, value))
 	}
-	stats := strings.Join(sb, "\n")
+	for metric, value := range qosCallsMap {
+		metrics = append(metrics, fmt.Sprintf("%s:%d|s", metric, value))
+	}
+	stats := strings.Join(metrics, "\n")
 
 	if conn, err := net.Dial("udp", *saddr); err == nil {
 		io.WriteString(conn, stats)

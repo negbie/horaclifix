@@ -30,12 +30,11 @@ go install github.com/negbie/horaclifix
   -s string
         StatsD server address
   -v    Verbose output to stdout
-
-
-        
+  
 ################################################################
 ./horaclifix -d -v
-./horaclifix -H 192.168.2.22:9060
-./horaclifix -H 192.168.2.22:9060 -g 192.168.2.22:4488 -s 127.0.0.1:8125
-The last command will send HEP messages to Homer, plain UDP to Graylog, plain UDP to StatsD.
+./horaclifix -H 192.168.2.22:9060&
+./horaclifix -H 192.168.2.22:9060 -g 192.168.2.22:4488 -s 127.0.0.1:8125&
+
+The last command will send HEP messages to Homer, plain UDP logs to Graylog, plain UDP metrics to StatsD.
 ```

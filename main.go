@@ -67,10 +67,14 @@ func start(conn *net.TCPConn) {
 			version = int(uint16(header[0])<<8 + uint16(header[1]))
 			dataLen = int(uint16(header[2])<<8 + uint16(header[3]))
 			setID = int(uint16(header[16])<<8 + uint16(header[17]))
+
+			if setID > 280 || setID < 256 || version != 10 {
+				break
+			}
 			dataSet = make([]byte, dataLen-len(header))
 
 		} else {
-			checkErr(err)
+			checkCritErr(err)
 		}
 		if _, err := io.ReadFull(r, dataSet); err == nil {
 			data := append(header, dataSet...)
@@ -151,8 +155,8 @@ func start(conn *net.TCPConn) {
 				*/
 
 				if *saddr != "" {
-					// Send only QoS with usable values
-					if msg.Data.QOS.IncMos >= 100 && msg.Data.QOS.OutMos >= 100 {
+					// Send only QoS stats with usable values
+					if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
 						msg.SendStatsd("QOS")
 					}
 				}
@@ -162,7 +166,7 @@ func start(conn *net.TCPConn) {
 			}
 
 		} else {
-			checkErr(err)
+			checkCritErr(err)
 		}
 
 	}
