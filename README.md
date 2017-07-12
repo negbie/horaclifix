@@ -21,16 +21,21 @@ go install github.com/negbie/horaclifix
 
 ```bash
   -H string
-        Homer server address (default "127.0.0.1:9060")
+        Homer server address
   -d    Debug output to stdout
   -g string
-        Graylog server address (default "127.0.0.1:4488")
+        Graylog server address
   -l string
-        Host ipfix listen address (default ":4739")
+        IPFIX listen address (default ":4739")
+  -s string
+        StatsD server address
+  -v    Verbose output to stdout
+
 
         
 ################################################################
-
+./horaclifix -d -v
 ./horaclifix -H 192.168.2.22:9060
-./horaclifix -H 192.168.2.22:9060 -d
+./horaclifix -H 192.168.2.22:9060 -g 192.168.2.22:4488 -s 127.0.0.1:8125
+The last command will send HEP messages to Homer, plain UDP to Graylog, plain UDP to StatsD.
 ```

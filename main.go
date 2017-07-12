@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	addr    = flag.String("l", ":4739", "Host ipfix listen address")
-	haddr   = flag.String("H", "127.0.0.1:9060", "Homer server address")
-	saddr   = flag.String("s", "127.0.0.1:8125", "StatsD server address")
+	addr    = flag.String("l", ":4739", "IPFIX listen address")
+	haddr   = flag.String("H", "", "Homer server address")
+	saddr   = flag.String("s", "", "StatsD server address")
 	debug   = flag.Bool("d", false, "Debug output to stdout")
-	verbose = flag.Bool("v", false, "Debug output to stdout")
+	verbose = flag.Bool("v", false, "Verbose output to stdout")
 	gaddr   = flag.String("g", "", "Graylog server address")
 )
 
@@ -89,7 +89,10 @@ func start(conn *net.TCPConn) {
 				SendHandshake(conn, data)
 			case 258:
 				msg := NewRecSipUDP(data)
-				NewSipHEP(msg)
+				if *haddr != "" {
+					NewSipHEP(msg)
+				}
+
 				if *gaddr != "" {
 					msg.SendLog("SIP")
 				}
@@ -99,7 +102,10 @@ func start(conn *net.TCPConn) {
 				}
 			case 259:
 				msg := NewSendSipUDP(data)
-				NewSipHEP(msg)
+				if *haddr != "" {
+					NewSipHEP(msg)
+				}
+
 				if *gaddr != "" {
 					msg.SendLog("SIP")
 				}
@@ -109,7 +115,9 @@ func start(conn *net.TCPConn) {
 				}
 			case 260:
 				msg := NewRecSipTCP(data)
-				NewSipHEP(msg)
+				if *haddr != "" {
+					NewSipHEP(msg)
+				}
 
 				if *gaddr != "" {
 					msg.SendLog("SIP")
@@ -120,7 +128,9 @@ func start(conn *net.TCPConn) {
 				}
 			case 261:
 				msg := NewSendSipTCP(data)
-				NewSipHEP(msg)
+				if *haddr != "" {
+					NewSipHEP(msg)
+				}
 
 				if *gaddr != "" {
 					msg.SendLog("SIP")
@@ -132,13 +142,16 @@ func start(conn *net.TCPConn) {
 			case 268:
 				msg := NewQosStats(data)
 				/*
-					NewQosHEPincRTP(msg)
-					NewQosHEPincRTCP(msg)
-					NewQosHEPoutRTP(msg)
-					NewQosHEPoutRTCP(msg)
+					if *haddr != "" {
+						NewQosHEPincRTP(msg)
+						NewQosHEPincRTCP(msg)
+						NewQosHEPoutRTP(msg)
+						NewQosHEPoutRTCP(msg)
+					}
 				*/
 
 				if *saddr != "" {
+					// Send only QoS with usable values
 					if msg.Data.QOS.IncMos >= 100 && msg.Data.QOS.OutMos >= 100 {
 						msg.SendStatsd("QOS")
 					}
