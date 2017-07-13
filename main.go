@@ -148,14 +148,14 @@ func start(conn *net.TCPConn) {
 				}
 			case 268:
 				msg := NewQosStats(data)
-				/*
-					if *haddr != "" {
-						NewQosHEPincRTP(msg)
-						NewQosHEPincRTCP(msg)
-						NewQosHEPoutRTP(msg)
-						NewQosHEPoutRTCP(msg)
-					}
-				*/
+
+				if *haddr != "" {
+					NewQosHEPincRTP(msg)
+					NewQosHEPoutRTP(msg)
+
+					NewQosHEPincRTCP(msg)
+					NewQosHEPoutRTCP(msg)
+				}
 
 				if *saddr != "" {
 					// Send only QoS stats with usable values
@@ -166,6 +166,8 @@ func start(conn *net.TCPConn) {
 				if *gaddr != "" {
 					msg.SendLog("QOS")
 				}
+			default:
+				log.Printf("Unhandled setID %v\n", setID)
 			}
 
 		} else if err != nil {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"log"
 	"net"
 )
 
@@ -170,21 +169,25 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 
 	// Chunk captured packet payload
 	case 0x000f:
-		packet = make([]byte, len(ipfix.Data.SIP.SipMsg)+6)
 		switch payloadType {
 		case "SIP":
+			packet = make([]byte, len(ipfix.Data.SIP.SipMsg)+6)
 			copy(packet[6:], ipfix.Data.SIP.SipMsg)
 		case "incRTP":
 			payload, _ := ipfix.PrepIncRtp()
+			packet = make([]byte, len(payload)+6)
 			copy(packet[6:], payload)
 		case "outRTP":
 			payload, _ := ipfix.PrepOutRtp()
+			packet = make([]byte, len(payload)+6)
 			copy(packet[6:], payload)
 		case "incRTCP":
 			payload, _ := ipfix.PrepIncRtcp()
+			packet = make([]byte, len(payload)+6)
 			copy(packet[6:], payload)
 		case "outRTCP":
 			payload, _ := ipfix.PrepIncRtcp()
+			packet = make([]byte, len(payload)+6)
 			copy(packet[6:], payload)
 		}
 
@@ -195,8 +198,6 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 	case 0x0011:
 		packet = make([]byte, len(ipfix.Data.QOS.IncCallID)+6)
 		copy(packet[6:], ipfix.Data.QOS.IncCallID)
-		log.Printf("Case 0x0011 Packet: %s", ipfix.Data.QOS.IncCallID)
-
 	}
 
 	binary.BigEndian.PutUint16(packet[:2], ChunckVen)
@@ -341,11 +342,7 @@ func (ipfix *IPFIX) PrepIncRtp() ([]byte, error) {
 		"TYPE":            "PERIODIC",
 	}
 	j, err := json.Marshal(mapIncRtp)
-
-	log.Printf("%s\n", j)
-
 	return j, err
-
 }
 
 func (ipfix *IPFIX) PrepOutRtp() ([]byte, error) {
@@ -390,11 +387,7 @@ func (ipfix *IPFIX) PrepOutRtp() ([]byte, error) {
 	}
 
 	j, err := json.Marshal(mapOutRtp)
-
-	log.Printf("%s\n", j)
-
 	return j, err
-
 }
 
 func (ipfix *IPFIX) PrepIncRtcp() ([]byte, error) {
@@ -438,8 +431,8 @@ func (ipfix *IPFIX) PrepIncRtcp() ([]byte, error) {
 		"TYPE":            "PERIODIC",
 	}
 
-	return json.Marshal(mapIncRtcp)
-
+	j, err := json.Marshal(mapIncRtcp)
+	return j, err
 }
 
 func (ipfix *IPFIX) PrepOutRtcp() ([]byte, error) {
@@ -483,6 +476,6 @@ func (ipfix *IPFIX) PrepOutRtcp() ([]byte, error) {
 		"TYPE":            "PERIODIC",
 	}
 
-	return json.Marshal(mapOutRtcp)
-
+	j, err := json.Marshal(mapOutRtcp)
+	return j, err
 }

@@ -63,11 +63,10 @@ func (i *IPFIX) PrepLogSIP() *map[string]interface{} {
 		"tflags":    i.Data.SIP.TFlags,
 		"ttl":       i.Data.SIP.TTL,
 		"tproto":    i.Data.SIP.TProto,
-		"srcIp":     toIPv4(i.Data.SIP.SrcIP),
-		"dstIp":     toIPv4(i.Data.SIP.DstIP),
+		"srcIp":     stringIPv4(i.Data.SIP.SrcIP),
+		"dstIp":     stringIPv4(i.Data.SIP.DstIP),
 		"srcPort":   i.Data.SIP.SrcPort,
 		"dstPort":   i.Data.SIP.DstPort,
-		"context":   i.Data.SIP.Context,
 		"sipMsg":    string(i.Data.SIP.SipMsg),
 		"ipfixPort": *addr,
 	}
@@ -114,22 +113,22 @@ func (i *IPFIX) PrepLogQoS() *map[string]interface{} {
 
 		"type": i.Data.QOS.Type,
 
-		"callerIncSrcIP":   toIPv4(i.Data.QOS.CallerIncSrcIP),
-		"callerIncDstIP":   toIPv4(i.Data.QOS.CallerIncDstIP),
+		"callerIncSrcIP":   stringIPv4(i.Data.QOS.CallerIncSrcIP),
+		"callerIncDstIP":   stringIPv4(i.Data.QOS.CallerIncDstIP),
 		"callerIncDstPort": i.Data.QOS.CallerIncDstPort,
 
-		"calleeIncSrcIP":   toIPv4(i.Data.QOS.CalleeIncSrcIP),
-		"calleeIncDstIP":   toIPv4(i.Data.QOS.CalleeIncDstIP),
+		"calleeIncSrcIP":   stringIPv4(i.Data.QOS.CalleeIncSrcIP),
+		"calleeIncDstIP":   stringIPv4(i.Data.QOS.CalleeIncDstIP),
 		"calleeIncSrcPort": i.Data.QOS.CalleeIncSrcPort,
 		"calleeIncDstPort": i.Data.QOS.CalleeIncDstPort,
 
-		"callerOutSrcIP":   toIPv4(i.Data.QOS.CallerOutSrcIP),
-		"callerOutDstIP":   toIPv4(i.Data.QOS.CallerOutDstIP),
+		"callerOutSrcIP":   stringIPv4(i.Data.QOS.CallerOutSrcIP),
+		"callerOutDstIP":   stringIPv4(i.Data.QOS.CallerOutDstIP),
 		"callerOutSrcPort": i.Data.QOS.CallerOutSrcPort,
 		"callerOutDstPort": i.Data.QOS.CallerOutDstPort,
 
-		"calleeOutSrcIP":   toIPv4(i.Data.QOS.CalleeOutSrcIP),
-		"calleeOutDstIP":   toIPv4(i.Data.QOS.CalleeOutDstIP),
+		"calleeOutSrcIP":   stringIPv4(i.Data.QOS.CalleeOutSrcIP),
+		"calleeOutDstIP":   stringIPv4(i.Data.QOS.CalleeOutDstIP),
 		"calleeOutSrcPort": i.Data.QOS.CalleeOutSrcPort,
 		"calleeOutDstPort": i.Data.QOS.CalleeOutDstPort,
 
@@ -170,7 +169,7 @@ func (i *IPFIX) PrepLogQoS() *map[string]interface{} {
 	return &mapQoS
 }
 
-func toIPv4(n uint32) string {
+func stringIPv4(n uint32) string {
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, n)
 	return ip.String()
