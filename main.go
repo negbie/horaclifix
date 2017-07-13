@@ -73,8 +73,11 @@ func start(conn *net.TCPConn) {
 			}
 			dataSet = make([]byte, dataLen-len(header))
 
-		} else {
-			checkCritErr(err)
+		} else if err != nil {
+			if err != io.EOF {
+				log.Printf("Read error: %s", err)
+			}
+			break
 		}
 		if _, err := io.ReadFull(r, dataSet); err == nil {
 			data := append(header, dataSet...)
@@ -165,8 +168,11 @@ func start(conn *net.TCPConn) {
 				}
 			}
 
-		} else {
-			checkCritErr(err)
+		} else if err != nil {
+			if err != io.EOF {
+				log.Printf("Read error: %s", err)
+			}
+			break
 		}
 
 	}

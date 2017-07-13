@@ -19,6 +19,12 @@ func (i *IPFIX) SendStatsd(s string) {
 			"QOS.IncMos": i.Data.QOS.IncMos,
 			"QOS.OutMos": i.Data.QOS.OutMos,
 
+			"QOS.IncRtpPackets": i.Data.QOS.IncRtpPackets,
+			"QOS.OutRtpPackets": i.Data.QOS.OutRtpPackets,
+
+			"QOS.IncRtcpAvgLat": i.Data.QOS.IncRtcpAvgLat,
+			"QOS.OutRtcpAvgLat": i.Data.QOS.OutRtcpAvgLat,
+
 			"QOS.IncRtpAvgJitter": i.Data.QOS.IncRtpAvgJitter,
 			"QOS.OutRtpAvgJitter": i.Data.QOS.OutRtpAvgJitter,
 
@@ -36,18 +42,11 @@ func (i *IPFIX) SendStatsd(s string) {
 
 			"QOS.IncRtcpLostPackets": i.Data.QOS.IncRtcpLostPackets,
 			"QOS.OutRtcpLostPackets": i.Data.QOS.OutRtcpLostPackets,
-
-			"QOS.IncRtcpAvgLat": i.Data.QOS.IncRtcpAvgLat,
-			"QOS.OutRtcpAvgLat": i.Data.QOS.OutRtcpAvgLat,
-
-			"QOS.IncRtpPackets": i.Data.QOS.IncRtpPackets,
-			"QOS.OutRtpPackets": i.Data.QOS.OutRtpPackets,
 		}
 
 		qosCallsMap = map[string]interface{}{
 			"QOS.IncCallID": i.Data.QOS.IncCallID,
 		}
-
 	}
 
 	for metric, value := range qosRtpMap {

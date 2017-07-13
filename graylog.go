@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"log"
 	"net"
@@ -35,56 +36,141 @@ func (i *IPFIX) SendLog(s string) {
 	switch s {
 	case "SIP":
 		//sLog, err := json.Marshal(&i.Data.SIP)
-		err = json.NewEncoder(gconn).Encode(&i.Data.SIP)
+		err = json.NewEncoder(gconn).Encode(i.PrepLogSIP())
 		if err != nil {
 			log.Println("SIP json.NewEncoder failed:", err)
 		}
 
 	case "QOS":
 		//qLog, err := json.Marshal(&i.Data.QOS)
-		err = json.NewEncoder(gconn).Encode(&i.Data.QOS)
+		err = json.NewEncoder(gconn).Encode(i.PrepLogQoS())
 		if err != nil {
 			log.Println("QOS json.NewEncoder failed:", err)
 		}
 	}
 }
 
-/*
-func LogSIP(ipfix *IPFIX) {
-	gconn, err := net.Dial("udp", *gaddr)
-	checkErr(err)
-	defer gconn.Close()
+func (i *IPFIX) PrepLogSIP() *map[string]interface{} {
 	mapSIP := map[string]interface{}{
-
-		"timeSec": ipfix.Data.SIP.TimeSec,
-		"timeMic": ipfix.Data.SIP.TimeMic,
-		"intVlan": ipfix.Data.SIP.IntVlan,
-		"id":      string(ipfix.Data.SIP.CallID),
-		"ipLen":   ipfix.Data.SIP.IPlen,
-		"udpLen":  ipfix.Data.SIP.UDPlen,
-		"vl":      ipfix.Data.SIP.VL,
-		"tos":     ipfix.Data.SIP.TOS,
-		"tlen":    ipfix.Data.SIP.TLen,
-		"tid":     ipfix.Data.SIP.TID,
-		"tflags":  ipfix.Data.SIP.TFlags,
-		"ttl":     ipfix.Data.SIP.TTL,
-		"tproto":  ipfix.Data.SIP.TProto,
-		"srcIp":   ipfix.Data.SIP.SrcIP,
-		"dstIp":   ipfix.Data.SIP.DstIP,
-		"srcPort": ipfix.Data.SIP.SrcPort,
-		"dstPort": ipfix.Data.SIP.DstPort,
-		"context": ipfix.Data.SIP.Context,
-		"sipMsg":  string(ipfix.Data.SIP.SipMsg),
-		"sbc":     "sbcSIP",
+		"intVlan":   i.Data.SIP.IntVlan,
+		"id":        string(i.Data.SIP.CallID),
+		"ipLen":     i.Data.SIP.IPlen,
+		"udpLen":    i.Data.SIP.UDPlen,
+		"vl":        i.Data.SIP.VL,
+		"tos":       i.Data.SIP.TOS,
+		"tlen":      i.Data.SIP.TLen,
+		"tid":       i.Data.SIP.TID,
+		"tflags":    i.Data.SIP.TFlags,
+		"ttl":       i.Data.SIP.TTL,
+		"tproto":    i.Data.SIP.TProto,
+		"srcIp":     toIPv4(i.Data.SIP.SrcIP).String(),
+		"dstIp":     toIPv4(i.Data.SIP.DstIP).String(),
+		"srcPort":   i.Data.SIP.SrcPort,
+		"dstPort":   i.Data.SIP.DstPort,
+		"context":   i.Data.SIP.Context,
+		"sipMsg":    string(i.Data.SIP.SipMsg),
+		"ipfixPort": *addr,
 	}
 
-	sLog, _ := json.Marshal(mapSIP)
-
-	gconn.Write(sLog)
-
-	if *debug {
-		log.Println("Json output:")
-		log.Printf("%s\n\n\n", sLog)
-	}
+	return &mapSIP
 }
-*/
+
+func (i *IPFIX) PrepLogQoS() *map[string]interface{} {
+	mapQoS := map[string]interface{}{
+
+		"incRtpBytes":       i.Data.QOS.IncRtpBytes,
+		"incRtpPackets":     i.Data.QOS.IncRtpPackets,
+		"incRtpLostPackets": i.Data.QOS.IncRtpLostPackets,
+		"incRtpAvgJitter":   i.Data.QOS.IncRtpAvgJitter,
+		"incRtpMaxJitter":   i.Data.QOS.IncRtpMaxJitter,
+
+		"incRtcpBytes":       i.Data.QOS.IncRtcpBytes,
+		"incRtcpPackets":     i.Data.QOS.IncRtcpPackets,
+		"incRtcpLostPackets": i.Data.QOS.IncRtcpLostPackets,
+		"incRtcpAvgJitter":   i.Data.QOS.IncRtcpAvgJitter,
+		"incRtcpMaxJitter":   i.Data.QOS.IncRtcpMaxJitter,
+		"incRtcpAvgLat":      i.Data.QOS.IncRtcpAvgLat,
+		"incRtcpMaxLat":      i.Data.QOS.IncRtcpMaxLat,
+
+		"incrVal": i.Data.QOS.IncrVal,
+		"incMos":  i.Data.QOS.IncMos,
+
+		"outRtpBytes":       i.Data.QOS.OutRtpBytes,
+		"outRtpPackets":     i.Data.QOS.OutRtpPackets,
+		"outRtpLostPackets": i.Data.QOS.OutRtpLostPackets,
+		"outRtpAvgJitter":   i.Data.QOS.OutRtpAvgJitter,
+		"outRtpMaxJitter":   i.Data.QOS.OutRtpMaxJitter,
+
+		"outRtcpBytes":       i.Data.QOS.OutRtcpBytes,
+		"outRtcpPackets":     i.Data.QOS.OutRtcpPackets,
+		"outRtcpLostPackets": i.Data.QOS.OutRtcpLostPackets,
+		"outRtcpAvgJitter":   i.Data.QOS.OutRtcpAvgJitter,
+		"outRtcpMaxJitter":   i.Data.QOS.OutRtcpMaxJitter,
+		"outRtcpAvgLat":      i.Data.QOS.OutRtcpAvgLat,
+		"outRtcpMaxLat":      i.Data.QOS.OutRtcpMaxLat,
+
+		"outrVal": i.Data.QOS.OutrVal,
+		"outMos":  i.Data.QOS.OutMos,
+
+		"type": i.Data.QOS.Type,
+
+		"callerIncSrcIP":   toIPv4(i.Data.QOS.CallerIncSrcIP).String(),
+		"callerIncDstIP":   toIPv4(i.Data.QOS.CallerIncDstIP).String(),
+		"callerIncSrcPort": i.Data.QOS.CallerIncSrcPort,
+		"callerIncDstPort": i.Data.QOS.CallerIncDstPort,
+
+		"calleeIncSrcIP":   toIPv4(i.Data.QOS.CalleeIncSrcIP).String(),
+		"calleeIncDstIP":   toIPv4(i.Data.QOS.CalleeIncDstIP).String(),
+		"calleeIncSrcPort": i.Data.QOS.CalleeIncSrcPort,
+		"calleeIncDstPort": i.Data.QOS.CalleeIncDstPort,
+
+		"callerOutSrcIP":   toIPv4(i.Data.QOS.CallerOutSrcIP).String(),
+		"callerOutDstIP":   toIPv4(i.Data.QOS.CallerOutDstIP).String(),
+		"callerOutSrcPort": i.Data.QOS.CallerOutSrcPort,
+		"callerOutDstPort": i.Data.QOS.CallerOutDstPort,
+
+		"calleeOutSrcIP":   toIPv4(i.Data.QOS.CalleeOutSrcIP).String(),
+		"calleeOutDstIP":   toIPv4(i.Data.QOS.CalleeOutDstIP).String(),
+		"calleeOutSrcPort": i.Data.QOS.CalleeOutSrcPort,
+		"calleeOutDstPort": i.Data.QOS.CalleeOutDstPort,
+
+		"callerIntSlot": i.Data.QOS.CallerIntSlot,
+		"callerIntPort": i.Data.QOS.CallerIntPort,
+		"callerIntVlan": i.Data.QOS.CallerIntVlan,
+
+		"calleeIntSlot": i.Data.QOS.CalleeIntSlot,
+		"calleeIntPort": i.Data.QOS.CalleeIntPort,
+		"calleeIntVlan": i.Data.QOS.CalleeIntVlan,
+
+		"beginTimeSec": i.Data.QOS.BeginTimeSec,
+		"beginTimeMic": i.Data.QOS.BeginTimeMic,
+
+		"endTimeSec":   i.Data.QOS.EndTimeSec,
+		"endinTimeMic": i.Data.QOS.EndinTimeMic,
+
+		"seperator": i.Data.QOS.Seperator,
+
+		"incRealmLen": i.Data.QOS.IncRealmLen,
+		"incRealm":    string(i.Data.QOS.IncRealm),
+		"incRealmEnd": i.Data.QOS.IncRealmEnd,
+
+		"outRealmLen": i.Data.QOS.OutRealmLen,
+		"outRealm":    string(i.Data.QOS.OutRealm),
+		"outRealmEnd": i.Data.QOS.OutRealmEnd,
+
+		"incCallIDLen": i.Data.QOS.IncCallIDLen,
+		"incCallID":    string(i.Data.QOS.IncCallID),
+		"incCallIDEnd": i.Data.QOS.IncCallIDEnd,
+
+		"OutCallIDLen": i.Data.QOS.OutCallIDLen,
+		"outCallID":    string(i.Data.QOS.OutCallID),
+		"ipfixPort":    *addr,
+	}
+	return &mapQoS
+}
+
+func toIPv4(n uint32) net.IP {
+	ip := make(net.IP, 4)
+	binary.BigEndian.PutUint32(ip, n)
+	return ip
+}
