@@ -26,9 +26,7 @@ func SendHEPMsg(msg []byte) {
 
 // NewHEPChunck constructs the HEP chunck
 func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadType string) []byte {
-
 	var packet []byte
-
 	switch ChunckType {
 	// Chunk IP protocol family (0x02=IPv4)
 	case 0x0001:
@@ -117,13 +115,13 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		case "SIP":
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.SIP.TimeSec)
 		case "incRTP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.BeginTimeSec)
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndTimeSec)
 		case "outRTP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.BeginTimeSec)
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndTimeSec)
 		case "incRTCP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.BeginTimeSec)
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndTimeSec)
 		case "outRTCP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.BeginTimeSec)
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndTimeSec)
 		}
 
 	// Chunk unix timestamp, microseconds offset
@@ -133,13 +131,13 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		case "SIP":
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.SIP.TimeMic)
 		case "incRTP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.BeginTimeMic)
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndinTimeMic)
 		case "outRTP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.BeginTimeMic)
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndinTimeMic)
 		case "incRTCP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.BeginTimeMic)
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndinTimeMic)
 		case "outRTCP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.BeginTimeMic)
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndinTimeMic)
 		}
 
 	// Chunk protocol type (SIP/H323/RTP/MGCP/M2UA)

@@ -176,7 +176,6 @@ func start(conn *net.TCPConn) {
 			}
 			break
 		}
-
 	}
 }
 
