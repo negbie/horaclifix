@@ -19,6 +19,8 @@ func SendHEPMsg(msg []byte) {
 	if conn, err := net.Dial("udp", *haddr); err == nil {
 		conn.Write(packet)
 		conn.Close()
+	} else {
+		checkErr(err)
 	}
 }
 
@@ -325,9 +327,9 @@ func (ipfix *IPFIX) PrepIncRtp() ([]byte, error) {
 		"RFACTOR":         ipfix.Data.QOS.IncrVal,
 		"MIN_RFACTOR":     ipfix.Data.QOS.IncrVal,
 		"MEAN_RFACTOR":    ipfix.Data.QOS.IncrVal,
-		"SRC_IP":          ipfix.Data.QOS.CallerIncSrcIP,
+		"SRC_IP":          stringIPv4(ipfix.Data.QOS.CallerIncSrcIP),
 		"SRC_PORT":        ipfix.Data.QOS.CallerIncSrcPort,
-		"DST_IP":          ipfix.Data.QOS.CallerIncDstIP,
+		"DST_IP":          stringIPv4(ipfix.Data.QOS.CallerIncDstIP),
 		"DST_PORT":        ipfix.Data.QOS.CallerIncSrcPort,
 		"SRC_MAC":         "00-00-00-00-00-00",
 		"DST_MAC":         "00-00-00-00-00-00",
@@ -369,9 +371,9 @@ func (ipfix *IPFIX) PrepOutRtp() ([]byte, error) {
 		"RFACTOR":         ipfix.Data.QOS.OutrVal,
 		"MIN_RFACTOR":     ipfix.Data.QOS.OutrVal,
 		"MEAN_RFACTOR":    ipfix.Data.QOS.OutrVal,
-		"SRC_IP":          ipfix.Data.QOS.CalleeOutSrcIP,
+		"SRC_IP":          stringIPv4(ipfix.Data.QOS.CalleeOutSrcIP),
 		"SRC_PORT":        ipfix.Data.QOS.CalleeOutSrcPort,
-		"DST_IP":          ipfix.Data.QOS.CalleeOutDstIP,
+		"DST_IP":          stringIPv4(ipfix.Data.QOS.CalleeOutDstIP),
 		"DST_PORT":        ipfix.Data.QOS.CalleeOutSrcPort,
 		"SRC_MAC":         "00-00-00-00-00-00",
 		"DST_MAC":         "00-00-00-00-00-00",
@@ -414,9 +416,9 @@ func (ipfix *IPFIX) PrepIncRtcp() ([]byte, error) {
 		"RFACTOR":         ipfix.Data.QOS.IncrVal,
 		"MIN_RFACTOR":     ipfix.Data.QOS.IncrVal,
 		"MEAN_RFACTOR":    ipfix.Data.QOS.IncrVal,
-		"SRC_IP":          ipfix.Data.QOS.CallerIncSrcIP,
+		"SRC_IP":          stringIPv4(ipfix.Data.QOS.CallerIncSrcIP),
 		"SRC_PORT":        ipfix.Data.QOS.CallerIncSrcPort,
-		"DST_IP":          ipfix.Data.QOS.CallerIncDstIP,
+		"DST_IP":          stringIPv4(ipfix.Data.QOS.CallerIncDstIP),
 		"DST_PORT":        ipfix.Data.QOS.CallerIncSrcPort,
 		"SRC_MAC":         "00-00-00-00-00-00",
 		"DST_MAC":         "00-00-00-00-00-00",
@@ -459,9 +461,9 @@ func (ipfix *IPFIX) PrepOutRtcp() ([]byte, error) {
 		"RFACTOR":         ipfix.Data.QOS.OutrVal,
 		"MIN_RFACTOR":     ipfix.Data.QOS.OutrVal,
 		"MEAN_RFACTOR":    ipfix.Data.QOS.OutrVal,
-		"SRC_IP":          ipfix.Data.QOS.CalleeOutSrcIP,
+		"SRC_IP":          stringIPv4(ipfix.Data.QOS.CalleeOutSrcIP),
 		"SRC_PORT":        ipfix.Data.QOS.CalleeOutSrcPort,
-		"DST_IP":          ipfix.Data.QOS.CalleeOutDstIP,
+		"DST_IP":          stringIPv4(ipfix.Data.QOS.CalleeOutDstIP),
 		"DST_PORT":        ipfix.Data.QOS.CalleeOutSrcPort,
 		"SRC_MAC":         "00-00-00-00-00-00",
 		"DST_MAC":         "00-00-00-00-00-00",
