@@ -63,8 +63,8 @@ func (i *IPFIX) PrepLogSIP() *map[string]interface{} {
 		"tflags":    i.Data.SIP.TFlags,
 		"ttl":       i.Data.SIP.TTL,
 		"tproto":    i.Data.SIP.TProto,
-		"srcIp":     toIPv4(i.Data.SIP.SrcIP).String(),
-		"dstIp":     toIPv4(i.Data.SIP.DstIP).String(),
+		"srcIp":     toIPv4(i.Data.SIP.SrcIP),
+		"dstIp":     toIPv4(i.Data.SIP.DstIP),
 		"srcPort":   i.Data.SIP.SrcPort,
 		"dstPort":   i.Data.SIP.DstPort,
 		"context":   i.Data.SIP.Context,
@@ -114,23 +114,22 @@ func (i *IPFIX) PrepLogQoS() *map[string]interface{} {
 
 		"type": i.Data.QOS.Type,
 
-		"callerIncSrcIP":   toIPv4(i.Data.QOS.CallerIncSrcIP).String(),
-		"callerIncDstIP":   toIPv4(i.Data.QOS.CallerIncDstIP).String(),
-		"callerIncSrcPort": i.Data.QOS.CallerIncSrcPort,
+		"callerIncSrcIP":   toIPv4(i.Data.QOS.CallerIncSrcIP),
+		"callerIncDstIP":   toIPv4(i.Data.QOS.CallerIncDstIP),
 		"callerIncDstPort": i.Data.QOS.CallerIncDstPort,
 
-		"calleeIncSrcIP":   toIPv4(i.Data.QOS.CalleeIncSrcIP).String(),
-		"calleeIncDstIP":   toIPv4(i.Data.QOS.CalleeIncDstIP).String(),
+		"calleeIncSrcIP":   toIPv4(i.Data.QOS.CalleeIncSrcIP),
+		"calleeIncDstIP":   toIPv4(i.Data.QOS.CalleeIncDstIP),
 		"calleeIncSrcPort": i.Data.QOS.CalleeIncSrcPort,
 		"calleeIncDstPort": i.Data.QOS.CalleeIncDstPort,
 
-		"callerOutSrcIP":   toIPv4(i.Data.QOS.CallerOutSrcIP).String(),
-		"callerOutDstIP":   toIPv4(i.Data.QOS.CallerOutDstIP).String(),
+		"callerOutSrcIP":   toIPv4(i.Data.QOS.CallerOutSrcIP),
+		"callerOutDstIP":   toIPv4(i.Data.QOS.CallerOutDstIP),
 		"callerOutSrcPort": i.Data.QOS.CallerOutSrcPort,
 		"callerOutDstPort": i.Data.QOS.CallerOutDstPort,
 
-		"calleeOutSrcIP":   toIPv4(i.Data.QOS.CalleeOutSrcIP).String(),
-		"calleeOutDstIP":   toIPv4(i.Data.QOS.CalleeOutDstIP).String(),
+		"calleeOutSrcIP":   toIPv4(i.Data.QOS.CalleeOutSrcIP),
+		"calleeOutDstIP":   toIPv4(i.Data.QOS.CalleeOutDstIP),
 		"calleeOutSrcPort": i.Data.QOS.CalleeOutSrcPort,
 		"calleeOutDstPort": i.Data.QOS.CalleeOutDstPort,
 
@@ -148,6 +147,8 @@ func (i *IPFIX) PrepLogQoS() *map[string]interface{} {
 		"endTimeSec":   i.Data.QOS.EndTimeSec,
 		"endinTimeMic": i.Data.QOS.EndinTimeMic,
 
+		"duration": (i.Data.QOS.EndTimeSec - i.Data.QOS.BeginTimeSec),
+
 		"seperator": i.Data.QOS.Seperator,
 
 		"incRealmLen": i.Data.QOS.IncRealmLen,
@@ -162,15 +163,15 @@ func (i *IPFIX) PrepLogQoS() *map[string]interface{} {
 		"incCallID":    string(i.Data.QOS.IncCallID),
 		"incCallIDEnd": i.Data.QOS.IncCallIDEnd,
 
-		"OutCallIDLen": i.Data.QOS.OutCallIDLen,
+		"outCallIDLen": i.Data.QOS.OutCallIDLen,
 		"outCallID":    string(i.Data.QOS.OutCallID),
 		"ipfixPort":    *addr,
 	}
 	return &mapQoS
 }
 
-func toIPv4(n uint32) net.IP {
+func toIPv4(n uint32) string {
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, n)
-	return ip
+	return ip.String()
 }
