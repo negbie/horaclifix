@@ -44,6 +44,8 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		switch payloadType {
 		case "SIP":
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.SIP.SrcIP)
+		case "QoSLog":
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.CallerIncSrcIP)
 		case "incRTP":
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.CallerIncSrcIP)
 		case "outRTP":
@@ -60,6 +62,8 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		switch payloadType {
 		case "SIP":
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.SIP.DstIP)
+		case "QoSLog":
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.CallerIncDstIP)
 		case "incRTP":
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.CallerIncDstIP)
 		case "outRTP":
@@ -82,6 +86,8 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		switch payloadType {
 		case "SIP":
 			binary.BigEndian.PutUint16(packet[6:], ipfix.Data.SIP.SrcPort)
+		case "QoSLog":
+			binary.BigEndian.PutUint16(packet[6:], ipfix.Data.QOS.CallerIncSrcPort)
 		case "incRTP":
 			binary.BigEndian.PutUint16(packet[6:], ipfix.Data.QOS.CallerIncSrcPort)
 		case "outRTP":
@@ -98,6 +104,8 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		switch payloadType {
 		case "SIP":
 			binary.BigEndian.PutUint16(packet[6:], ipfix.Data.SIP.DstPort)
+		case "QoSLog":
+			binary.BigEndian.PutUint16(packet[6:], ipfix.Data.QOS.CallerIncDstPort)
 		case "incRTP":
 			binary.BigEndian.PutUint16(packet[6:], ipfix.Data.QOS.CallerIncDstPort)
 		case "outRTP":
@@ -114,6 +122,8 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		switch payloadType {
 		case "SIP":
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.SIP.TimeSec)
+		case "QoSLog":
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndTimeSec)
 		case "incRTP":
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndTimeSec)
 		case "outRTP":
@@ -130,6 +140,8 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		switch payloadType {
 		case "SIP":
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.SIP.TimeMic)
+		case "QoSLog":
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndinTimeMic)
 		case "incRTP":
 			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.EndinTimeMic)
 		case "outRTP":
@@ -146,6 +158,8 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		switch payloadType {
 		case "SIP":
 			packet[6] = 1
+		case "QoSLog":
+			packet[6] = 100
 		case "incRTP":
 			packet[6] = 34
 		case "outRTP":
@@ -175,6 +189,10 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		case "SIP":
 			packet = make([]byte, len(ipfix.Data.SIP.SipMsg)+6)
 			copy(packet[6:], ipfix.Data.SIP.SipMsg)
+		case "QoSLog":
+			payload, _ := json.Marshal(ipfix.PrepLogQoS())
+			packet = make([]byte, len(payload)+6)
+			copy(packet[6:], payload)
 		case "incRTP":
 			payload, _ := ipfix.PrepIncRtp()
 			packet = make([]byte, len(payload)+6)
@@ -206,19 +224,22 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 			copy(packet[6:], ipfix.Data.QOS.OutCallID)
 		}
 
-	// Chunk MOS
-	case 0x0020:
-		packet = make([]byte, 6+2)
-		switch payloadType {
-		case "incRTP":
-			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.IncMos))
-		case "outRTP":
-			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.OutMos))
-		case "incRTCP":
-			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.IncMos))
-		case "outRTCP":
-			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.OutMos))
-		}
+		/*
+		   // TODO rewrite cast to uint16
+		   // Chunk MOS
+		   	case 0x0020:
+		   		packet = make([]byte, 6+2)
+		   		switch payloadType {
+		   		case "incRTP":
+		   			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.IncMos))
+		   		case "outRTP":
+		   			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.OutMos))
+		   		case "incRTCP":
+		   			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.IncMos))
+		   		case "outRTCP":
+		   			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.OutMos))
+		   		}
+		*/
 	}
 
 	binary.BigEndian.PutUint16(packet[:2], ChunckVen)
@@ -244,9 +265,9 @@ func (i *IPFIX) SendHep(s string) {
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, s))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000e, s))
 	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, s))
-	if s == "incRTP" || s == "outRTP" || s == "incRTCP" || s == "outRTCP" {
+	if s == "incRTP" || s == "outRTP" || s == "incRTCP" || s == "outRTCP" || s == "QoSLog" {
 		bhep.Write(i.NewHEPChunck(0x0000, 0x0011, s))
-		bhep.Write(i.NewHEPChunck(0x0000, 0x0020, s))
+		//bhep.Write(i.NewHEPChunck(0x0000, 0x0020, s))
 	}
 	SendHepMsg(bhep.Bytes())
 }

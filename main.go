@@ -158,6 +158,7 @@ func start(conn *net.TCPConn) {
 					msg.SendHep("outRTP")
 					msg.SendHep("incRTCP")
 					msg.SendHep("outRTCP")
+					msg.SendHep("QoSLog")
 				}
 
 				if *saddr != "" {
