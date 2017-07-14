@@ -6,6 +6,8 @@ import (
 	"log"
 )
 
+// NewRecSipUDP fills the SipSet struct with
+// the dataSet 258
 func NewRecSipUDP(header []byte) *IPFIX {
 	/*	t := time.Now()
 		defer func() {
@@ -47,6 +49,8 @@ func NewRecSipUDP(header []byte) *IPFIX {
 	return &i
 }
 
+// NewSendSipUDP fills the SipSet struct with
+// the dataSet 259
 func NewSendSipUDP(header []byte) *IPFIX {
 	/*	t := time.Now()
 		defer func() {
@@ -92,6 +96,8 @@ func NewSendSipUDP(header []byte) *IPFIX {
 	return &i
 }
 
+// NewRecSipTCP fills the SipSet struct with
+// the dataSet 260
 func NewRecSipTCP(header []byte) *IPFIX {
 	var i IPFIX
 
@@ -119,6 +125,8 @@ func NewRecSipTCP(header []byte) *IPFIX {
 	return &i
 }
 
+// NewSendSipTCP fills the SipSet struct with
+// the dataSet 261
 func NewSendSipTCP(header []byte) *IPFIX {
 	var i IPFIX
 	r := bytes.NewReader(header)

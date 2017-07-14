@@ -47,7 +47,7 @@ packet := buffers.Get().([]byte)
 buffers.Put(packet)
 */
 
-// start handles the incoming packets
+// Start handles the incoming packets
 func start(conn *net.TCPConn) {
 	log.Printf("Handling new connection under %v\n", *addr)
 
@@ -57,6 +57,7 @@ func start(conn *net.TCPConn) {
 		conn.Close()
 	}()
 
+	// Create a buffer for incoming packets
 	r := bufio.NewReader(conn)
 	header := make([]byte, headerLen)
 	var (
@@ -67,14 +68,22 @@ func start(conn *net.TCPConn) {
 	)
 
 	for {
+		// Read the next 20 bytes which represent
+		// the ipfix header + setheader at once
 		if _, err := io.ReadFull(r, header); err == nil {
+			// Extract the ipfix version
 			version = int(uint16(header[0])<<8 + uint16(header[1]))
+			// Extract the length of the whole packet
 			dataLen = int(uint16(header[2])<<8 + uint16(header[3]))
+			// Extract the setID
 			setID = int(uint16(header[16])<<8 + uint16(header[17]))
 
 			if setID > 280 || setID < 256 || version != 10 {
 				break
 			}
+			// Create a buffer which holds exactly one
+			// dataSet of the length of (dataLen-headerLen)
+			// or in words the packet length minus the header length
 			dataSet = make([]byte, dataLen-headerLen)
 
 		} else if err != nil {
@@ -83,7 +92,10 @@ func start(conn *net.TCPConn) {
 			}
 			break
 		}
+		// Read the next (dataLen-headerLen) bytes into
+		// the dataSet buffer at once
 		if _, err := io.ReadFull(r, dataSet); err == nil {
+			// Now merge the header with the dataSet.
 			data := append(header, dataSet...)
 
 			if *verbose {
@@ -154,15 +166,18 @@ func start(conn *net.TCPConn) {
 				msg := NewQosStats(data)
 
 				if *haddr != "" {
-					msg.SendHep("incRTP")
-					msg.SendHep("outRTP")
-					msg.SendHep("incRTCP")
-					msg.SendHep("outRTCP")
-					msg.SendHep("logQOS")
+					// Send only QOS stats with meaningful values
+					if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
+						msg.SendHep("incRTP")
+						msg.SendHep("outRTP")
+						msg.SendHep("incRTCP")
+						msg.SendHep("outRTCP")
+						msg.SendHep("logQOS")
+					}
 				}
 
 				if *saddr != "" {
-					// Send only QOS stats with usable values
+					// Send only QOS stats with meaningful values
 					if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
 						msg.SendStatsd("QOS")
 					}

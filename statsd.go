@@ -7,17 +7,17 @@ import (
 	"strings"
 )
 
-// SendStatsd creates a map with QoS or SIP stats which will
+// SendStatsd creates a map with QOS or SIP stats which will
 // be converted into statsd compatible strings seperated by '\n'
 func (i *IPFIX) SendStatsd(s string) {
 	var metrics []string
-	var qosRtpMap map[string]interface{}
-	var qosCallsMap map[string]interface{}
+	var mapQOS map[string]interface{}
+	var mapCalls map[string]interface{}
 	switch s {
 	case "SIP":
 
 	case "QOS":
-		qosRtpMap = map[string]interface{}{
+		mapQOS = map[string]interface{}{
 			"QOS.IncMos": i.Data.QOS.IncMos,
 			"QOS.OutMos": i.Data.QOS.OutMos,
 
@@ -46,15 +46,15 @@ func (i *IPFIX) SendStatsd(s string) {
 			"QOS.OutRtcpLostPackets": i.Data.QOS.OutRtcpLostPackets,
 		}
 
-		qosCallsMap = map[string]interface{}{
+		mapCalls = map[string]interface{}{
 			"QOS.IncCallID": i.Data.QOS.IncCallID,
 		}
 	}
 
-	for metric, value := range qosRtpMap {
+	for metric, value := range mapQOS {
 		metrics = append(metrics, fmt.Sprintf("%s:%d|h", metric, value))
 	}
-	for metric, value := range qosCallsMap {
+	for metric, value := range mapCalls {
 		metrics = append(metrics, fmt.Sprintf("%s:%d|s", metric, value))
 	}
 	stats := strings.Join(metrics, "\n")
