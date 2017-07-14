@@ -115,7 +115,7 @@ func (i *IPFIX) PrepLogQoS() *map[string]interface{} {
 
 		"callerIncSrcIP":   stringIPv4(i.Data.QOS.CallerIncSrcIP),
 		"callerIncDstIP":   stringIPv4(i.Data.QOS.CallerIncDstIP),
-		"CallerIncSrcPort": i.Data.QOS.CallerIncSrcPort,
+		"callerIncSrcPort": i.Data.QOS.CallerIncSrcPort,
 		"callerIncDstPort": i.Data.QOS.CallerIncDstPort,
 
 		"calleeIncSrcIP":   stringIPv4(i.Data.QOS.CalleeIncSrcIP),

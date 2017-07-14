@@ -194,19 +194,19 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 			packet = make([]byte, len(payload)+6)
 			copy(packet[6:], payload)
 		case "incRTP":
-			payload, _ := ipfix.PrepIncRtp()
+			payload, _ := json.Marshal(ipfix.PrepIncRtp())
 			packet = make([]byte, len(payload)+6)
 			copy(packet[6:], payload)
 		case "outRTP":
-			payload, _ := ipfix.PrepOutRtp()
+			payload, _ := json.Marshal(ipfix.PrepOutRtp())
 			packet = make([]byte, len(payload)+6)
 			copy(packet[6:], payload)
 		case "incRTCP":
-			payload, _ := ipfix.PrepIncRtcp()
+			payload, _ := json.Marshal(ipfix.PrepIncRtcp())
 			packet = make([]byte, len(payload)+6)
 			copy(packet[6:], payload)
 		case "outRTCP":
-			payload, _ := ipfix.PrepIncRtcp()
+			payload, _ := json.Marshal(ipfix.PrepIncRtcp())
 			packet = make([]byte, len(payload)+6)
 			copy(packet[6:], payload)
 		}
@@ -273,7 +273,7 @@ func (i *IPFIX) SendHep(s string) {
 }
 
 // PrepIncRtp
-func (ipfix *IPFIX) PrepIncRtp() ([]byte, error) {
+func (ipfix *IPFIX) PrepIncRtp() *map[string]interface{} {
 	mapIncRtp := map[string]interface{}{
 
 		"CORRELATION_ID":  string(ipfix.Data.QOS.IncCallID),
@@ -313,11 +313,10 @@ func (ipfix *IPFIX) PrepIncRtp() ([]byte, error) {
 		"PARTY":           0,
 		"TYPE":            "PERIODIC",
 	}
-	j, err := json.Marshal(mapIncRtp)
-	return j, err
+	return &mapIncRtp
 }
 
-func (ipfix *IPFIX) PrepOutRtp() ([]byte, error) {
+func (ipfix *IPFIX) PrepOutRtp() *map[string]interface{} {
 	mapOutRtp := map[string]interface{}{
 
 		"CORRELATION_ID":  string(ipfix.Data.QOS.OutCallID),
@@ -357,12 +356,10 @@ func (ipfix *IPFIX) PrepOutRtp() ([]byte, error) {
 		"PARTY":           1,
 		"TYPE":            "PERIODIC",
 	}
-
-	j, err := json.Marshal(mapOutRtp)
-	return j, err
+	return &mapOutRtp
 }
 
-func (ipfix *IPFIX) PrepIncRtcp() ([]byte, error) {
+func (ipfix *IPFIX) PrepIncRtcp() *map[string]interface{} {
 	mapIncRtcp := map[string]interface{}{
 
 		"CORRELATION_ID":  string(ipfix.Data.QOS.IncCallID),
@@ -402,12 +399,10 @@ func (ipfix *IPFIX) PrepIncRtcp() ([]byte, error) {
 		"PARTY":           0,
 		"TYPE":            "PERIODIC",
 	}
-
-	j, err := json.Marshal(mapIncRtcp)
-	return j, err
+	return &mapIncRtcp
 }
 
-func (ipfix *IPFIX) PrepOutRtcp() ([]byte, error) {
+func (ipfix *IPFIX) PrepOutRtcp() *map[string]interface{} {
 	mapOutRtcp := map[string]interface{}{
 
 		"CORRELATION_ID":  string(ipfix.Data.QOS.OutCallID),
@@ -447,7 +442,5 @@ func (ipfix *IPFIX) PrepOutRtcp() ([]byte, error) {
 		"PARTY":           1,
 		"TYPE":            "PERIODIC",
 	}
-
-	j, err := json.Marshal(mapOutRtcp)
-	return j, err
+	return &mapOutRtcp
 }
