@@ -18,7 +18,11 @@ var (
 	debug   = flag.Bool("d", false, "Debug output to stdout")
 	verbose = flag.Bool("v", false, "Verbose output to stdout")
 	gaddr   = flag.String("g", "", "Graylog server address")
+	name    = flag.String("n", "sbc", "SBC name in graylog")
+	hepPw   = flag.String("P", "myhep", "HEP capture password")
 )
+
+const headerLen int = 20
 
 func checkErr(err error) {
 	if err != nil {
@@ -54,7 +58,7 @@ func start(conn *net.TCPConn) {
 	}()
 
 	r := bufio.NewReader(conn)
-	header := make([]byte, 20)
+	header := make([]byte, headerLen)
 	var (
 		version int
 		dataLen int
@@ -71,7 +75,7 @@ func start(conn *net.TCPConn) {
 			if setID > 280 || setID < 256 || version != 10 {
 				break
 			}
-			dataSet = make([]byte, dataLen-len(header))
+			dataSet = make([]byte, dataLen-headerLen)
 
 		} else if err != nil {
 			if err != io.EOF {
@@ -97,7 +101,7 @@ func start(conn *net.TCPConn) {
 			case 258:
 				msg := NewRecSipUDP(data)
 				if *haddr != "" {
-					NewSipHEP(msg)
+					msg.SendHep("SIP")
 				}
 
 				if *gaddr != "" {
@@ -110,7 +114,7 @@ func start(conn *net.TCPConn) {
 			case 259:
 				msg := NewSendSipUDP(data)
 				if *haddr != "" {
-					NewSipHEP(msg)
+					msg.SendHep("SIP")
 				}
 
 				if *gaddr != "" {
@@ -123,7 +127,7 @@ func start(conn *net.TCPConn) {
 			case 260:
 				msg := NewRecSipTCP(data)
 				if *haddr != "" {
-					NewSipHEP(msg)
+					msg.SendHep("SIP")
 				}
 
 				if *gaddr != "" {
@@ -136,7 +140,7 @@ func start(conn *net.TCPConn) {
 			case 261:
 				msg := NewSendSipTCP(data)
 				if *haddr != "" {
-					NewSipHEP(msg)
+					msg.SendHep("SIP")
 				}
 
 				if *gaddr != "" {
@@ -150,11 +154,10 @@ func start(conn *net.TCPConn) {
 				msg := NewQosStats(data)
 
 				if *haddr != "" {
-					NewQosHEPincRTP(msg)
-					NewQosHEPoutRTP(msg)
-
-					NewQosHEPincRTCP(msg)
-					NewQosHEPoutRTCP(msg)
+					msg.SendHep("incRTP")
+					msg.SendHep("outRTP")
+					msg.SendHep("incRTCP")
+					msg.SendHep("outRTCP")
 				}
 
 				if *saddr != "" {

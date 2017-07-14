@@ -7,8 +7,8 @@ import (
 	"net"
 )
 
-// SendHEPMsg writes the final HEP packet into the buffer
-func SendHEPMsg(msg []byte) {
+// SendHepMsg writes the final HEP packet into the buffer
+func SendHepMsg(msg []byte) {
 	var packet []byte
 	packet = make([]byte, len(msg)+6)
 
@@ -161,11 +161,13 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		packet = make([]byte, 6+4)
 		binary.BigEndian.PutUint32(packet[6:], 0x00000BEE) // Node homer01:3054
 
-	// case 0x000d:
-	// Chunk keep alive timer
+		// case 0x000d:
+		// Chunk keep alive timer
 
-	// case 0x000e:
 	// Chunk authenticate key (plain text / TLS connection)
+	case 0x000e:
+		packet = make([]byte, len(*hepPw)+6)
+		copy(packet[6:], *hepPw)
 
 	// Chunk captured packet payload
 	case 0x000f:
@@ -196,8 +198,27 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 
 	// Chunk internal correlation id
 	case 0x0011:
-		packet = make([]byte, len(ipfix.Data.QOS.IncCallID)+6)
-		copy(packet[6:], ipfix.Data.QOS.IncCallID)
+		if len(ipfix.Data.QOS.IncCallID) > 0 {
+			packet = make([]byte, len(ipfix.Data.QOS.IncCallID)+6)
+			copy(packet[6:], ipfix.Data.QOS.IncCallID)
+		} else {
+			packet = make([]byte, len(ipfix.Data.QOS.OutCallID)+6)
+			copy(packet[6:], ipfix.Data.QOS.OutCallID)
+		}
+
+	// Chunk MOS
+	case 0x0020:
+		packet = make([]byte, 6+2)
+		switch payloadType {
+		case "incRTP":
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.IncMos)
+		case "outRTP":
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.OutMos)
+		case "incRTCP":
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.IncMos)
+		case "outRTCP":
+			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.OutMos)
+		}
 	}
 
 	binary.BigEndian.PutUint16(packet[:2], ChunckVen)
@@ -207,97 +228,27 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 	return packet
 }
 
-// SendHEP sends the HEP message
-func NewSipHEP(i *IPFIX) {
+// SendHep builds the HEP message
+func (i *IPFIX) SendHep(s string) {
 	bhep := new(bytes.Buffer)
 
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "SIP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0002, "SIP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0003, "SIP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0004, "SIP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0007, "SIP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0008, "SIP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0009, "SIP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000a, "SIP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000b, "SIP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "SIP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "SIP"))
-	SendHEPMsg(bhep.Bytes())
-}
-
-func NewQosHEPincRTP(i *IPFIX) {
-	bhep := new(bytes.Buffer)
-
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "incRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0002, "incRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0003, "incRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0004, "incRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0007, "incRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0008, "incRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0009, "incRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000a, "incRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000b, "incRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "incRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "incRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "incRTP"))
-	SendHEPMsg(bhep.Bytes())
-
-}
-
-func NewQosHEPoutRTP(i *IPFIX) {
-	bhep := new(bytes.Buffer)
-
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "outRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0002, "outRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0003, "outRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0004, "outRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0007, "outRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0008, "outRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0009, "outRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000a, "outRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000b, "outRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "outRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "outRTP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "outRTP"))
-	SendHEPMsg(bhep.Bytes())
-
-}
-
-func NewQosHEPincRTCP(i *IPFIX) {
-	bhep := new(bytes.Buffer)
-
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "incRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0002, "incRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0003, "incRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0004, "incRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0007, "incRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0008, "incRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0009, "incRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000a, "incRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000b, "incRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "incRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "incRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "incRTCP"))
-	SendHEPMsg(bhep.Bytes())
-
-}
-func NewQosHEPoutRTCP(i *IPFIX) {
-	bhep := new(bytes.Buffer)
-
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, "outRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0002, "outRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0003, "outRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0004, "outRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0007, "outRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0008, "outRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0009, "outRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000a, "outRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000b, "outRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, "outRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, "outRTCP"))
-	bhep.Write(i.NewHEPChunck(0x0000, 0x0011, "outRTCP"))
-	SendHEPMsg(bhep.Bytes())
-
+	bhep.Write(i.NewHEPChunck(0x0000, 0x0001, s))
+	bhep.Write(i.NewHEPChunck(0x0000, 0x0002, s))
+	bhep.Write(i.NewHEPChunck(0x0000, 0x0003, s))
+	bhep.Write(i.NewHEPChunck(0x0000, 0x0004, s))
+	bhep.Write(i.NewHEPChunck(0x0000, 0x0007, s))
+	bhep.Write(i.NewHEPChunck(0x0000, 0x0008, s))
+	bhep.Write(i.NewHEPChunck(0x0000, 0x0009, s))
+	bhep.Write(i.NewHEPChunck(0x0000, 0x000a, s))
+	bhep.Write(i.NewHEPChunck(0x0000, 0x000b, s))
+	bhep.Write(i.NewHEPChunck(0x0000, 0x000c, s))
+	bhep.Write(i.NewHEPChunck(0x0000, 0x000e, s))
+	bhep.Write(i.NewHEPChunck(0x0000, 0x000f, s))
+	if s == "incRTP" || s == "outRTP" || s == "incRTCP" || s == "outRTCP" {
+		bhep.Write(i.NewHEPChunck(0x0000, 0x0011, s))
+		bhep.Write(i.NewHEPChunck(0x0000, 0x0020, s))
+	}
+	SendHepMsg(bhep.Bytes())
 }
 
 // PrepIncRtp

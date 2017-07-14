@@ -52,23 +52,23 @@ func (i *IPFIX) SendLog(s string) {
 
 func (i *IPFIX) PrepLogSIP() *map[string]interface{} {
 	mapSIP := map[string]interface{}{
-		"intVlan":   i.Data.SIP.IntVlan,
-		"id":        string(i.Data.SIP.CallID),
-		"ipLen":     i.Data.SIP.IPlen,
-		"udpLen":    i.Data.SIP.UDPlen,
-		"vl":        i.Data.SIP.VL,
-		"tos":       i.Data.SIP.TOS,
-		"tlen":      i.Data.SIP.TLen,
-		"tid":       i.Data.SIP.TID,
-		"tflags":    i.Data.SIP.TFlags,
-		"ttl":       i.Data.SIP.TTL,
-		"tproto":    i.Data.SIP.TProto,
-		"srcIp":     stringIPv4(i.Data.SIP.SrcIP),
-		"dstIp":     stringIPv4(i.Data.SIP.DstIP),
-		"srcPort":   i.Data.SIP.SrcPort,
-		"dstPort":   i.Data.SIP.DstPort,
-		"sipMsg":    string(i.Data.SIP.SipMsg),
-		"ipfixPort": *addr,
+		"intVlan": i.Data.SIP.IntVlan,
+		"id":      string(i.Data.SIP.CallID),
+		"ipLen":   i.Data.SIP.IPlen,
+		"udpLen":  i.Data.SIP.UDPlen,
+		"vl":      i.Data.SIP.VL,
+		"tos":     i.Data.SIP.TOS,
+		"tlen":    i.Data.SIP.TLen,
+		"tid":     i.Data.SIP.TID,
+		"tflags":  i.Data.SIP.TFlags,
+		"ttl":     i.Data.SIP.TTL,
+		"tproto":  i.Data.SIP.TProto,
+		"srcIp":   stringIPv4(i.Data.SIP.SrcIP),
+		"dstIp":   stringIPv4(i.Data.SIP.DstIP),
+		"srcPort": i.Data.SIP.SrcPort,
+		"dstPort": i.Data.SIP.DstPort,
+		"sipMsg":  string(i.Data.SIP.SipMsg),
+		"sbcName": *name,
 	}
 
 	return &mapSIP
@@ -115,6 +115,7 @@ func (i *IPFIX) PrepLogQoS() *map[string]interface{} {
 
 		"callerIncSrcIP":   stringIPv4(i.Data.QOS.CallerIncSrcIP),
 		"callerIncDstIP":   stringIPv4(i.Data.QOS.CallerIncDstIP),
+		"CallerIncSrcPort": i.Data.QOS.CallerIncSrcPort,
 		"callerIncDstPort": i.Data.QOS.CallerIncDstPort,
 
 		"calleeIncSrcIP":   stringIPv4(i.Data.QOS.CalleeIncSrcIP),
@@ -164,7 +165,7 @@ func (i *IPFIX) PrepLogQoS() *map[string]interface{} {
 
 		"outCallIDLen": i.Data.QOS.OutCallIDLen,
 		"outCallID":    string(i.Data.QOS.OutCallID),
-		"ipfixPort":    *addr,
+		"sbcName":      *name,
 	}
 	return &mapQoS
 }
