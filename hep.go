@@ -211,13 +211,13 @@ func (ipfix *IPFIX) NewHEPChunck(ChunckVen uint16, ChunckType uint16, payloadTyp
 		packet = make([]byte, 6+2)
 		switch payloadType {
 		case "incRTP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.IncMos)
+			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.IncMos))
 		case "outRTP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.OutMos)
+			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.OutMos))
 		case "incRTCP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.IncMos)
+			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.IncMos))
 		case "outRTCP":
-			binary.BigEndian.PutUint32(packet[6:], ipfix.Data.QOS.OutMos)
+			binary.BigEndian.PutUint16(packet[6:], uint16(ipfix.Data.QOS.OutMos))
 		}
 	}
 
