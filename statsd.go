@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+// SendStatsd creates a map with QoS or SIP stats which will
+// be converted into statsd compatible strings seperated by '\n'
 func (i *IPFIX) SendStatsd(s string) {
 	var metrics []string
 	var qosRtpMap map[string]interface{}

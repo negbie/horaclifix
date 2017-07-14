@@ -47,7 +47,7 @@ packet := buffers.Get().([]byte)
 buffers.Put(packet)
 */
 
-// start handles incoming packets
+// start handles the incoming packets
 func start(conn *net.TCPConn) {
 	log.Printf("Handling new connection under %v\n", *addr)
 
@@ -158,11 +158,11 @@ func start(conn *net.TCPConn) {
 					msg.SendHep("outRTP")
 					msg.SendHep("incRTCP")
 					msg.SendHep("outRTCP")
-					msg.SendHep("QoSLog")
+					msg.SendHep("logQOS")
 				}
 
 				if *saddr != "" {
-					// Send only QoS stats with usable values
+					// Send only QOS stats with usable values
 					if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
 						msg.SendStatsd("QOS")
 					}

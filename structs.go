@@ -1,7 +1,6 @@
 package main
 
 // IPFIX holds the structure of one IPFIX packet
-//
 // Wire format:
 //
 // Bytes:  0                   1                   2                   3
@@ -42,20 +41,21 @@ type IpfixSetHeader struct {
 	Length uint16
 }
 
-// DataSet holds multiple datasets with following SetID's:
-// HandShake: 	257
-// RecSipUDP: 	258
-// SendSipUDP: 	259
-// RecSipTCP: 	260
-// SendSipTCP: 	261
+// DataSet holds multiple datasets with following setID's:
+// HandShake: 	  	257
+// NewRecSipUDP: 	258
+// NewSendSipUDP: 	259
+// NewRecSipTCP: 	260
+// NewSendSipTCP: 	261
+// NewQosStats:		268
 type DataSet struct {
-	HandShake Hs
-	SIP       SipSet
-	QOS       CallStats
+	Hs  HandShake
+	SIP SipSet
+	QOS QosSet
 }
 
-// Hs holds the HandShake dataset fields
-type Hs struct {
+// HandShake holds the HandShake dataset fields
+type HandShake struct {
 	MaVer    uint16
 	MiVer    uint16
 	CFlags1  uint16
@@ -71,10 +71,10 @@ type Hs struct {
 	//Hostname    ByteString
 }
 
-// Use custom type to get strings instead base64 when calling json.Marshal
+// ByteString is to parse []byte to string for json.Marshal
 type ByteString []byte
 
-// SipSet holds the SIP dataset fields
+// SipSet holds the SIP related fields
 type SipSet struct {
 	TimeSec   uint32
 	TimeMic   uint32
@@ -103,7 +103,8 @@ type SipSet struct {
 	SipMsg    ByteString
 }
 
-type CallStats struct {
+// QosSet holds the QoS related fields
+type QosSet struct {
 	IncRtpBytes       uint32
 	IncRtpPackets     uint32
 	IncRtpLostPackets uint32

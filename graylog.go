@@ -23,11 +23,13 @@ func (s *ByteString) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-func (ipfix *IPFIX) MarshalJSON() ([]byte, error) {
-	bytes, err := json.Marshal(*ipfix)
+func (i *IPFIX) MarshalJSON() ([]byte, error) {
+	bytes, err := json.Marshal(*i)
 	return bytes, err
 }
 
+// SendLog will encode the QOS & SIP maps to json
+// and send them over UDP to Graylog
 func (i *IPFIX) SendLog(s string) {
 	gconn, err := net.Dial("udp", *gaddr)
 	checkErr(err)
@@ -43,13 +45,15 @@ func (i *IPFIX) SendLog(s string) {
 
 	case "QOS":
 		//qLog, err := json.Marshal(&i.Data.QOS)
-		err = json.NewEncoder(gconn).Encode(i.PrepLogQoS())
+		err = json.NewEncoder(gconn).Encode(i.PrepLogQOS())
 		if err != nil {
 			log.Println("QOS json.NewEncoder failed:", err)
 		}
 	}
 }
 
+// PrepLogSIP retruns a map with SIP stats which can be
+// json encoded and send into homer, or graylog
 func (i *IPFIX) PrepLogSIP() *map[string]interface{} {
 	mapSIP := map[string]interface{}{
 		"intVlan": i.Data.SIP.IntVlan,
@@ -70,12 +74,13 @@ func (i *IPFIX) PrepLogSIP() *map[string]interface{} {
 		"sipMsg":  string(i.Data.SIP.SipMsg),
 		"sbcName": *name,
 	}
-
 	return &mapSIP
 }
 
-func (i *IPFIX) PrepLogQoS() *map[string]interface{} {
-	mapQoS := map[string]interface{}{
+// PrepLogQOS retruns a map with QOS stats which can be
+// json encoded and send into homer, or graylog
+func (i *IPFIX) PrepLogQOS() *map[string]interface{} {
+	mapQOS := map[string]interface{}{
 
 		"incRtpBytes":       i.Data.QOS.IncRtpBytes,
 		"incRtpPackets":     i.Data.QOS.IncRtpPackets,
@@ -167,9 +172,10 @@ func (i *IPFIX) PrepLogQoS() *map[string]interface{} {
 		"outCallID":    string(i.Data.QOS.OutCallID),
 		"sbcName":      *name,
 	}
-	return &mapQoS
+	return &mapQOS
 }
 
+// stringIPv4 converts a ipv4 unit32 into a string
 func stringIPv4(n uint32) string {
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, n)
