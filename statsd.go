@@ -2,14 +2,12 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"net"
 	"strings"
 )
 
 // SendStatsd creates a map with QOS or SIP stats which will
 // be converted into statsd compatible strings seperated by '\n'
-func (i *IPFIX) SendStatsd(s string) {
+func (conn Connections) SendStatsD(i *IPFIX, s string) {
 	var metrics []string
 	var mapQOS map[string]interface{}
 	var mapCalls map[string]interface{}
@@ -59,9 +57,8 @@ func (i *IPFIX) SendStatsd(s string) {
 	}
 	stats := strings.Join(metrics, "\n")
 
-	if conn, err := net.Dial("udp", *saddr); err == nil {
-		io.WriteString(conn, stats)
-		conn.Close()
+	if _, err := conn.StatsD.Write([]byte(stats)); err != nil {
+		checkErr(err)
 	}
 }
 

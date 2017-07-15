@@ -1,5 +1,7 @@
 package main
 
+import "net"
+
 // IPFIX holds the structure of one IPFIX packet
 // Wire format:
 //
@@ -191,4 +193,10 @@ type QosSet struct {
 
 	OutCallIDLen uint16
 	OutCallID    ByteString
+}
+
+type Connections struct {
+	Graylog net.Conn
+	Homer   net.Conn
+	StatsD  net.Conn
 }

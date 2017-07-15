@@ -4,35 +4,31 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"net"
 )
 
-// SendHepMsg will write the final HEP message into the buffer and send it to wire
+// SendHep will write the final HEP message into the buffer and send it to wire
 // The first 4 bytes are the string "HEP3". The next 2 bytes are the length of the
 // whole message (len("HEP3") + length of all the chucks we have). The next bytes
-// are all the chuncks created by NewHEPChunck()
+// are all the chuncks created by NewHEPChuncks()
 // Bytes: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31......
 //        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //        | "HEP3"|len|chuncks(0x0001|0x0002|0x0003|0x0004|0x0007|0x0008|0x0009|0x000a|0x000b|......)
 //        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-func SendHepMsg(chuncks []byte) {
-	var hepMsg []byte
-	hepMsg = make([]byte, len(chuncks)+6)
+func (conn *Connections) SendHep(i *IPFIX, s string) {
+	chuncks := i.NewHEPChuncks(s)
+	hepMsg := make([]byte, len(chuncks)+6)
 
 	copy(hepMsg[6:], chuncks)
 	binary.BigEndian.PutUint32(hepMsg[:4], uint32(0x48455033))   // ASCII "HEP3"
 	binary.BigEndian.PutUint16(hepMsg[4:6], uint16(len(hepMsg))) // Total length
 
-	if conn, err := net.Dial("udp", *haddr); err == nil {
-		conn.Write(hepMsg)
-		conn.Close()
-	} else {
+	if _, err := conn.Homer.Write(hepMsg); err != nil {
 		checkErr(err)
 	}
 }
 
-// NewHEPChunck will construct the HEP chuncks
-func (i *IPFIX) NewHEPChunck(chunckVen uint16, chunckType uint16, payloadType string) []byte {
+// MakeChunck will construct the respective HEP chunck
+func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType string) []byte {
 	var chunck []byte
 	switch chunckType {
 	// Chunk IP protocol family (0x02=IPv4)
@@ -240,28 +236,28 @@ func (i *IPFIX) NewHEPChunck(chunckVen uint16, chunckType uint16, payloadType st
 	return chunck
 }
 
-// SendHep will fill a buffer with all the chuncks
+// NewHEPChuncks will fill a buffer with all the chuncks
 // we need and give this buffer to SendHepMsg
-func (i *IPFIX) SendHep(s string) {
+func (i *IPFIX) NewHEPChuncks(s string) []byte {
 	buf := new(bytes.Buffer)
 
-	buf.Write(i.NewHEPChunck(0x0000, 0x0001, s))
-	buf.Write(i.NewHEPChunck(0x0000, 0x0002, s))
-	buf.Write(i.NewHEPChunck(0x0000, 0x0003, s))
-	buf.Write(i.NewHEPChunck(0x0000, 0x0004, s))
-	buf.Write(i.NewHEPChunck(0x0000, 0x0007, s))
-	buf.Write(i.NewHEPChunck(0x0000, 0x0008, s))
-	buf.Write(i.NewHEPChunck(0x0000, 0x0009, s))
-	buf.Write(i.NewHEPChunck(0x0000, 0x000a, s))
-	buf.Write(i.NewHEPChunck(0x0000, 0x000b, s))
-	buf.Write(i.NewHEPChunck(0x0000, 0x000c, s))
-	buf.Write(i.NewHEPChunck(0x0000, 0x000e, s))
-	buf.Write(i.NewHEPChunck(0x0000, 0x000f, s))
+	buf.Write(i.MakeChunck(0x0000, 0x0001, s))
+	buf.Write(i.MakeChunck(0x0000, 0x0002, s))
+	buf.Write(i.MakeChunck(0x0000, 0x0003, s))
+	buf.Write(i.MakeChunck(0x0000, 0x0004, s))
+	buf.Write(i.MakeChunck(0x0000, 0x0007, s))
+	buf.Write(i.MakeChunck(0x0000, 0x0008, s))
+	buf.Write(i.MakeChunck(0x0000, 0x0009, s))
+	buf.Write(i.MakeChunck(0x0000, 0x000a, s))
+	buf.Write(i.MakeChunck(0x0000, 0x000b, s))
+	buf.Write(i.MakeChunck(0x0000, 0x000c, s))
+	buf.Write(i.MakeChunck(0x0000, 0x000e, s))
+	buf.Write(i.MakeChunck(0x0000, 0x000f, s))
 	if s == "incRTP" || s == "outRTP" || s == "incRTCP" || s == "outRTCP" || s == "logQOS" {
-		buf.Write(i.NewHEPChunck(0x0000, 0x0011, s))
-		//buf.Write(i.NewHEPChunck(0x0000, 0x0020, s))
+		buf.Write(i.MakeChunck(0x0000, 0x0011, s))
+		//buf.Write(i.MakeChunck(0x0000, 0x0020, s))
 	}
-	SendHepMsg(buf.Bytes())
+	return buf.Bytes()
 }
 
 // PrepIncRtp

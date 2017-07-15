@@ -50,11 +50,15 @@ buffers.Put(packet)
 // Start handles the incoming packets
 func start(conn *net.TCPConn) {
 	log.Printf("Handling new connection under %v\n", *addr)
+	uConn := NewUDPConnections()
 
 	// Close connection when this function ends
 	defer func() {
 		log.Printf("Closing connection under %v\n", *addr)
 		conn.Close()
+		uConn.Graylog.Close()
+		uConn.Homer.Close()
+		uConn.StatsD.Close()
 	}()
 
 	// Create a buffer for incoming packets
@@ -113,11 +117,11 @@ func start(conn *net.TCPConn) {
 			case 258:
 				msg := NewRecSipUDP(data)
 				if *haddr != "" {
-					msg.SendHep("SIP")
+					uConn.SendHep(msg, "SIP")
 				}
 
 				if *gaddr != "" {
-					msg.SendLog("SIP")
+					uConn.SendLog(msg, "SIP")
 				}
 				if *debug {
 					fmt.Println("SIP output:")
@@ -126,11 +130,11 @@ func start(conn *net.TCPConn) {
 			case 259:
 				msg := NewSendSipUDP(data)
 				if *haddr != "" {
-					msg.SendHep("SIP")
+					uConn.SendHep(msg, "SIP")
 				}
 
 				if *gaddr != "" {
-					msg.SendLog("SIP")
+					uConn.SendLog(msg, "SIP")
 				}
 				if *debug {
 					fmt.Println("SIP output:")
@@ -139,11 +143,11 @@ func start(conn *net.TCPConn) {
 			case 260:
 				msg := NewRecSipTCP(data)
 				if *haddr != "" {
-					msg.SendHep("SIP")
+					uConn.SendHep(msg, "SIP")
 				}
 
 				if *gaddr != "" {
-					msg.SendLog("SIP")
+					uConn.SendLog(msg, "SIP")
 				}
 				if *debug {
 					fmt.Println("SIP output:")
@@ -152,11 +156,11 @@ func start(conn *net.TCPConn) {
 			case 261:
 				msg := NewSendSipTCP(data)
 				if *haddr != "" {
-					msg.SendHep("SIP")
+					uConn.SendHep(msg, "SIP")
 				}
 
 				if *gaddr != "" {
-					msg.SendLog("SIP")
+					uConn.SendLog(msg, "SIP")
 				}
 				if *debug {
 					fmt.Println("SIP output:")
@@ -168,22 +172,22 @@ func start(conn *net.TCPConn) {
 				if *haddr != "" {
 					// Send only QOS stats with meaningful values
 					if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
-						msg.SendHep("incRTP")
-						msg.SendHep("outRTP")
-						msg.SendHep("incRTCP")
-						msg.SendHep("outRTCP")
-						msg.SendHep("logQOS")
+						uConn.SendHep(msg, "incRTP")
+						uConn.SendHep(msg, "outRTP")
+						uConn.SendHep(msg, "incRTCP")
+						uConn.SendHep(msg, "outRTCP")
+						uConn.SendHep(msg, "logQOS")
 					}
 				}
 
 				if *saddr != "" {
 					// Send only QOS stats with meaningful values
 					if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
-						msg.SendStatsd("QOS")
+						uConn.SendStatsD(msg, "QOS")
 					}
 				}
 				if *gaddr != "" {
-					msg.SendLog("QOS")
+					uConn.SendLog(msg, "QOS")
 				}
 			default:
 				log.Printf("Unhandled setID %v\n", setID)
@@ -196,6 +200,20 @@ func start(conn *net.TCPConn) {
 			break
 		}
 	}
+}
+
+func NewUDPConnections() *Connections {
+	conn := new(Connections)
+	gconn, err := net.Dial("udp", *gaddr)
+	checkErr(err)
+	hconn, err := net.Dial("udp", *haddr)
+	checkErr(err)
+	sconn, err := net.Dial("udp", *saddr)
+	checkErr(err)
+	conn.Graylog = gconn
+	conn.Homer = hconn
+	conn.StatsD = sconn
+	return conn
 }
 
 func main() {

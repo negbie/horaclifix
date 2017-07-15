@@ -7,14 +7,15 @@ import (
 	"net"
 )
 
+/*
 func (s *ByteString) MarshalJSON() ([]byte, error) {
 	bytes, err := json.Marshal(string(*s))
 	return bytes, err
 }
 
-/*func (i *ByteIP) MarshalJSON() ([]byte, error) {
+func (i *ByteIP) MarshalJSON() ([]byte, error) {
 	return json.Marshal(net.IP(*i).String())
-}*/
+}
 
 func (s *ByteString) UnmarshalJSON(data []byte) error {
 	var x string
@@ -27,28 +28,34 @@ func (i *IPFIX) MarshalJSON() ([]byte, error) {
 	bytes, err := json.Marshal(*i)
 	return bytes, err
 }
+*/
 
 // SendLog will encode the QOS & SIP maps to json
 // and send them over UDP to Graylog
-func (i *IPFIX) SendLog(s string) {
-	gconn, err := net.Dial("udp", *gaddr)
-	checkErr(err)
-	defer gconn.Close()
-
+func (conn Connections) SendLog(i *IPFIX, s string) {
+	var gLog []byte
 	switch s {
 	case "SIP":
-		//sLog, err := json.Marshal(&i.Data.SIP)
-		err = json.NewEncoder(gconn).Encode(i.PrepLogSIP())
-		if err != nil {
-			log.Println("SIP json.NewEncoder failed:", err)
+		/*
+		   if gLog, err := json.Marshal(i.PrepLogSIP()); err != nil {
+		   		log.Println("SIP json.NewEncoder failed:", err, gLog)
+		   	}
+		*/
+		if err := json.NewEncoder(conn.Graylog).Encode(i.PrepLogSIP()); err != nil {
+			log.Println("SIP json.NewEncoder failed:", err, gLog)
 		}
-
 	case "QOS":
-		//qLog, err := json.Marshal(&i.Data.QOS)
-		err = json.NewEncoder(gconn).Encode(i.PrepLogQOS())
-		if err != nil {
-			log.Println("QOS json.NewEncoder failed:", err)
+		/*
+			if gLog, err := json.Marshal(i.PrepLogQOS()); err != nil {
+				log.Println("SIP json.NewEncoder failed:", err, gLog)
+			}
+		*/
+		if err := json.NewEncoder(conn.Graylog).Encode(i.PrepLogQOS()); err != nil {
+			log.Println("SIP json.NewEncoder failed:", err, gLog)
 		}
+	}
+	if _, err := conn.Graylog.Write(gLog); err != nil {
+		checkErr(err)
 	}
 }
 
