@@ -6,6 +6,8 @@ import (
 	"log"
 )
 
+// NewQosStats fills the QosSet struct with
+// the dataSet 268
 func NewQosStats(header []byte) *IPFIX {
 	/*	t := time.Now()
 		defer func() {

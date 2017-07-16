@@ -8,8 +8,10 @@ import (
 	"io"
 	"log"
 	"net"
-	"net/http"
-	_ "net/http/pprof"
+	/*
+		"net"
+		_ "net/http/pprof"
+	*/
 	"os"
 )
 
@@ -25,6 +27,26 @@ var (
 )
 
 const headerLen int = 20
+
+type Connections struct {
+	Graylog net.Conn
+	Homer   net.Conn
+	StatsD  net.Conn
+}
+
+func NewUDPConnections() *Connections {
+	conn := new(Connections)
+	gconn, err := net.Dial("udp", *gaddr)
+	checkErr(err)
+	hconn, err := net.Dial("udp", *haddr)
+	checkErr(err)
+	sconn, err := net.Dial("udp", *saddr)
+	checkErr(err)
+	conn.Graylog = gconn
+	conn.Homer = hconn
+	conn.StatsD = sconn
+	return conn
+}
 
 func checkErr(err error) {
 	if err != nil {
@@ -201,23 +223,8 @@ func start(conn *net.TCPConn) {
 	}
 }
 
-func NewUDPConnections() *Connections {
-	conn := new(Connections)
-	gconn, err := net.Dial("udp", *gaddr)
-	checkErr(err)
-	hconn, err := net.Dial("udp", *haddr)
-	checkErr(err)
-	sconn, err := net.Dial("udp", *saddr)
-	checkErr(err)
-	conn.Graylog = gconn
-	conn.Homer = hconn
-	conn.StatsD = sconn
-	return conn
-}
-
 func main() {
-	go http.ListenAndServe(":8080", http.DefaultServeMux)
-
+	//go http.ListenAndServe(":8080", http.DefaultServeMux)
 	flag.Parse()
 	f, err := os.OpenFile("horaclifix.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	checkCritErr(err)

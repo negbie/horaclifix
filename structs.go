@@ -1,7 +1,5 @@
 package main
 
-import "net"
-
 // IPFIX holds the structure of one IPFIX packet
 // Wire format:
 //
@@ -43,13 +41,7 @@ type IpfixSetHeader struct {
 	Length uint16
 }
 
-// DataSet holds multiple datasets with following setID's:
-// HandShake: 	  	257
-// NewRecSipUDP: 	258
-// NewSendSipUDP: 	259
-// NewRecSipTCP: 	260
-// NewSendSipTCP: 	261
-// NewQosStats:		268
+// DataSet holds different IPFIX datasets
 type DataSet struct {
 	Hs  HandShake
 	SIP SipSet
@@ -193,10 +185,4 @@ type QosSet struct {
 
 	OutCallIDLen uint16
 	OutCallID    ByteString
-}
-
-type Connections struct {
-	Graylog net.Conn
-	Homer   net.Conn
-	StatsD  net.Conn
 }

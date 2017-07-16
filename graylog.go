@@ -34,25 +34,26 @@ func (i *IPFIX) MarshalJSON() ([]byte, error) {
 // and send them over UDP to Graylog
 func (conn Connections) SendLog(i *IPFIX, s string) {
 	var gLog []byte
+	var err error
 	switch s {
 	case "SIP":
-		/*
-		   if gLog, err := json.Marshal(i.PrepLogSIP()); err != nil {
-		   		log.Println("SIP json.NewEncoder failed:", err, gLog)
-		   	}
-		*/
-		if err := json.NewEncoder(conn.Graylog).Encode(i.PrepLogSIP()); err != nil {
+
+		if gLog, err = json.Marshal(i.PrepLogSIP()); err != nil {
 			log.Println("SIP json.NewEncoder failed:", err, gLog)
 		}
-	case "QOS":
-		/*
-			if gLog, err := json.Marshal(i.PrepLogQOS()); err != nil {
+
+		/*		if err := json.NewEncoder(conn.Graylog).Encode(i.PrepLogSIP()); err != nil {
 				log.Println("SIP json.NewEncoder failed:", err, gLog)
-			}
-		*/
-		if err := json.NewEncoder(conn.Graylog).Encode(i.PrepLogQOS()); err != nil {
+			}*/
+	case "QOS":
+
+		if gLog, err = json.Marshal(i.PrepLogQOS()); err != nil {
 			log.Println("SIP json.NewEncoder failed:", err, gLog)
 		}
+
+		/*		if err := json.NewEncoder(conn.Graylog).Encode(i.PrepLogQOS()); err != nil {
+				log.Println("SIP json.NewEncoder failed:", err, gLog)
+			}*/
 	}
 	if _, err := conn.Graylog.Write(gLog); err != nil {
 		checkErr(err)
