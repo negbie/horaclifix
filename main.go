@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 )
 
@@ -56,9 +58,6 @@ func start(conn *net.TCPConn) {
 	defer func() {
 		log.Printf("Closing connection under %v\n", *addr)
 		conn.Close()
-		uConn.Graylog.Close()
-		uConn.Homer.Close()
-		uConn.StatsD.Close()
 	}()
 
 	// Create a buffer for incoming packets
@@ -217,6 +216,8 @@ func NewUDPConnections() *Connections {
 }
 
 func main() {
+	go http.ListenAndServe(":8080", http.DefaultServeMux)
+
 	flag.Parse()
 	f, err := os.OpenFile("horaclifix.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	checkCritErr(err)
