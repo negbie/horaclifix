@@ -34,17 +34,23 @@ type Connections struct {
 	StatsD  net.Conn
 }
 
-func NewUDPConnections() *Connections {
+func newUDPConnections() *Connections {
 	conn := new(Connections)
-	gconn, err := net.Dial("udp", *gaddr)
-	checkErr(err)
-	hconn, err := net.Dial("udp", *haddr)
-	checkErr(err)
-	sconn, err := net.Dial("udp", *saddr)
-	checkErr(err)
-	conn.Graylog = gconn
-	conn.Homer = hconn
-	conn.StatsD = sconn
+	if *gaddr != "" {
+		gconn, err := net.Dial("udp", *gaddr)
+		checkCritErr(err)
+		conn.Graylog = gconn
+	}
+	if *haddr != "" {
+		hconn, err := net.Dial("udp", *haddr)
+		checkCritErr(err)
+		conn.Homer = hconn
+	}
+	if *saddr != "" {
+		sconn, err := net.Dial("udp", *saddr)
+		checkCritErr(err)
+		conn.StatsD = sconn
+	}
 	return conn
 }
 
@@ -73,12 +79,15 @@ buffers.Put(packet)
 
 // Start handles the incoming packets
 func start(conn *net.TCPConn) {
-	log.Printf("Handling new connection under %v\n", *addr)
-	uConn := NewUDPConnections()
+	log.Printf("Handling new connection for %v|%v\n", *addr, *name)
+	uConn := newUDPConnections()
 
 	// Close connection when this function ends
 	defer func() {
-		log.Printf("Closing connection under %v\n", *addr)
+		log.Printf("Closing connection for %v|%v\n", *addr, *name)
+		uConn.Graylog.Close()
+		uConn.Homer.Close()
+		uConn.StatsD.Close()
 		conn.Close()
 	}()
 

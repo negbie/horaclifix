@@ -22,9 +22,7 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 	binary.BigEndian.PutUint32(hepMsg[:4], uint32(0x48455033))   // ASCII "HEP3"
 	binary.BigEndian.PutUint16(hepMsg[4:6], uint16(len(hepMsg))) // Total length
 
-	if _, err := conn.Homer.Write(hepMsg); err != nil {
-		checkErr(err)
-	}
+	conn.Homer.Write(hepMsg)
 }
 
 // MakeChunck will construct the respective HEP chunck
@@ -160,7 +158,7 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 	// Chunk capture agent ID
 	case 0x000c:
 		chunck = make([]byte, 6+4)
-		binary.BigEndian.PutUint32(chunck[6:], 0x00000BEE) // Node homer01:3054
+		binary.BigEndian.PutUint32(chunck[6:], 0x00000BEE)
 
 		// case 0x000d:
 		// Chunk keep alive timer

@@ -55,9 +55,7 @@ func (conn Connections) SendLog(i *IPFIX, s string) {
 				log.Println("SIP json.NewEncoder failed:", err, gLog)
 			}*/
 	}
-	if _, err := conn.Graylog.Write(gLog); err != nil {
-		checkErr(err)
-	}
+	conn.Graylog.Write(gLog)
 }
 
 // PrepLogSIP retruns a map with SIP stats which can be

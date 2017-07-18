@@ -56,10 +56,7 @@ func (conn Connections) SendStatsD(i *IPFIX, s string) {
 		metrics = append(metrics, fmt.Sprintf("%s:%d|s", metric, value))
 	}
 	stats := strings.Join(metrics, "\n")
-
-	if _, err := conn.StatsD.Write([]byte(stats)); err != nil {
-		checkErr(err)
-	}
+	conn.StatsD.Write([]byte(stats))
 }
 
 /*
