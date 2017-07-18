@@ -143,16 +143,12 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 		switch payloadType {
 		case "SIP":
 			chunck[6] = 1
+		case "incRTP":
+			chunck[6] = 33
+		case "outRTP":
+			chunck[6] = 33
 		case "logQOS":
 			chunck[6] = 100
-		case "incRTP":
-			chunck[6] = 34
-		case "outRTP":
-			chunck[6] = 34
-		case "incRTCP":
-			chunck[6] = 35
-		case "outRTCP":
-			chunck[6] = 35
 		}
 
 	// Chunk capture agent ID
@@ -179,19 +175,11 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 			chunck = make([]byte, len(payload)+6)
 			copy(chunck[6:], payload)
 		case "incRTP":
-			payload, _ := json.Marshal(i.PrepIncRTP())
+			payload, _ := json.Marshal(i.PrepIncQOS())
 			chunck = make([]byte, len(payload)+6)
 			copy(chunck[6:], payload)
 		case "outRTP":
-			payload, _ := json.Marshal(i.PrepOutRTP())
-			chunck = make([]byte, len(payload)+6)
-			copy(chunck[6:], payload)
-		case "incRTCP":
-			payload, _ := json.Marshal(i.PrepIncRTCP())
-			chunck = make([]byte, len(payload)+6)
-			copy(chunck[6:], payload)
-		case "outRTCP":
-			payload, _ := json.Marshal(i.PrepOutRTCP())
+			payload, _ := json.Marshal(i.PrepOutQOS())
 			chunck = make([]byte, len(payload)+6)
 			copy(chunck[6:], payload)
 		}
@@ -259,92 +247,57 @@ func (i *IPFIX) NewHEPChuncks(s string) []byte {
 }
 
 // PrepIncRtp
-func (i *IPFIX) PrepIncRTP() *map[string]interface{} {
+func (i *IPFIX) PrepIncQOS() *map[string]interface{} {
 	mapIncRtp := map[string]interface{}{
-
-		"CORRELATION_ID":  string(i.Data.QOS.IncCallID),
-		"RTP_SIP_CALL_ID": string(i.Data.QOS.IncCallID),
-		"REPORT_TS":       i.Data.QOS.BeginTimeSec,
-		"TL_BYTE":         i.Data.QOS.IncRtpBytes,
-		"SKEW":            0.000,
-		"TOTAL_PK":        i.Data.QOS.IncRtpPackets,
-		"EXPECTED_PK":     (i.Data.QOS.IncRtpPackets + i.Data.QOS.IncRtpLostPackets),
-		"PACKET_LOSS":     i.Data.QOS.IncRtpLostPackets,
-		"SEQ":             0,
-		"JITTER":          i.Data.QOS.IncRtpAvgJitter,
-		"MAX_JITTER":      i.Data.QOS.IncRtpMaxJitter,
-		"MEAN_JITTER":     i.Data.QOS.IncRtpAvgJitter,
-		"DELTA":           0.000,
-		"MAX_DELTA":       0.000,
-		"MAX_SKEW":        0.000,
-		"MIN_MOS":         i.Data.QOS.IncMos,
-		"MEAN_MOS":        i.Data.QOS.IncMos,
+		"ID":              string(i.Data.QOS.IncCallID),
+		"RTP_BYTE":        i.Data.QOS.IncRtpBytes,
+		"RTP_PK":          i.Data.QOS.IncRtpPackets,
+		"RTP_PK_LOSS":     i.Data.QOS.IncRtpLostPackets,
+		"RTP_AVG_JITTER":  i.Data.QOS.IncRtpAvgJitter,
+		"RTP_MAX_JITTER":  i.Data.QOS.IncRtpMaxJitter,
+		"RTCP_BYTE":       i.Data.QOS.IncRtcpBytes,
+		"RTCP_PK":         i.Data.QOS.IncRtcpPackets,
+		"RTCP_PK_LOSS":    i.Data.QOS.IncRtcpLostPackets,
+		"RTCP_AVG_JITTER": i.Data.QOS.IncRtcpAvgJitter,
+		"RTCP_MAX_JITTER": i.Data.QOS.IncRtcpMaxJitter,
+		"RTCP_AVG_LAT":    i.Data.QOS.IncRtcpAvgLat,
+		"RTCP_MAX_LAT":    i.Data.QOS.IncRtcpMaxLat,
 		"MOS":             i.Data.QOS.IncMos,
-		"RFACTOR":         i.Data.QOS.IncrVal,
-		"MIN_RFACTOR":     i.Data.QOS.IncrVal,
-		"MEAN_RFACTOR":    i.Data.QOS.IncrVal,
 		"SRC_IP":          stringIPv4(i.Data.QOS.CallerIncSrcIP),
 		"SRC_PORT":        i.Data.QOS.CallerIncSrcPort,
 		"DST_IP":          stringIPv4(i.Data.QOS.CallerIncDstIP),
-		"DST_PORT":        i.Data.QOS.CallerIncSrcPort,
-		"SRC_MAC":         "00-00-00-00-00-00",
-		"DST_MAC":         "00-00-00-00-00-00",
-		"OUT_ORDER":       0,
-		"SSRC_CHG":        0,
-		"CODEC_PT":        i.Data.QOS.Type,
-		"CLOCK":           8000,
-		"CODEC_NAME":      i.Data.QOS.Type,
-		"DIR":             0,
-		"REPORT_NAME":     string(i.Data.QOS.IncRealm),
-		"PARTY":           0,
-		"TYPE":            "PERIODIC",
+		"DST_PORT":        i.Data.QOS.CallerIncDstPort,
+		"REALM":           string(i.Data.QOS.IncRealm),
 	}
 	return &mapIncRtp
 }
 
-func (i *IPFIX) PrepOutRTP() *map[string]interface{} {
+func (i *IPFIX) PrepOutQOS() *map[string]interface{} {
 	mapOutRtp := map[string]interface{}{
-
-		"CORRELATION_ID":  string(i.Data.QOS.OutCallID),
-		"RTP_SIP_CALL_ID": string(i.Data.QOS.OutCallID),
-		"REPORT_TS":       i.Data.QOS.BeginTimeSec,
-		"TL_BYTE":         i.Data.QOS.OutRtpBytes,
-		"SKEW":            0.000,
-		"TOTAL_PK":        i.Data.QOS.OutRtpPackets,
-		"EXPECTED_PK":     (i.Data.QOS.OutRtpPackets + i.Data.QOS.OutRtpLostPackets),
-		"PACKET_LOSS":     i.Data.QOS.OutRtpLostPackets,
-		"SEQ":             0,
-		"JITTER":          i.Data.QOS.OutRtpAvgJitter,
-		"MAX_JITTER":      i.Data.QOS.OutRtpMaxJitter,
-		"MEAN_JITTER":     i.Data.QOS.OutRtpAvgJitter,
-		"DELTA":           0.000,
-		"MAX_DELTA":       0.000,
-		"MAX_SKEW":        0.000,
-		"MIN_MOS":         i.Data.QOS.OutMos,
-		"MEAN_MOS":        i.Data.QOS.OutMos,
+		"ID":              string(i.Data.QOS.OutCallID),
+		"RTP_BYTE":        i.Data.QOS.OutRtpBytes,
+		"RTP_PK":          i.Data.QOS.OutRtpPackets,
+		"RTP_PK_LOSS":     i.Data.QOS.OutRtpLostPackets,
+		"RTP_AVG_JITTER":  i.Data.QOS.OutRtpAvgJitter,
+		"RTP_MAX_JITTER":  i.Data.QOS.OutRtpMaxJitter,
+		"RTCP_BYTE":       i.Data.QOS.OutRtcpBytes,
+		"RTCP_PK":         i.Data.QOS.OutRtcpPackets,
+		"RTCP_PK_LOSS":    i.Data.QOS.OutRtcpLostPackets,
+		"RTCP_AVG_JITTER": i.Data.QOS.OutRtcpAvgJitter,
+		"RTCP_MAX_JITTER": i.Data.QOS.OutRtcpMaxJitter,
+		"RTCP_AVG_LAT":    i.Data.QOS.OutRtcpAvgLat,
+		"RTCP_MAX_LAT":    i.Data.QOS.OutRtcpMaxLat,
 		"MOS":             i.Data.QOS.OutMos,
-		"RFACTOR":         i.Data.QOS.OutrVal,
-		"MIN_RFACTOR":     i.Data.QOS.OutrVal,
-		"MEAN_RFACTOR":    i.Data.QOS.OutrVal,
-		"SRC_IP":          stringIPv4(i.Data.QOS.CalleeOutSrcIP),
-		"SRC_PORT":        i.Data.QOS.CalleeOutSrcPort,
-		"DST_IP":          stringIPv4(i.Data.QOS.CalleeOutDstIP),
-		"DST_PORT":        i.Data.QOS.CalleeOutSrcPort,
-		"SRC_MAC":         "00-00-00-00-00-00",
-		"DST_MAC":         "00-00-00-00-00-00",
-		"OUT_ORDER":       0,
-		"SSRC_CHG":        0,
-		"CODEC_PT":        i.Data.QOS.Type,
-		"CLOCK":           8000,
-		"CODEC_NAME":      i.Data.QOS.Type,
-		"DIR":             0,
-		"REPORT_NAME":     string(i.Data.QOS.OutRealm),
-		"PARTY":           1,
-		"TYPE":            "PERIODIC",
+		"SRC_IP":          stringIPv4(i.Data.QOS.CalleeIncSrcIP),
+		"SRC_PORT":        i.Data.QOS.CalleeIncSrcPort,
+		"DST_IP":          stringIPv4(i.Data.QOS.CalleeIncDstIP),
+		"DST_PORT":        i.Data.QOS.CalleeIncDstPort,
+		"REALM":           string(i.Data.QOS.OutRealm),
 	}
 	return &mapOutRtp
 }
 
+/*
 func (i *IPFIX) PrepIncRTCP() *map[string]interface{} {
 	mapIncRtcp := map[string]interface{}{
 
@@ -430,3 +383,4 @@ func (i *IPFIX) PrepOutRTCP() *map[string]interface{} {
 	}
 	return &mapOutRtcp
 }
+*/

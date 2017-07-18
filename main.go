@@ -204,8 +204,6 @@ func start(conn *net.TCPConn) {
 					if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
 						uConn.SendHep(msg, "incRTP")
 						uConn.SendHep(msg, "outRTP")
-						uConn.SendHep(msg, "incRTCP")
-						uConn.SendHep(msg, "outRTCP")
 						uConn.SendHep(msg, "logQOS")
 					}
 				}
