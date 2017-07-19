@@ -870,68 +870,57 @@ class Report {
 				$data[$key]["msg"] = $d;
 			}
 			$dataArray = $data[$key]["msg"];
-			$src_ip = $data[$key]["msg"]["SRC_IP"];
-			$dst_ip = $data[$key]["msg"]["DST_IP"];
-			$ipkey= "HORACLIFIX[".$dataArray["ID"]."] ".$src_ip." -> ".$dst_ip;
+			$caller_src_ip = $data[$key]["msg"]["CALLER_SRC_IP"];
+			$caller_dst_ip = $data[$key]["msg"]["CALLER_DST_IP"];
+			$callee_src_ip = $data[$key]["msg"]["CALLEE_SRC_IP"];
+			$callee_dst_ip = $data[$key]["msg"]["CALLEE_DST_IP"];
 
+			$ipkey= "Horaclifix[".$dataArray["INC_REALM"]."/".$dataArray["OUT_REALM"]."] "."IN: ".$caller_src_ip." -> ".$caller_dst_ip." OUT: ".$callee_src_ip." <- ".$callee_dst_ip;
 			if(!array_key_exists($ipkey,  $chartData)) $chartData[$ipkey] = array();
-
-			$chartData[$ipkey]["mos"] = array();
-			$chartData[$ipkey]["packets"] = array();
-			$chartData[$ipkey]["jitter"] = array();
-			$chartData[$ipkey]["packets_lost"] = array();
-			$chartData[$ipkey]["packets"] =  array();
-			$statsData[$ipkey] = array();
-			$statsData[$ipkey]["mos_counter"] =  0;
-			$statsData[$ipkey]["mos_average"] =  floatval($dataArray["MOS"])/100;
-			$statsData[$ipkey]["mos_worst"] =  1;
-			$statsData[$ipkey]["packet_sent"] =  0;
-			$statsData[$ipkey]["packet_recv"] =  0;
-			$statsData[$ipkey]["jitter_max"] = $dataArray["MAX_JITTER"];
-			$statsData[$ipkey]["jitter_avg"] = $dataArray["MEAN_JITTER"];
-			$statsData[$ipkey]["delay"] =  0;
-
-			//$mainData["jitter_max"] =  floatval($dataArray["MAX_JITTER"]);
-			//$mainData["jitter_min"] = $dataArray["MIN_JITTER"];
-			//$mainData["total_pk"] = $dataArray["TOTAL_PK"];
-			//$mainData["tl_byte"] = $dataArray["TL_BYTE"];
-			//$mainData["type"] = $dataArray["TOTAL_PK"];
-
-			$statsData[$ipkey]["mos_counter"] += 1;
-			$statsData[$ipkey]["packet_total"] += $dataArray["TOTAL_PK"];
-			$statsData[$ipkey]["mos_average"] = floatval($dataArray["MOS"])/100;
-			$statsData[$ipkey]["jitter_avg"] += $dataArray["MEAN_JITTER"];
-			$statsData[$ipkey]["packets_lost"] += $dataArray["MEAN_JITTER"];
-			if($maxJitter > $statsData[$ipkey]["jitter_max"]) $statsData[$ipkey]["jitter_max"] = $maxJitter;
-			if(!array_key_exists("mos_worst", $statsData[$ipkey]) || $statsData[$ipkey]["mos_worst"] > $minMos) $statsData[$ipkey]["mos_worst"] = $minMos;
-			$chartData[$ipkey]["mos"][]= array($msts, floatval($dataArray["MOS"])/100);
-			$chartData[$ipkey]["jitter"][]=array($msts, $tmpJitter);
-			$chartData[$ipkey]["packets"][]=array($msts, $dataArray["TOTAL_PK"]);
-			$chartData[$ipkey]["packets_lost"][] = array($msts, floatval($dataArray["PACKET_LOSS"]));
 		}
 		foreach($chartData as $key=>$value) {
-			$statsData[$key]["mos_average"] = round($statsData[$key]["mos_average"],2);
-			$statsData[$key]["jitter_avg"] = round($statsData[$key]["jitter_avg"]/$statsData[$key]["mos_counter"],2);
-			$statsData[$key]["mos_counter"] = 1;
+			// This will be column 1
+			$mainData["inc_rtp_byte"] =  $dataArray["INC_RTP_BYTE"];
+			$mainData["inc_rtp_pk"] =  $dataArray["INC_RTP_PK"];
+			$mainData["inc_rtcp_byte"] =  $dataArray["INC_RTCP_BYTE"];
+			$mainData["inc_rtcp_pk"] =  $dataArray["INC_RTCP_PK"];
+			$mainData["inc_rtp_pk_loss"] =  $dataArray["INC_RTP_PK_LOSS"];
+			$mainData["inc_rtcp_pk_loss"] =  $dataArray["INC_RTCP_PK_LOSS"];
 
-			$mainData["mos_counter"]  += 1;
-			$mainData["mos_average"]  = $statsData[$key]["mos_average"];
-			$mainData["jitter_avg"]   += $statsData[$key]["jitter_avg"];
-			$mainData["packets_lost"] += $statsData[$key]["packets_lost"];
-			$mainData["jitter_avg"]   += $statsData[$key]["jitter_avg"];
-			$mainData["jitter_max"]   += $statsData[$key]["jitter_max"];
-			$mainData["total_pk"] += $statsData[$key]["packet_total"];
-			if(!array_key_exists("mos_worst", $mainData) || $statsData[$key]["mos_worst"] < $mainData["mos_worst"])
-					$mainData["mos_worst"] = $statsData[$key]["mos_worst"];
-			if($statsData[$key]["jitter_max"] > $mainData["jitter_max"]) $mainData["jitter_max"]= $statsData[$key]["jitter_max"];
-		}
-		/* sum of report */
-		if(array_key_exists("mos_counter", $mainData) && $mainData["mos_counter"] != 0) {
-			$mainData["mos_average"] = $mainData["mos_average"];
-			$mainData["mos_worst"] = $mainData["mos_average"];
-			$mainData["jitter_avg"] = round($mainData["jitter_avg"]/$mainData["mos_counter"],2);
-			$mainData["jitter_max"] = $mainData["jitter_max"];
-			$mainData["mos_counter"] = 1;
+			$mainData["out_rtp_byte"] =  $dataArray["OUT_RTP_BYTE"];
+			$mainData["out_rtp_pk"] =  $dataArray["OUT_RTP_PK"];
+			$mainData["out_rtcp_byte"] =  $dataArray["OUT_RTCP_BYTE"];
+			$mainData["out_rtcp_pk"] =  $dataArray["OUT_RTCP_PK"];
+			$mainData["out_rtp_pk_loss"] =  $dataArray["OUT_RTP_PK_LOSS"];
+			$mainData["out_rtcp_pk_loss"] =  $dataArray["OUT_RTCP_PK_LOSS"];
+			// This will be column 2
+			$mainData["inc_rtp_avg_jitter"] =  $dataArray["INC_RTP_AVG_JITTER"];
+			$mainData["inc_rtp_max_jitter"] =  $dataArray["INC_RTP_MAX_JITTER"];
+			$mainData["inc_rtcp_avg_jitter"] =  $dataArray["INC_RTCP_AVG_JITTER"];
+			$mainData["inc_rtcp_max_jitter"] =  $dataArray["INC_RTCP_MAX_JITTER"];
+			$mainData["inc_rtcp_avg_lat"] =  $dataArray["INC_RTCP_AVG_LAT"];
+			$mainData["inc_rtcp_max_lat"] =  $dataArray["INC_RTCP_MAX_LAT"];
+
+			$mainData["out_rtp_avg_jitter"] =  $dataArray["OUT_RTP_AVG_JITTER"];
+			$mainData["out_rtp_max_jitter"] =  $dataArray["OUT_RTP_MAX_JITTER"];
+			$mainData["out_rtcp_avg_jitter"] =  $dataArray["OUT_RTCP_AVG_JITTER"];
+			$mainData["out_rtcp_max_jitter"] =  $dataArray["OUT_RTCP_MAX_JITTER"];
+			$mainData["out_rtcp_avg_lat"] =  $dataArray["OUT_RTCP_AVG_LAT"];
+			$mainData["out_rtcp_max_lat"] =  $dataArray["OUT_RTCP_MAX_LAT"];
+			// This will be column 3
+			$mainData["inc_mos"] =  floatval($dataArray["INC_MOS"])/100;
+			$mainData["inc_rval"] =  floatval($dataArray["INC_RVAL"])/100;
+			$mainData["caller_vlan"] =  $dataArray["CALLER_VLAN"];
+			$mainData["caller_src_port"] =  $dataArray["CALLER_SRC_PORT"];
+			$mainData["caller_dst_port"] =  $dataArray["CALLER_DST_PORT"];
+
+			$mainData["out_mos"] =  floatval($dataArray["OUT_MOS"])/100;
+			$mainData["out_rval"] =  floatval($dataArray["OUT_RVAL"])/100;
+			$mainData["callee_vlan"] =  $dataArray["CALLEE_VLAN"];
+			$mainData["callee_src_port"] =  $dataArray["CALLEE_SRC_PORT"];
+			$mainData["callee_dst_port"] =  $dataArray["CALLEE_DST_PORT"];
+			$mainData["media_type"] =  $dataArray["MEDIA_TYPE"];
+
 		}
 		return array($chartData, $statsData, $mainData);
 	}

@@ -472,7 +472,6 @@
 							$scope.showMessage(obj.data, event);
 						}
 					}
-
 					return ret;
 				};
 
@@ -562,7 +561,6 @@
 							//$scope.showRTCPChart(); // Voicenter function                            
 
 							if (msg.global) {
-
 								try {
 									if (msg.global.main) {
 										// Call Duration
@@ -609,7 +607,6 @@
 									console.log('no x-rtp stats');
 								}
 
-
 								try {
 									if (msg.reports.rtpagent && msg.reports.rtpagent.main) {
 										$scope.calc_rtpagent = msg.reports.rtpagent.main;
@@ -629,7 +626,7 @@
 										$scope.calc_horaclifix.lost_avg = ($scope.calc_horaclifix.packets_lost * 100 / $scope.calc_horaclifix.total_pk).toFixed(2);
 									}
 								} catch (e) {
-									console.log('no rtpagent stats');
+									console.log('no horaclifix stats');
 								}
 
 								// RTCP

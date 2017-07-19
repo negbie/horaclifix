@@ -198,13 +198,11 @@ func start(conn *net.TCPConn) {
 				}
 			case 268:
 				msg := NewQosStats(data)
-
 				if *haddr != "" {
 					// Send only QOS stats with meaningful values
 					if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
-						uConn.SendHep(msg, "incRTP")
-						uConn.SendHep(msg, "outRTP")
-						uConn.SendHep(msg, "logQOS")
+						uConn.SendHep(msg, "QOS")
+						//uConn.SendHep(msg, "logQOS")
 					}
 				}
 
