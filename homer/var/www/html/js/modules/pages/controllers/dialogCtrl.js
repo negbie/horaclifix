@@ -621,9 +621,6 @@
 								try {
 									if (msg.reports.horaclifix && msg.reports.horaclifix.main) {
 										$scope.calc_horaclifix = msg.reports.horaclifix.main;
-										$scope.calc_horaclifix.mos_average = $scope.calc_horaclifix.mos_average.toFixed(2);
-										$scope.calc_horaclifix.mos_worst = $scope.calc_horaclifix.mos_worst.toFixed(2);
-										$scope.calc_horaclifix.lost_avg = ($scope.calc_horaclifix.packets_lost * 100 / $scope.calc_horaclifix.total_pk).toFixed(2);
 									}
 								} catch (e) {
 									console.log('no horaclifix stats');
