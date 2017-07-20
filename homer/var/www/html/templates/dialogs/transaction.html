@@ -231,11 +231,11 @@
 													<p class="M-text">{{calc_horaclifix.inc_rtp_byte}} / {{calc_horaclifix.out_rtp_byte}}</p>
 												</div>
 												<div class="row light-orange">
-													<p>RTP Packets</p>
+													<p>RTP Pkt</p>
 													<p class="M-text">{{calc_horaclifix.inc_rtp_pk}} / {{calc_horaclifix.out_rtp_pk}}</p>
 												</div>
 												<div class="row light-orange">
-													<p>RTP Loss</p>
+													<p>RTP Pkt lost</p>
 													<p class="M-text">{{calc_horaclifix.inc_rtp_pk_loss}} / {{calc_horaclifix.out_rtp_pk_loss}}</p>
 												</div>
 												<div class="row light-orange">
@@ -243,63 +243,63 @@
 													<p class="M-text">{{calc_horaclifix.inc_rtcp_byte}} / {{calc_horaclifix.out_rtcp_byte}}</p>
 												</div>
 												<div class="row light-orange">
-													<p>RTCP Packets</p>
+													<p>RTCP Pkt</p>
 													<p class="M-text">{{calc_horaclifix.inc_rtcp_pk}} / {{calc_horaclifix.out_rtcp_pk}}</p>
 												</div>
 												<div class="row light-orange">
-													<p>RTCP Loss</p>
+													<p>RTCP Pkt lost</p>
 													<p class="M-text">{{calc_horaclifix.inc_rtcp_pk_loss}} / {{calc_horaclifix.out_rtcp_pk_loss}}</p>
 												</div>
 
 											</div>
 											<div class="col-md-4" ng-show="!xcollapsed">
 												<div class="row light-blue">
-													<p>Avg RTP Jitter</p>
+													<p>Avg RTP Jit (ms)</p>
 													<p class="M-text">{{calc_horaclifix.inc_rtp_avg_jitter}} / {{calc_horaclifix.out_rtp_avg_jitter}}</p>
 												</div>
 												<div class="row light-blue">
-													<p>Max RTP Jitter</p>
+													<p>Max RTP Jit (ms)</p>
 													<p class="M-text">{{calc_horaclifix.inc_rtp_max_jitter}} / {{calc_horaclifix.out_rtp_max_jitter}}</p>
 												</div>
 												<div class="row light-blue">
-													<p>Avg RTCP Jitter</p>
+													<p>Avg RTCP Jit (ms)</p>
 													<p class="M-text">{{calc_horaclifix.inc_rtcp_avg_jitter}} / {{calc_horaclifix.out_rtcp_avg_jitter}}</p>
 												</div>
 												<div class="row light-blue">
-													<p>Max RTCP Jitter</p>
+													<p>Max RTCP Jit (ms)</p>
 													<p class="M-text">{{calc_horaclifix.inc_rtcp_max_jitter}} / {{calc_horaclifix.out_rtcp_max_jitter}}</p>
 												</div>
 												<div class="row light-blue">
-													<p>Avg RTCP Lat</p>
+													<p>Avg RTCP Lat (ms)</p>
 													<p class="M-text">{{calc_horaclifix.inc_rtcp_avg_lat}} / {{calc_horaclifix.out_rtcp_avg_lat}}</p>
 												</div>
 												<div class="row light-blue">
-													<p>Max RTCP Lat</p>
+													<p>Max RTCP Lat (ms)</p>
 													<p class="M-text">{{calc_horaclifix.inc_rtcp_max_lat}} / {{calc_horaclifix.out_rtcp_max_lat}}</p>
 												</div>
 											</div>
 											<div class="col-md-4" ng-show="!xcollapsed">
-												<div class="row light-blue">
+												<div class="row light-green">
 													<p>Avg MOS </p>
 													<p class="M-text">{{calc_horaclifix.inc_mos}} / {{calc_horaclifix.out_mos}}</p>
 												</div>
-												<div class="row light-blue">
+												<div class="row light-green">
 													<p>Avg rValue</p>
 													<p class="M-text">{{calc_horaclifix.inc_rval}} / {{calc_horaclifix.out_rval}}</p>
 												</div>
-												<div class="row light-blue">
+												<div class="row light-green">
 													<p>VLAN</p>
 													<p class="M-text">{{calc_horaclifix.caller_vlan}} / {{calc_horaclifix.callee_vlan}}</p>
 												</div>
-												<div class="row light-blue">
-													<p>Src Port</p>
-													<p class="M-text">{{calc_horaclifix.caller_src_port}} / {{calc_horaclifix.callee_src_port}}</p>
+												<div class="row light-green">
+													<p>Caller Port</p>
+													<p class="M-text">{{calc_horaclifix.caller_src_port}} / {{calc_horaclifix.caller_dst_port}}</p>
 												</div>
-												<div class="row light-blue">
-													<p>Dst Port</p>
-													<p class="M-text">{{calc_horaclifix.caller_dst_port}} / {{calc_horaclifix.caller_dst_port}}</p>
+												<div class="row light-green">
+													<p>Callee Port</p>
+													<p class="M-text">{{calc_horaclifix.callee_src_port}} / {{calc_horaclifix.callee_dst_port}}</p>
 												</div>
-												<div class="row light-blue">
+												<div class="row light-green">
 													<p>Media Type</p>
 													<p class="M-text">{{calc_horaclifix.media_type}}</p>
 												</div>
