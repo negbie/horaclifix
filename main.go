@@ -17,6 +17,7 @@ import (
 
 var (
 	addr    = flag.String("l", ":4739", "IPFIX listen address")
+	baddr   = flag.String("b", "", "Banshee server address")
 	haddr   = flag.String("H", "", "Homer server address")
 	saddr   = flag.String("s", "", "StatsD server address")
 	debug   = flag.Bool("d", false, "Debug output to stdout")
@@ -32,10 +33,16 @@ type Connections struct {
 	Graylog net.Conn
 	Homer   net.Conn
 	StatsD  net.Conn
+	Banshee net.Conn
 }
 
-func newUDPConnections() *Connections {
+func newConnections() *Connections {
 	conn := new(Connections)
+	if *baddr != "" {
+		sconn, err := net.Dial("tcp", *baddr)
+		checkCritErr(err)
+		conn.Banshee = sconn
+	}
 	if *gaddr != "" {
 		gconn, err := net.Dial("udp", *gaddr)
 		checkCritErr(err)
@@ -51,6 +58,7 @@ func newUDPConnections() *Connections {
 		checkCritErr(err)
 		conn.StatsD = sconn
 	}
+
 	return conn
 }
 
@@ -80,11 +88,14 @@ buffers.Put(packet)
 // Start handles the incoming packets
 func start(conn *net.TCPConn) {
 	log.Printf("Handling new connection for %v|%v\n", *addr, *name)
-	uConn := newUDPConnections()
+	uConn := newConnections()
 
 	// Close connection when this function ends
 	defer func() {
 		log.Printf("Closing connection for %v|%v\n", *addr, *name)
+		if *baddr != "" {
+			uConn.Banshee.Close()
+		}
 		if *gaddr != "" {
 			uConn.Graylog.Close()
 		}
@@ -204,6 +215,12 @@ func start(conn *net.TCPConn) {
 				}
 			case 268:
 				msg := NewQosStats(data)
+				if *baddr != "" {
+					// Send only QOS stats with meaningful values
+					if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
+						uConn.SendBanshee(msg, "QOS")
+					}
+				}
 				if *haddr != "" {
 					// Send only QOS stats with meaningful values
 					if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
@@ -211,7 +228,6 @@ func start(conn *net.TCPConn) {
 						//uConn.SendHep(msg, "logQOS")
 					}
 				}
-
 				if *saddr != "" {
 					// Send only QOS stats with meaningful values
 					if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
