@@ -189,7 +189,6 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 }
 
 // NewHEPChuncks will fill a buffer with all the chuncks
-// we need and give this buffer to SendHepMsg
 func (i *IPFIX) NewHEPChuncks(s string) []byte {
 	buf := new(bytes.Buffer)
 

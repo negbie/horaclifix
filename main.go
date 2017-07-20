@@ -85,9 +85,15 @@ func start(conn *net.TCPConn) {
 	// Close connection when this function ends
 	defer func() {
 		log.Printf("Closing connection for %v|%v\n", *addr, *name)
-		uConn.Graylog.Close()
-		uConn.Homer.Close()
-		uConn.StatsD.Close()
+		if *gaddr != "" {
+			uConn.Graylog.Close()
+		}
+		if *haddr != "" {
+			uConn.Homer.Close()
+		}
+		if *saddr != "" {
+			uConn.StatsD.Close()
+		}
 		conn.Close()
 	}()
 
