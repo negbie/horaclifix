@@ -128,7 +128,7 @@ func start(conn *net.TCPConn) {
 			dataLen = int(uint16(header[2])<<8 + uint16(header[3]))
 			// Extract the setID
 			setID = int(uint16(header[16])<<8 + uint16(header[17]))
-
+			// Check if we have valid setID's and IPFIX packets
 			if setID > 280 || setID < 256 || version != 10 {
 				break
 			}
