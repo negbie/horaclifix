@@ -270,7 +270,6 @@ my $maxparts = 1;
 my $newparts = 1;
 
 foreach my $table (keys %{ $CONFIG->{"DATA_TABLE_ROTATION"} }) {
-
 	my $rotate = $CONFIG->{'DATA_TABLE_ROTATION'}{$table};
 	my $partstep = $CONFIG->{'DATA_TABLE_STEP'}{$table};
 	$newparts = $CONFIG->{'MYSQL'}{'newtables'};
@@ -379,7 +378,6 @@ sub calculate_gmt_offset {
 }
 
 sub new_data_table {
-
 	my $cstamp = shift;
 	my $mystep = shift;
 	my $partstep = shift;
@@ -431,7 +429,6 @@ sub new_data_table {
 }
 
 sub new_partition_table {
-
 	my $db       = shift;
 	my $db_name  = shift;
 	my $table    = shift;
@@ -550,9 +547,7 @@ sub new_partition_table {
 	}
 }
 
-
 sub read_config {
-
 	my $ini = shift;
 
 	open (INI, "$ini") || die "Can't open $ini: $!\n";
