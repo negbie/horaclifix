@@ -1,6 +1,6 @@
 package main
 
-import "github.com/marv2097/siprocket"
+import "github.com/negbie/siprocket"
 
 // mapQOS retruns a map with QOS stats which can be
 // json encoded and send into homer, or graylog
@@ -55,9 +55,10 @@ func (i *IPFIX) mapQOS() *map[string]interface{} {
 }
 
 // mapLogSIP retruns a map with SIP stats which can be
-// json encoded and send into homer, or graylog
+// json encoded and send send as gelf to graylog
 func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 	sipMSG := siprocket.Parse(i.Data.SIP.SipMsg)
+	siprocket.PrintSipStruct(&sipMSG)
 	mLogSIP := map[string]interface{}{
 		"version":       "1.1",
 		"host":          *name,
@@ -66,6 +67,9 @@ func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 		"_id":           string(sipMSG.CallId.Value),
 		"_from":         string(sipMSG.From.User),
 		"_to":           string(sipMSG.To.User),
+		"_method":       string(sipMSG.Req.Method),
+		"_statusCode":   string(sipMSG.Req.StatusCode),
+		"_ua":           string(sipMSG.Ua.Value),
 		"_srcIp":        stringIPv4(i.Data.SIP.SrcIP),
 		"_dstIp":        stringIPv4(i.Data.SIP.DstIP),
 		"_srcPort":      i.Data.SIP.SrcPort,
@@ -85,7 +89,7 @@ func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 }
 
 // mapLogQOS retruns a map with QOS stats which can be
-// json encoded and send into homer, or graylog
+// json encoded and send as gelf to graylog
 func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 	mLogQOS := map[string]interface{}{
 		"version":             "1.1",
