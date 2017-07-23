@@ -25,6 +25,9 @@ func Read(conn *net.TCPConn) {
 		if *gaddr != "" {
 			c.Graylog.Close()
 		}
+		if *gtaddr != "" {
+			c.GraylogTLS.Close()
+		}
 		if *haddr != "" {
 			c.Homer.Close()
 		}

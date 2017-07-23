@@ -191,8 +191,8 @@ type QosSet struct {
 
 type Connections struct {
 	Graylog    net.Conn
+	GraylogTLS *tls.Conn
 	Homer      net.Conn
 	StatsD     net.Conn
 	Banshee    net.Conn
-	GraylogTLS *tls.Conn
 }

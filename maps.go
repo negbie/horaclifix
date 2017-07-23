@@ -1,5 +1,7 @@
 package main
 
+import "github.com/marv2097/siprocket"
+
 // mapQOS retruns a map with QOS stats which can be
 // json encoded and send into homer, or graylog
 func (i *IPFIX) mapQOS() *map[string]interface{} {
@@ -55,15 +57,22 @@ func (i *IPFIX) mapQOS() *map[string]interface{} {
 // mapLogSIP retruns a map with SIP stats which can be
 // json encoded and send into homer, or graylog
 func (i *IPFIX) mapLogSIP() *map[string]interface{} {
+	sipMSG := siprocket.Parse(i.Data.SIP.SipMsg)
 	mLogSIP := map[string]interface{}{
 		"version":       "1.1",
 		"host":          *name,
 		"short_message": string(i.Data.SIP.SipMsg),
 		"level":         5,
-		"_intVlan":      i.Data.SIP.IntVlan,
-		"_id":           string(i.Data.SIP.CallID),
+		"_id":           string(sipMSG.CallId.Value),
+		"_from":         string(sipMSG.From.User),
+		"_to":           string(sipMSG.To.User),
+		"_srcIp":        stringIPv4(i.Data.SIP.SrcIP),
+		"_dstIp":        stringIPv4(i.Data.SIP.DstIP),
+		"_srcPort":      i.Data.SIP.SrcPort,
+		"_dstPort":      i.Data.SIP.DstPort,
 		"_ipLen":        i.Data.SIP.IPlen,
 		"_udpLen":       i.Data.SIP.UDPlen,
+		"_intVlan":      i.Data.SIP.IntVlan,
 		"_vl":           i.Data.SIP.VL,
 		"_tos":          i.Data.SIP.TOS,
 		"_tlen":         i.Data.SIP.TLen,
@@ -71,10 +80,6 @@ func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 		"_tflags":       i.Data.SIP.TFlags,
 		"_ttl":          i.Data.SIP.TTL,
 		"_tproto":       i.Data.SIP.TProto,
-		"_srcIp":        stringIPv4(i.Data.SIP.SrcIP),
-		"_dstIp":        stringIPv4(i.Data.SIP.DstIP),
-		"_srcPort":      i.Data.SIP.SrcPort,
-		"_dstPort":      i.Data.SIP.DstPort,
 	}
 	return &mLogSIP
 }
