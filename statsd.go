@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// SendStatsd creates a map with QOS or SIP stats which will
+// SendStatsD creates a map with QOS or SIP stats which will
 // be converted into statsd compatible strings seperated by '\n'
 func (conn Connections) SendStatsD(i *IPFIX, s string) {
 	var metrics []string

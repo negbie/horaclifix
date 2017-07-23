@@ -6,7 +6,7 @@ import (
 )
 
 // SendBanshee creates a map with QOS or SIP stats which will
-// be converted into statsd compatible strings seperated by '\n'
+// be converted into statsd like strings seperated by '\n'
 func (conn Connections) SendBanshee(i *IPFIX, s string) {
 	var mapQOS map[string]interface{}
 	buf := new(bytes.Buffer)

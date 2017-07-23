@@ -1,5 +1,10 @@
 package main
 
+import (
+	"crypto/tls"
+	"net"
+)
+
 // IPFIX holds the structure of one IPFIX packet
 // Wire format:
 //
@@ -65,9 +70,6 @@ type HandShake struct {
 	//Hostname    ByteString
 }
 
-// ByteString is to parse []byte to string for json.Marshal
-type ByteString []byte
-
 // SipSet holds the SIP related fields
 type SipSet struct {
 	TimeSec   uint32
@@ -76,7 +78,7 @@ type SipSet struct {
 	IntPort   uint8
 	IntVlan   uint16
 	CallIDLen uint8
-	CallID    ByteString
+	CallID    []byte
 	CallIDEnd uint8
 	IPlen     uint16
 	VL        uint8
@@ -94,7 +96,7 @@ type SipSet struct {
 	Context   uint32
 	UDPlen    uint16
 	MsgLen    uint16
-	SipMsg    ByteString
+	SipMsg    []byte
 }
 
 // QosSet holds the QoS related fields
@@ -172,17 +174,25 @@ type QosSet struct {
 	Seperator uint8
 
 	IncRealmLen uint16
-	IncRealm    ByteString
+	IncRealm    []byte
 	IncRealmEnd uint8
 
 	OutRealmLen uint16
-	OutRealm    ByteString
+	OutRealm    []byte
 	OutRealmEnd uint8
 
 	IncCallIDLen uint16
-	IncCallID    ByteString
+	IncCallID    []byte
 	IncCallIDEnd uint8
 
 	OutCallIDLen uint16
-	OutCallID    ByteString
+	OutCallID    []byte
+}
+
+type Connections struct {
+	Graylog    net.Conn
+	Homer      net.Conn
+	StatsD     net.Conn
+	Banshee    net.Conn
+	GraylogTLS *tls.Conn
 }

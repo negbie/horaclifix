@@ -10,7 +10,6 @@ import (
 // SendHandshake will write the binary Handshake representation
 // into the buffer and send it to wire
 func SendHandshake(c *net.TCPConn, hs []byte) {
-
 	var i IPFIX
 	r := bytes.NewReader(hs)
 	binary.Read(r, binary.BigEndian, &i.Header)
