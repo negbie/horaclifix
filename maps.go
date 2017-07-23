@@ -58,7 +58,7 @@ func (i *IPFIX) mapQOS() *map[string]interface{} {
 // json encoded and send send as gelf to graylog
 func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 	sipMSG := siprocket.Parse(i.Data.SIP.SipMsg)
-	siprocket.PrintSipStruct(&sipMSG)
+	//siprocket.PrintSipStruct(&sipMSG)
 	mLogSIP := map[string]interface{}{
 		"version":       "1.1",
 		"host":          *name,
