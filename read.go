@@ -13,27 +13,32 @@ const headerLen int = 20
 
 // Read handles the incoming packets
 func Read(conn *net.TCPConn) {
-	log.Printf("Handling new connection for %v|%v\n", *addr, *name)
+	log.Printf("New connection from %v\n", conn.RemoteAddr())
 	c := NewConnections()
 
 	// Close connection when this function ends
 	defer func() {
-		log.Printf("Closing connection for %v|%v\n", *addr, *name)
 		if *baddr != "" {
+			log.Printf("Close Banshee connection %v\n", c.Banshee.RemoteAddr())
 			c.Banshee.Close()
 		}
 		if *gaddr != "" {
+			log.Printf("Close Graylog connection %v\n", c.Graylog.RemoteAddr())
 			c.Graylog.Close()
 		}
 		if *gtaddr != "" {
+			log.Printf("Close GraylogTLS connection %v\n", c.GraylogTLS.RemoteAddr())
 			c.GraylogTLS.Close()
 		}
 		if *haddr != "" {
+			log.Printf("Close Homer connection %v\n", c.Homer.RemoteAddr())
 			c.Homer.Close()
 		}
 		if *saddr != "" {
+			log.Printf("Close StatsD connection %v\n", c.StatsD.RemoteAddr())
 			c.StatsD.Close()
 		}
+		log.Printf("Close IPFIX connection %v\n", conn.RemoteAddr())
 		conn.Close()
 	}()
 
@@ -59,6 +64,7 @@ func Read(conn *net.TCPConn) {
 			setID = int(uint16(header[16])<<8 + uint16(header[17]))
 			// Check if we have valid setID's and IPFIX packets
 			if setID > 280 || setID < 256 || version != 10 {
+				log.Printf("Malformed IPFIX header: %v", header)
 				break
 			}
 			// Create a buffer which holds exactly one
@@ -68,7 +74,7 @@ func Read(conn *net.TCPConn) {
 
 		} else if err != nil {
 			if err != io.EOF {
-				log.Printf("Read error: %s", err)
+				log.Printf("Header read error: %s", err)
 			}
 			break
 		}
@@ -111,7 +117,7 @@ func Read(conn *net.TCPConn) {
 			}
 		} else if err != nil {
 			if err != io.EOF {
-				log.Printf("Read error: %s", err)
+				log.Printf("Dataset read error: %s", err)
 			}
 			break
 		}

@@ -13,11 +13,11 @@ import (
 
 var (
 	addr    = flag.String("l", ":4739", "IPFIX listen address")
-	baddr   = flag.String("b", "", "Banshee server address")
-	gaddr   = flag.String("g", "", "Graylog server address")
-	gtaddr  = flag.String("gt", "", "Graylog TLS server address")
-	haddr   = flag.String("H", "", "Homer server address")
-	saddr   = flag.String("s", "", "StatsD server address")
+	baddr   = flag.String("b", "", "Banshee TCP server address")
+	gaddr   = flag.String("g", "", "Graylog gelf UDP server address")
+	gtaddr  = flag.String("gt", "", "Graylog gelf TLS server address")
+	haddr   = flag.String("H", "", "Homer UDP server address")
+	saddr   = flag.String("s", "", "StatsD UDP server address")
 	name    = flag.String("n", "sbc", "SBC name")
 	hepPw   = flag.String("P", "myhep", "HEP capture password")
 	debug   = flag.Bool("d", false, "Debug output to stdout")

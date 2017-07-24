@@ -13,14 +13,14 @@ func (conn Connections) SendLog(i *IPFIX, s string) {
 	switch s {
 	case "SIP":
 		if gLog, err = json.Marshal(i.mapLogSIP()); err != nil {
-			log.Println("SIP json.NewEncoder failed:", err, gLog)
+			log.Println("SIP json.Marshal failed:", err, gLog)
 		}
 		/*	if err := json.NewEncoder(conn.Graylog).Encode(i.PrepLogSIP()); err != nil {
 			log.Println("SIP json.NewEncoder failed:", err, gLog)
 		}*/
 	case "QOS":
 		if gLog, err = json.Marshal(i.mapLogQOS()); err != nil {
-			log.Println("SIP json.NewEncoder failed:", err, gLog)
+			log.Println("QOS json.Marshal failed:", err, gLog)
 		}
 		/*	if err := json.NewEncoder(conn.Graylog).Encode(i.PrepLogQOS()); err != nil {
 			log.Println("SIP json.NewEncoder failed:", err, gLog)
