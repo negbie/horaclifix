@@ -2,7 +2,7 @@
 
 # A Prometheus & Grafana docker-compose stack
 
-Here's a quick start to stand-up a [Prometheus](http://prometheus.io/) stack containing Prometheus, Grafana and Node scraper to monitor your Docker infrastructure. A big shoutout to [philicious](https://github.com/philicious) for kicking this project off!
+Here's a quick start to stand-up a [Prometheus](http://prometheus.io/) stack containing Prometheus, statsd & node exporter, Grafana.
 
 ## Pre-requisites
 * Latest docker version and [docker-compose](https://docs.docker.com/compose/install/)
@@ -26,7 +26,7 @@ The Grafana Dashboard is now accessible via: `http://<Host IP Address>:3000` for
 username - admin
 password - foobar (Password is stored in the `config.monitoring` env file)
 
-## Post Configuration
+## Post Configurations
 Now we need to create the Prometheus Datasource in order to connect Grafana to Prometheus 
 * Click the `Grafana` Menu at the top left corner (looks like a fireball)
 * Click `Data Sources`
