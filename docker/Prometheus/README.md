@@ -5,7 +5,7 @@
 Here's a quick start to stand-up a [Prometheus](http://prometheus.io/) stack containing Prometheus, Grafana and Node scraper to monitor your Docker infrastructure. A big shoutout to [philicious](https://github.com/philicious) for kicking this project off!
 
 ## Pre-requisites
-Before we get started installing the Prometheus stack. Ensure you install the latest version of docker and [docker-compose](https://docs.docker.com/compose/install/) on your Docker host machine. This has also been tested with Docker for Mac and it works well.
+* Latest docker version and [docker-compose](https://docs.docker.com/compose/install/)
 
 ## Installation & Configuration
 Clone the project locally to your Docker host. 
@@ -19,7 +19,7 @@ Once configurations are done let's start it up. From the horaclifix/docker/Prome
 
 
 That's it. docker-compose builds the entire Grafa and Prometheus stack automagically. Since we don't want to listen on
-0.0.0.0 use the replaceIP script which will replace thepreconfigured IP 1.1.1.1 with your own IP.
+0.0.0.0 use the replaceIP script which will replace the preconfigured IP 1.1.1.1 with your own IP.
 
 The Grafana Dashboard is now accessible via: `http://<Host IP Address>:3000` for example http://192.168.10.1:3000
 
