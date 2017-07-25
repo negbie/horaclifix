@@ -13,7 +13,7 @@ const headerLen int = 20
 
 // Read handles the incoming packets
 func Read(conn *net.TCPConn) {
-	log.Printf("New IPFIX connection from %v\n", conn.RemoteAddr())
+	log.Printf("New IPFIX connection from %s at %v\n", *name, conn.RemoteAddr())
 	c := NewConnections()
 
 	// Close connection when this function ends
@@ -38,7 +38,7 @@ func Read(conn *net.TCPConn) {
 			log.Printf("Close StatsD connection to %v\n", c.StatsD.RemoteAddr())
 			c.StatsD.Close()
 		}
-		log.Printf("Close IPFIX connection to %v\n", conn.RemoteAddr())
+		log.Printf("Close IPFIX connection to %s at %v\n", *name, conn.RemoteAddr())
 		conn.Close()
 	}()
 

@@ -33,7 +33,7 @@ func SendHandshake(c *net.TCPConn, hs []byte) {
 		bi[i] = int8(v)
 	}
 
-	log.Printf("Send handshake message %v to %v\n", bi, c.RemoteAddr())
+	log.Printf("Send handshake message %v to %s at %v\n", bi, *name, c.RemoteAddr())
 	err := binary.Write(c, binary.BigEndian, bi)
 	if err != nil {
 		log.Println("binary.Write failed:", err)
