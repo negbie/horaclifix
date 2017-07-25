@@ -12,12 +12,14 @@ Clone the project locally to your Docker host.
 
 If you would like to change which targets should be monitored or make configuration changes edit the [/prometheus/prometheus.yml](https://github.com/vegasbrianc/prometheus/blob/version-2/prometheus/prometheus.yml) file. The targets section is where you define what should be monitored by Prometheus. The names defined in this file are actually sourced from the service name in the docker-compose file. If you wish to change names of the services you can add the "container_name" parameter in the `docker-compose.yml` file.
 
-Once configurations are done let's start it up. From the /prometheus project directory run the following command:
+Once configurations are done let's start it up. From the horaclifix/docker/Prometheus project directory run the following commands:
 
+	$ ./replaceIP.sh 1.1.1.1 YOUR_OWN_IP
     $ docker-compose up -d
 
 
-That's it. docker-compose builds the entire Grafa and Prometheus stack automagically. 
+That's it. docker-compose builds the entire Grafa and Prometheus stack automagically. Since we don't want to listen on
+0.0.0.0 use the replaceIP script which will replace thepreconfigured IP 1.1.1.1 with your own IP.
 
 The Grafana Dashboard is now accessible via: `http://<Host IP Address>:3000` for example http://192.168.10.1:3000
 
