@@ -8,8 +8,7 @@ Here's a quick start to stand-up a [Prometheus](http://prometheus.io/) stack con
 * Latest docker version and [docker-compose](https://docs.docker.com/compose/install/)
 
 ## Installation & Configuration
-* Clone the project locally to your Docker host. 
-* From the horaclifix/docker/Prometheus directory run:
+Clone the project locally to your Docker host and run from the horaclifix/docker/Prometheus directory:
 
 	$ ./replaceIP.sh 1.1.1.1 YOUR_OWN_IP
     $ docker-compose up -d
@@ -24,7 +23,7 @@ password - foobar (Password is stored in the `config.monitoring` env file)
 
 ## Post Configurations
 Now we need to create the Prometheus Datasource in order to connect Grafana to Prometheus 
-* Click the `Grafana` Menu at the top left corner (looks like a fireball)
+* Click the `Grafana` Menu at the top left corner
 * Click `Data Sources`
 * Click the green button `Add Data Source`.
 
