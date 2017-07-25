@@ -8,20 +8,16 @@ Here's a quick start to stand-up a [Prometheus](http://prometheus.io/) stack con
 * Latest docker version and [docker-compose](https://docs.docker.com/compose/install/)
 
 ## Installation & Configuration
-Clone the project locally to your Docker host. 
-
-If you would like to change which targets should be monitored or make configuration changes edit the [/prometheus/prometheus.yml](https://github.com/vegasbrianc/prometheus/blob/version-2/prometheus/prometheus.yml) file. The targets section is where you define what should be monitored by Prometheus. The names defined in this file are actually sourced from the service name in the docker-compose file. If you wish to change names of the services you can add the "container_name" parameter in the `docker-compose.yml` file.
-
-Once configurations are done let's start it up. From the horaclifix/docker/Prometheus project directory run the following commands:
+* Clone the project locally to your Docker host. 
+* From the horaclifix/docker/Prometheus directory run:
 
 	$ ./replaceIP.sh 1.1.1.1 YOUR_OWN_IP
     $ docker-compose up -d
 
 
-That's it. docker-compose builds the entire Grafa and Prometheus stack automagically. Since we don't want to listen on
-0.0.0.0 use the replaceIP script which will replace the preconfigured IP 1.1.1.1 with your own IP.
+Since we don't want to listen on 0.0.0.0 use the replaceIP script which will replace the preconfigured IP 1.1.1.1 with your own IP.
 
-The Grafana Dashboard is now accessible via: `http://<Host IP Address>:3000` for example http://192.168.10.1:3000
+The Grafana Dashboard is now accessible via: `http://<your own IP>:3000`
 
 username - admin
 password - foobar (Password is stored in the `config.monitoring` env file)
