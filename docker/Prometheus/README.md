@@ -16,10 +16,10 @@ Clone the project locally to your Docker host and run from the horaclifix/docker
 
 Since we don't want to listen on 0.0.0.0 use the replaceIP script which will replace the preconfigured IP 1.1.1.1 with your own IP.
 
-The Grafana Dashboard is now accessible via: `http://<your own IP>:3000`
+The Grafana Dashboard is now accessible via: `http://<YOUR_OWN_IP>:3000`
 
-username - admin
-password - foobar (Password is stored in the `config.monitoring` env file)
+* username:admin
+* password:foobar (Password is stored in the `config.monitoring` env file)
 
 ## Post Configurations
 Now we need to create the Prometheus Datasource in order to connect Grafana to Prometheus 
