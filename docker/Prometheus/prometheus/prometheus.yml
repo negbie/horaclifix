@@ -28,4 +28,4 @@ scrape_configs:
     # scheme defaults to 'http'.
 
     static_configs:
-         - targets: ['1.1.1.1:9090','1.1.1.1:9102','cadvisor:8080','node-exporter:9100']
+         - targets: ['prometheus:9090','statsd-exporter:9102','cadvisor:8080','node-exporter:9100']
