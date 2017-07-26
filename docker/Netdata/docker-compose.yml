@@ -1,0 +1,16 @@
+netdata:
+  image: titpetric/netdata:latest
+  container_name: netdata
+  cap_add:
+  - SYS_PTRACE
+  volumes:
+  - ./netdata.conf:/etc/netdata/netdata.conf:ro
+  - ./sbc_qos.conf:/etc/netdata/statsd.d/sbc_qos.conf:ro
+  - /proc:/host/proc:ro
+  - /sys:/host/sys:ro
+  expose:
+  - 19999
+  - 8125
+  ports:
+  - 1.1.1.1:19999:19999
+  - 1.1.1.1:8125:8125/udp
