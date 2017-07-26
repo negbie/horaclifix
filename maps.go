@@ -1,58 +1,8 @@
 package main
 
-import "github.com/negbie/siprocket"
-
-// mapQOS retruns a map with QOS stats which can be
-// json encoded and send into homer, or graylog
-func (i *IPFIX) mapQOS() *map[string]interface{} {
-	mQOS := map[string]interface{}{
-		"INC_ID":              string(i.Data.QOS.IncCallID),
-		"INC_RTP_BYTE":        i.Data.QOS.IncRtpBytes,
-		"INC_RTP_PK":          i.Data.QOS.IncRtpPackets,
-		"INC_RTP_PK_LOSS":     i.Data.QOS.IncRtpLostPackets,
-		"INC_RTP_AVG_JITTER":  i.Data.QOS.IncRtpAvgJitter,
-		"INC_RTP_MAX_JITTER":  i.Data.QOS.IncRtpMaxJitter,
-		"INC_RTCP_BYTE":       i.Data.QOS.IncRtcpBytes,
-		"INC_RTCP_PK":         i.Data.QOS.IncRtcpPackets,
-		"INC_RTCP_PK_LOSS":    i.Data.QOS.IncRtcpLostPackets,
-		"INC_RTCP_AVG_JITTER": i.Data.QOS.IncRtcpAvgJitter,
-		"INC_RTCP_MAX_JITTER": i.Data.QOS.IncRtcpMaxJitter,
-		"INC_RTCP_AVG_LAT":    i.Data.QOS.IncRtcpAvgLat,
-		"INC_RTCP_MAX_LAT":    i.Data.QOS.IncRtcpMaxLat,
-		"INC_MOS":             i.Data.QOS.IncMos,
-		"INC_RVAL":            i.Data.QOS.IncrVal,
-		"CALLER_VLAN":         i.Data.QOS.CallerIntVlan,
-		"CALLER_SRC_IP":       stringIPv4(i.Data.QOS.CallerIncSrcIP),
-		"CALLER_SRC_PORT":     i.Data.QOS.CallerIncSrcPort,
-		"CALLER_DST_IP":       stringIPv4(i.Data.QOS.CallerOutDstIP),
-		"CALLER_DST_PORT":     i.Data.QOS.CallerOutDstPort,
-		"INC_REALM":           string(i.Data.QOS.IncRealm),
-
-		"OUT_ID":              string(i.Data.QOS.OutCallID),
-		"OUT_RTP_BYTE":        i.Data.QOS.OutRtpBytes,
-		"OUT_RTP_PK":          i.Data.QOS.OutRtpPackets,
-		"OUT_RTP_PK_LOSS":     i.Data.QOS.OutRtpLostPackets,
-		"OUT_RTP_AVG_JITTER":  i.Data.QOS.OutRtpAvgJitter,
-		"OUT_RTP_MAX_JITTER":  i.Data.QOS.OutRtpMaxJitter,
-		"OUT_RTCP_BYTE":       i.Data.QOS.OutRtcpBytes,
-		"OUT_RTCP_PK":         i.Data.QOS.OutRtcpPackets,
-		"OUT_RTCP_PK_LOSS":    i.Data.QOS.OutRtcpLostPackets,
-		"OUT_RTCP_AVG_JITTER": i.Data.QOS.OutRtcpAvgJitter,
-		"OUT_RTCP_MAX_JITTER": i.Data.QOS.OutRtcpMaxJitter,
-		"OUT_RTCP_AVG_LAT":    i.Data.QOS.OutRtcpAvgLat,
-		"OUT_RTCP_MAX_LAT":    i.Data.QOS.OutRtcpMaxLat,
-		"OUT_MOS":             i.Data.QOS.OutMos,
-		"OUT_RVAL":            i.Data.QOS.OutrVal,
-		"CALLEE_VLAN":         i.Data.QOS.CalleeIntVlan,
-		"CALLEE_SRC_IP":       stringIPv4(i.Data.QOS.CalleeOutSrcIP),
-		"CALLEE_SRC_PORT":     i.Data.QOS.CalleeOutSrcPort,
-		"CALLEE_DST_IP":       stringIPv4(i.Data.QOS.CalleeIncDstIP),
-		"CALLEE_DST_PORT":     i.Data.QOS.CalleeIncDstPort,
-		"OUT_REALM":           string(i.Data.QOS.OutRealm),
-		"MEDIA_TYPE":          i.Data.QOS.Type,
-	}
-	return &mQOS
-}
+import (
+	"github.com/negbie/siprocket"
+)
 
 // mapLogSIP retruns a map with SIP stats which can be
 // json encoded and send send as gelf to graylog
@@ -163,9 +113,152 @@ func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 	return &mLogQOS
 }
 
-/*
-func (i *IPFIX) mapIncRTCP() *map[string]interface{} {
-	mIncRtcp := map[string]interface{}{
+// mapQOS33 retruns a map with QOS33 stats which can be
+// json encoded and send into homer, or graylog
+func (i *IPFIX) mapQOS33() *map[string]interface{} {
+	mQOS33 := map[string]interface{}{
+		"INC_ID":              string(i.Data.QOS.IncCallID),
+		"INC_RTP_BYTE":        i.Data.QOS.IncRtpBytes,
+		"INC_RTP_PK":          i.Data.QOS.IncRtpPackets,
+		"INC_RTP_PK_LOSS":     i.Data.QOS.IncRtpLostPackets,
+		"INC_RTP_AVG_JITTER":  i.Data.QOS.IncRtpAvgJitter,
+		"INC_RTP_MAX_JITTER":  i.Data.QOS.IncRtpMaxJitter,
+		"INC_RTCP_BYTE":       i.Data.QOS.IncRtcpBytes,
+		"INC_RTCP_PK":         i.Data.QOS.IncRtcpPackets,
+		"INC_RTCP_PK_LOSS":    i.Data.QOS.IncRtcpLostPackets,
+		"INC_RTCP_AVG_JITTER": i.Data.QOS.IncRtcpAvgJitter,
+		"INC_RTCP_MAX_JITTER": i.Data.QOS.IncRtcpMaxJitter,
+		"INC_RTCP_AVG_LAT":    i.Data.QOS.IncRtcpAvgLat,
+		"INC_RTCP_MAX_LAT":    i.Data.QOS.IncRtcpMaxLat,
+		"INC_MOS":             i.Data.QOS.IncMos,
+		"INC_RVAL":            i.Data.QOS.IncrVal,
+		"CALLER_VLAN":         i.Data.QOS.CallerIntVlan,
+		"CALLER_SRC_IP":       stringIPv4(i.Data.QOS.CallerIncSrcIP),
+		"CALLER_SRC_PORT":     i.Data.QOS.CallerIncSrcPort,
+		"CALLER_DST_IP":       stringIPv4(i.Data.QOS.CallerOutDstIP),
+		"CALLER_DST_PORT":     i.Data.QOS.CallerOutDstPort,
+		"INC_REALM":           string(i.Data.QOS.IncRealm),
+
+		"OUT_ID":              string(i.Data.QOS.OutCallID),
+		"OUT_RTP_BYTE":        i.Data.QOS.OutRtpBytes,
+		"OUT_RTP_PK":          i.Data.QOS.OutRtpPackets,
+		"OUT_RTP_PK_LOSS":     i.Data.QOS.OutRtpLostPackets,
+		"OUT_RTP_AVG_JITTER":  i.Data.QOS.OutRtpAvgJitter,
+		"OUT_RTP_MAX_JITTER":  i.Data.QOS.OutRtpMaxJitter,
+		"OUT_RTCP_BYTE":       i.Data.QOS.OutRtcpBytes,
+		"OUT_RTCP_PK":         i.Data.QOS.OutRtcpPackets,
+		"OUT_RTCP_PK_LOSS":    i.Data.QOS.OutRtcpLostPackets,
+		"OUT_RTCP_AVG_JITTER": i.Data.QOS.OutRtcpAvgJitter,
+		"OUT_RTCP_MAX_JITTER": i.Data.QOS.OutRtcpMaxJitter,
+		"OUT_RTCP_AVG_LAT":    i.Data.QOS.OutRtcpAvgLat,
+		"OUT_RTCP_MAX_LAT":    i.Data.QOS.OutRtcpMaxLat,
+		"OUT_MOS":             i.Data.QOS.OutMos,
+		"OUT_RVAL":            i.Data.QOS.OutrVal,
+		"CALLEE_VLAN":         i.Data.QOS.CalleeIntVlan,
+		"CALLEE_SRC_IP":       stringIPv4(i.Data.QOS.CalleeOutSrcIP),
+		"CALLEE_SRC_PORT":     i.Data.QOS.CalleeOutSrcPort,
+		"CALLEE_DST_IP":       stringIPv4(i.Data.QOS.CalleeIncDstIP),
+		"CALLEE_DST_PORT":     i.Data.QOS.CalleeIncDstPort,
+		"OUT_REALM":           string(i.Data.QOS.OutRealm),
+		"MEDIA_TYPE":          i.Data.QOS.Type,
+	}
+	return &mQOS33
+}
+
+// mapIncQOS34 retruns a map with QOS33 stats which can be
+// json encoded and send into homer, or graylog
+func (i *IPFIX) mapIncQOS34() *map[string]interface{} {
+	mIncQOS34 := map[string]interface{}{
+
+		"CORRELATION_ID":  string(i.Data.QOS.IncCallID),
+		"RTP_SIP_CALL_ID": string(i.Data.QOS.IncCallID),
+		"REPORT_TS":       i.Data.QOS.BeginTimeSec,
+		"TL_BYTE":         i.Data.QOS.IncRtpBytes,
+		"SKEW":            0.000,
+		"TOTAL_PK":        i.Data.QOS.IncRtpPackets,
+		"EXPECTED_PK":     (i.Data.QOS.IncRtpPackets + i.Data.QOS.IncRtpLostPackets),
+		"PACKET_LOSS":     i.Data.QOS.IncRtpLostPackets,
+		"SEQ":             0,
+		"JITTER":          i.Data.QOS.IncRtpAvgJitter,
+		"MAX_JITTER":      i.Data.QOS.IncRtpMaxJitter,
+		"MEAN_JITTER":     i.Data.QOS.IncRtpAvgJitter,
+		"DELTA":           0.000,
+		"MAX_DELTA":       0.000,
+		"MAX_SKEW":        0.000,
+		"MIN_MOS":         i.Data.QOS.IncMos,
+		"MEAN_MOS":        i.Data.QOS.IncMos,
+		"MOS":             i.Data.QOS.IncMos,
+		"RFACTOR":         i.Data.QOS.IncrVal,
+		"MIN_RFACTOR":     i.Data.QOS.IncrVal,
+		"MEAN_RFACTOR":    i.Data.QOS.IncrVal,
+		"SRC_IP":          stringIPv4(i.Data.QOS.CallerIncSrcIP),
+		"SRC_PORT":        i.Data.QOS.CallerIncSrcPort,
+		"DST_IP":          stringIPv4(i.Data.QOS.CallerIncDstIP),
+		"DST_PORT":        i.Data.QOS.CallerIncSrcPort,
+		"SRC_MAC":         "00-00-00-00-00-00",
+		"DST_MAC":         "00-00-00-00-00-00",
+		"OUT_ORDER":       0,
+		"SSRC_CHG":        0,
+		"CODEC_PT":        i.Data.QOS.Type,
+		"CLOCK":           8000,
+		"CODEC_NAME":      i.Data.QOS.Type,
+		"DIR":             0,
+		"REPORT_NAME":     string(i.Data.QOS.IncRealm),
+		"PARTY":           0,
+		"TYPE":            "PERIODIC",
+	}
+	return &mIncQOS34
+}
+
+// mapOutQOS34 retruns a map with QOS33 stats which can be
+// json encoded and send into homer, or graylog
+func (i *IPFIX) mapOutQOS34() *map[string]interface{} {
+	mOutQOS34 := map[string]interface{}{
+
+		"CORRELATION_ID":  string(i.Data.QOS.OutCallID),
+		"RTP_SIP_CALL_ID": string(i.Data.QOS.OutCallID),
+		"REPORT_TS":       i.Data.QOS.BeginTimeSec,
+		"TL_BYTE":         i.Data.QOS.OutRtpBytes,
+		"SKEW":            0.000,
+		"TOTAL_PK":        i.Data.QOS.OutRtpPackets,
+		"EXPECTED_PK":     (i.Data.QOS.OutRtpPackets + i.Data.QOS.OutRtpLostPackets),
+		"PACKET_LOSS":     i.Data.QOS.OutRtpLostPackets,
+		"SEQ":             0,
+		"JITTER":          i.Data.QOS.OutRtpAvgJitter,
+		"MAX_JITTER":      i.Data.QOS.OutRtpMaxJitter,
+		"MEAN_JITTER":     i.Data.QOS.OutRtpAvgJitter,
+		"DELTA":           0.000,
+		"MAX_DELTA":       0.000,
+		"MAX_SKEW":        0.000,
+		"MIN_MOS":         i.Data.QOS.OutMos,
+		"MEAN_MOS":        i.Data.QOS.OutMos,
+		"MOS":             i.Data.QOS.OutMos,
+		"RFACTOR":         i.Data.QOS.OutrVal,
+		"MIN_RFACTOR":     i.Data.QOS.OutrVal,
+		"MEAN_RFACTOR":    i.Data.QOS.OutrVal,
+		"SRC_IP":          stringIPv4(i.Data.QOS.CalleeOutSrcIP),
+		"SRC_PORT":        i.Data.QOS.CalleeOutSrcPort,
+		"DST_IP":          stringIPv4(i.Data.QOS.CalleeOutDstIP),
+		"DST_PORT":        i.Data.QOS.CalleeOutSrcPort,
+		"SRC_MAC":         "00-00-00-00-00-00",
+		"DST_MAC":         "00-00-00-00-00-00",
+		"OUT_ORDER":       0,
+		"SSRC_CHG":        0,
+		"CODEC_PT":        i.Data.QOS.Type,
+		"CLOCK":           8000,
+		"CODEC_NAME":      i.Data.QOS.Type,
+		"DIR":             0,
+		"REPORT_NAME":     string(i.Data.QOS.OutRealm),
+		"PARTY":           1,
+		"TYPE":            "PERIODIC",
+	}
+	return &mOutQOS34
+}
+
+// mapIncQOS35 retruns a map with QOS33 stats which can be
+// json encoded and send into homer, or graylog
+func (i *IPFIX) mapIncQOS35() *map[string]interface{} {
+	mIncQOS35 := map[string]interface{}{
 
 		"CORRELATION_ID":  string(i.Data.QOS.IncCallID),
 		"RTP_SIP_CALL_ID": string(i.Data.QOS.IncCallID),
@@ -203,12 +296,14 @@ func (i *IPFIX) mapIncRTCP() *map[string]interface{} {
 		"REPORT_NAME":     string(i.Data.QOS.IncRealm),
 		"PARTY":           0,
 		"TYPE":            "PERIODIC",
-	} return &mIncRtcp
+	}
+	return &mIncQOS35
 }
 
-func (i *IPFIX) mapOutRTCP() *map[string]interface{} {
-	mOutRtcp := map[string]interface{}{
-
+// mapOutQOS35 retruns a map with QOS33 stats which can be
+// json encoded and send into homer, or graylog
+func (i *IPFIX) mapOutQOS35() *map[string]interface{} {
+	mOutQOS35 := map[string]interface{}{
 		"CORRELATION_ID":  string(i.Data.QOS.OutCallID),
 		"RTP_SIP_CALL_ID": string(i.Data.QOS.OutCallID),
 		"REPORT_TS":       i.Data.QOS.BeginTimeSec,
@@ -245,6 +340,6 @@ func (i *IPFIX) mapOutRTCP() *map[string]interface{} {
 		"REPORT_NAME":     string(i.Data.QOS.OutRealm),
 		"PARTY":           1,
 		"TYPE":            "PERIODIC",
-	} return &mOutRtcp
+	}
+	return &mOutQOS35
 }
-*/

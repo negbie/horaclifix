@@ -41,20 +41,20 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 	case 0x0003:
 		chunck = make([]byte, 6+4)
 		switch payloadType {
-		case "QOS":
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.CallerIncSrcIP)
-		default:
+		case "SIP":
 			binary.BigEndian.PutUint32(chunck[6:], i.Data.SIP.SrcIP)
+		default:
+			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.CallerIncSrcIP)
 		}
 
 	// Chunk IPv4 destination address
 	case 0x0004:
 		chunck = make([]byte, 6+4)
 		switch payloadType {
-		case "QOS":
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.CallerIncDstIP)
-		default:
+		case "SIP":
 			binary.BigEndian.PutUint32(chunck[6:], i.Data.SIP.DstIP)
+		default:
+			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.CallerIncDstIP)
 		}
 
 	// Chunk IPv6 source address
@@ -67,48 +67,56 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 	case 0x0007:
 		chunck = make([]byte, 6+2)
 		switch payloadType {
-		case "QOS":
-			binary.BigEndian.PutUint16(chunck[6:], i.Data.QOS.CallerIncSrcPort)
-		default:
+		case "SIP":
 			binary.BigEndian.PutUint16(chunck[6:], i.Data.SIP.SrcPort)
+		default:
+			binary.BigEndian.PutUint16(chunck[6:], i.Data.QOS.CallerIncSrcPort)
 		}
 
 	// Chunk destination source port
 	case 0x0008:
 		chunck = make([]byte, 6+2)
 		switch payloadType {
-		case "QOS":
-			binary.BigEndian.PutUint16(chunck[6:], i.Data.QOS.CallerIncDstPort)
-		default:
+		case "SIP":
 			binary.BigEndian.PutUint16(chunck[6:], i.Data.SIP.DstPort)
+		default:
+			binary.BigEndian.PutUint16(chunck[6:], i.Data.QOS.CallerIncDstPort)
 		}
 
 	// Chunk unix timestamp, seconds
 	case 0x0009:
 		chunck = make([]byte, 6+4)
 		switch payloadType {
-		case "QOS":
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.EndTimeSec)
-		default:
+		case "SIP":
 			binary.BigEndian.PutUint32(chunck[6:], i.Data.SIP.TimeSec)
+		default:
+			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.EndTimeSec)
 		}
 
 	// Chunk unix timestamp, microseconds offset
 	case 0x000a:
 		chunck = make([]byte, 6+4)
 		switch payloadType {
-		case "QOS":
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.EndinTimeMic)
-		default:
+		case "SIP":
 			binary.BigEndian.PutUint32(chunck[6:], i.Data.SIP.TimeMic)
+		default:
+			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.EndinTimeMic)
 		}
 
 	// Chunk protocol type (SIP/H323/RTP/MGCP/M2UA)
 	case 0x000b:
 		chunck = make([]byte, 6+1)
 		switch payloadType {
-		case "QOS":
+		case "QOS33":
 			chunck[6] = 33
+		case "incQOS34":
+			chunck[6] = 34
+		case "outQOS34":
+			chunck[6] = 34
+		case "incQOS35":
+			chunck[6] = 35
+		case "outQOS35":
+			chunck[6] = 35
 		case "LOG":
 			chunck[6] = 100
 		default:
@@ -131,8 +139,24 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 	// Chunk captured packet payload
 	case 0x000f:
 		switch payloadType {
-		case "QOS":
-			payload, _ := json.Marshal(i.mapQOS())
+		case "QOS33":
+			payload, _ := json.Marshal(i.mapQOS33())
+			chunck = make([]byte, len(payload)+6)
+			copy(chunck[6:], payload)
+		case "incQOS34":
+			payload, _ := json.Marshal(i.mapIncQOS34())
+			chunck = make([]byte, len(payload)+6)
+			copy(chunck[6:], payload)
+		case "outQOS34":
+			payload, _ := json.Marshal(i.mapOutQOS34())
+			chunck = make([]byte, len(payload)+6)
+			copy(chunck[6:], payload)
+		case "incQOS35":
+			payload, _ := json.Marshal(i.mapIncQOS35())
+			chunck = make([]byte, len(payload)+6)
+			copy(chunck[6:], payload)
+		case "outQOS35":
+			payload, _ := json.Marshal(i.mapOutQOS35())
 			chunck = make([]byte, len(payload)+6)
 			copy(chunck[6:], payload)
 		default:
@@ -175,7 +199,7 @@ func (i *IPFIX) NewHEPChuncks(s string) []byte {
 	buf.Write(i.MakeChunck(0x0000, 0x000c, s))
 	buf.Write(i.MakeChunck(0x0000, 0x000e, s))
 	buf.Write(i.MakeChunck(0x0000, 0x000f, s))
-	if s == "QOS" || s == "LOG" {
+	if s != "SIP" {
 		buf.Write(i.MakeChunck(0x0000, 0x0011, s))
 	}
 	return buf.Bytes()
