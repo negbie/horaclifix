@@ -38,7 +38,6 @@ services:
     container_name: statsd-exporter
     volumes:
       - ./statsd/statsd_mapping.conf:/tmp/statsd-exporter.conf:ro
-      - prometheus_data:/prometheus
     command:
       - '-statsd.mapping-config=/tmp/statsd-exporter.conf'
       - '-statsd.add-suffix=false'
