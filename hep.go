@@ -176,7 +176,17 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 			chunck = make([]byte, len(i.Data.QOS.OutCallID)+6)
 			copy(chunck[6:], i.Data.QOS.OutCallID)
 		}
+
+	case 0x0020:
+		chunck = make([]byte, 6+4)
+		switch payloadType {
+		case "incQOS35":
+			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.IncMos)
+		case "outQOS35":
+			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.OutMos)
+		}
 	}
+
 	binary.BigEndian.PutUint16(chunck[:2], chunckVen)
 	binary.BigEndian.PutUint16(chunck[2:4], chunckType)
 	binary.BigEndian.PutUint16(chunck[4:6], uint16(len(chunck)))
@@ -201,6 +211,9 @@ func (i *IPFIX) NewHEPChuncks(s string) []byte {
 	buf.Write(i.MakeChunck(0x0000, 0x000f, s))
 	if s != "SIP" {
 		buf.Write(i.MakeChunck(0x0000, 0x0011, s))
+	}
+	if s == "incQOS35" || s == "outQOS35" {
+		buf.Write(i.MakeChunck(0x0000, 0x0020, s))
 	}
 	return buf.Bytes()
 }
