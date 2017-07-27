@@ -21,14 +21,24 @@ go install github.com/negbie/horaclifix
 
 ```bash
   -H string
-        Homer server address
+        Homer UDP server address
+  -HQ
+        Send hepic QOS Stats
+  -P string
+        HEP capture password (default "myhep")
+  -b string
+        Banshee TCP server address
   -d    Debug output to stdout
   -g string
-        Graylog server address
+        Graylog gelf UDP server address
+  -gt string
+        Graylog gelf TLS server address
   -l string
         IPFIX listen address (default ":4739")
+  -n string
+        SBC name (default "sbc")
   -s string
-        StatsD server address
+        StatsD UDP server address
   -v    Verbose output to stdout
   
 ################################################################
