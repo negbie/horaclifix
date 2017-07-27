@@ -107,15 +107,15 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 	case 0x000b:
 		chunck = make([]byte, 6+1)
 		switch payloadType {
-		case "QOS33":
-			chunck[6] = 33
-		case "incQOS34":
+		case "allQOS":
+			chunck[6] = 38
+		case "incQOS":
 			chunck[6] = 34
-		case "outQOS34":
+		case "outQOS":
 			chunck[6] = 34
-		case "incQOS35":
+		case "incMOS":
 			chunck[6] = 35
-		case "outQOS35":
+		case "outMOS":
 			chunck[6] = 35
 		case "LOG":
 			chunck[6] = 100
@@ -139,24 +139,16 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 	// Chunk captured packet payload
 	case 0x000f:
 		switch payloadType {
-		case "QOS33":
-			payload, _ := json.Marshal(i.mapQOS33())
+		case "allQOS":
+			payload, _ := json.Marshal(i.mapAllQOS())
 			chunck = make([]byte, len(payload)+6)
 			copy(chunck[6:], payload)
-		case "incQOS34":
-			payload, _ := json.Marshal(i.mapIncQOS34())
+		case "incQOS":
+			payload, _ := json.Marshal(i.mapIncQOS())
 			chunck = make([]byte, len(payload)+6)
 			copy(chunck[6:], payload)
-		case "outQOS34":
-			payload, _ := json.Marshal(i.mapOutQOS34())
-			chunck = make([]byte, len(payload)+6)
-			copy(chunck[6:], payload)
-		case "incQOS35":
-			payload, _ := json.Marshal(i.mapIncQOS35())
-			chunck = make([]byte, len(payload)+6)
-			copy(chunck[6:], payload)
-		case "outQOS35":
-			payload, _ := json.Marshal(i.mapOutQOS35())
+		case "outQOS":
+			payload, _ := json.Marshal(i.mapOutQOS())
 			chunck = make([]byte, len(payload)+6)
 			copy(chunck[6:], payload)
 		default:
@@ -180,9 +172,9 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 	case 0x0020:
 		chunck = make([]byte, 6+4)
 		switch payloadType {
-		case "incQOS35":
+		case "incMOS":
 			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.IncMos)
-		case "outQOS35":
+		case "outMOS":
 			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.OutMos)
 		}
 	}
@@ -208,11 +200,13 @@ func (i *IPFIX) NewHEPChuncks(s string) []byte {
 	buf.Write(i.MakeChunck(0x0000, 0x000b, s))
 	buf.Write(i.MakeChunck(0x0000, 0x000c, s))
 	buf.Write(i.MakeChunck(0x0000, 0x000e, s))
-	buf.Write(i.MakeChunck(0x0000, 0x000f, s))
+	if s != "incMOS" || s != "outMOS" {
+		buf.Write(i.MakeChunck(0x0000, 0x000f, s))
+	}
 	if s != "SIP" {
 		buf.Write(i.MakeChunck(0x0000, 0x0011, s))
 	}
-	if s == "incQOS35" || s == "outQOS35" {
+	if s == "incMOS" || s == "outMOS" {
 		buf.Write(i.MakeChunck(0x0000, 0x0020, s))
 	}
 	return buf.Bytes()

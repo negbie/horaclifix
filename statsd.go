@@ -9,10 +9,10 @@ import (
 // be converted into statsd compatible strings seperated by '\n'
 func (conn Connections) SendStatsD(i *IPFIX, s string) {
 	buf := new(bytes.Buffer)
-	var mapQOS map[string]interface{}
+	var mapQOS map[string]float32
 	switch s {
 	case "QOS":
-		mapQOS = map[string]interface{}{
+		mapQOS = map[string]float32{
 			"qos.inc.rtp.mos":          float32(i.Data.QOS.IncMos) / 100,
 			"qos.out.rtp.mos":          float32(i.Data.QOS.OutMos) / 100,
 			"qos.inc.rtcp.mos":         float32(i.Data.QOS.IncMos) / 100,

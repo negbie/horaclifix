@@ -11,11 +11,13 @@ func (conn Connections) Send(msg *IPFIX, s string) {
 				conn.SendBanshee(msg, "QOS")
 			}
 			if *haddr != "" {
-				conn.SendHep(msg, "QOS33")
-				conn.SendHep(msg, "incQOS34")
-				conn.SendHep(msg, "outQOS34")
-				conn.SendHep(msg, "incQOS35")
-				conn.SendHep(msg, "outQOS35")
+				conn.SendHep(msg, "allQOS")
+				if *hepicQOS {
+					conn.SendHep(msg, "incQOS")
+					conn.SendHep(msg, "outQOS")
+					conn.SendHep(msg, "incMOS")
+					conn.SendHep(msg, "outMOS")
+				}
 			}
 			if *saddr != "" {
 				conn.SendStatsD(msg, "QOS")

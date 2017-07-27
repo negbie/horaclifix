@@ -8,11 +8,11 @@ import (
 // SendBanshee creates a map with QOS or SIP stats which will
 // be converted into statsd like strings seperated by '\n'
 func (conn Connections) SendBanshee(i *IPFIX, s string) {
-	var mapQOS map[string]interface{}
+	var mapQOS map[string]float32
 	buf := new(bytes.Buffer)
 	switch s {
 	case "QOS":
-		mapQOS = map[string]interface{}{
+		mapQOS = map[string]float32{
 			"timer.mean_90." + *name + ".inc.mos":              float32(i.Data.QOS.IncMos) / 100,
 			"timer.mean_90." + *name + ".out.mos":              float32(i.Data.QOS.OutMos) / 100,
 			"timer.mean_90." + *name + ".inc.rval":             float32(i.Data.QOS.IncrVal) / 100,

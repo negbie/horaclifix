@@ -973,7 +973,7 @@ event_route[sipcapture:request] {
                 return 0;
         }
 	 #####################HORACLIFIX###############################
-        else if($hep(0x00b) == 33){
+        else if($hep(0x00b) == 38){
 
                 #If report lets proceed here with payload
                 #xlog("HEP HORACLIFIX CHUNK PAYLOAD $hep(0x00f) request from $si:$sp\r\n");

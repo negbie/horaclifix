@@ -1,19 +1,21 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/negbie/siprocket"
 )
 
 // mapLogSIP retruns a map with SIP stats which can be
 // json encoded and send send as gelf to graylog
-func (i *IPFIX) mapLogSIP() *map[string]interface{} {
+func (i *IPFIX) mapLogSIP() *map[string]string {
 	sipMSG := siprocket.Parse(i.Data.SIP.SipMsg)
 	//siprocket.PrintSipStruct(&sipMSG)
-	mLogSIP := map[string]interface{}{
+	mLogSIP := map[string]string{
 		"version":       "1.1",
 		"host":          *name,
 		"short_message": string(i.Data.SIP.SipMsg),
-		"level":         5,
+		"level":         "5",
 		"_id":           string(sipMSG.CallId.Value),
 		"_from":         string(sipMSG.From.User),
 		"_to":           string(sipMSG.To.User),
@@ -22,18 +24,18 @@ func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 		"_ua":           string(sipMSG.Ua.Value),
 		"_srcIp":        stringIPv4(i.Data.SIP.SrcIP),
 		"_dstIp":        stringIPv4(i.Data.SIP.DstIP),
-		"_srcPort":      i.Data.SIP.SrcPort,
-		"_dstPort":      i.Data.SIP.DstPort,
-		"_ipLen":        i.Data.SIP.IPlen,
-		"_udpLen":       i.Data.SIP.UDPlen,
-		"_intVlan":      i.Data.SIP.IntVlan,
-		"_vl":           i.Data.SIP.VL,
-		"_tos":          i.Data.SIP.TOS,
-		"_tlen":         i.Data.SIP.TLen,
-		"_tid":          i.Data.SIP.TID,
-		"_tflags":       i.Data.SIP.TFlags,
-		"_ttl":          i.Data.SIP.TTL,
-		"_tproto":       i.Data.SIP.TProto,
+		"_srcPort":      fmt.Sprint(i.Data.SIP.SrcPort),
+		"_dstPort":      fmt.Sprint(i.Data.SIP.DstPort),
+		"_ipLen":        fmt.Sprint(i.Data.SIP.IPlen),
+		"_udpLen":       fmt.Sprint(i.Data.SIP.UDPlen),
+		"_intVlan":      fmt.Sprint(i.Data.SIP.IntVlan),
+		"_vl":           fmt.Sprint(i.Data.SIP.VL),
+		"_tos":          fmt.Sprint(i.Data.SIP.TOS),
+		"_tlen":         fmt.Sprint(i.Data.SIP.TLen),
+		"_tid":          fmt.Sprint(i.Data.SIP.TID),
+		"_tflags":       fmt.Sprint(i.Data.SIP.TFlags),
+		"_ttl":          fmt.Sprint(i.Data.SIP.TTL),
+		"_tproto":       fmt.Sprint(i.Data.SIP.TProto),
 	}
 	return &mLogSIP
 }
@@ -113,10 +115,10 @@ func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 	return &mLogQOS
 }
 
-// mapQOS33 retruns a map with QOS33 stats which can be
+// mapAllQOS retruns a map with QOS33 stats which can be
 // json encoded and send into homer, or graylog
-func (i *IPFIX) mapQOS33() *map[string]interface{} {
-	mQOS33 := map[string]interface{}{
+func (i *IPFIX) mapAllQOS() *map[string]interface{} {
+	mAllQOS := map[string]interface{}{
 		"INC_ID":              string(i.Data.QOS.IncCallID),
 		"INC_RTP_BYTE":        i.Data.QOS.IncRtpBytes,
 		"INC_RTP_PK":          i.Data.QOS.IncRtpPackets,
@@ -162,13 +164,13 @@ func (i *IPFIX) mapQOS33() *map[string]interface{} {
 		"OUT_REALM":           string(i.Data.QOS.OutRealm),
 		"MEDIA_TYPE":          i.Data.QOS.Type,
 	}
-	return &mQOS33
+	return &mAllQOS
 }
 
-// mapIncQOS34 retruns a map with QOS33 stats which can be
+// mapIncQOS retruns a map with incomming RTP QOS stats which can be
 // json encoded and send into homer, or graylog
-func (i *IPFIX) mapIncQOS34() *map[string]interface{} {
-	mIncQOS34 := map[string]interface{}{
+func (i *IPFIX) mapIncQOS() *map[string]interface{} {
+	mIncQOS := map[string]interface{}{
 
 		"CORRELATION_ID":  string(i.Data.QOS.IncCallID),
 		"RTP_SIP_CALL_ID": string(i.Data.QOS.IncCallID),
@@ -182,8 +184,8 @@ func (i *IPFIX) mapIncQOS34() *map[string]interface{} {
 		"JITTER":          i.Data.QOS.IncRtpAvgJitter,
 		"MAX_JITTER":      i.Data.QOS.IncRtpMaxJitter,
 		"MEAN_JITTER":     i.Data.QOS.IncRtpAvgJitter,
-		"DELTA":           0.000,
-		"MAX_DELTA":       0.000,
+		"DELTA":           i.Data.QOS.IncRtcpAvgLat,
+		"MAX_DELTA":       i.Data.QOS.IncRtcpMaxLat,
 		"MAX_SKEW":        0.000,
 		"MIN_MOS":         i.Data.QOS.IncMos,
 		"MEAN_MOS":        i.Data.QOS.IncMos,
@@ -207,13 +209,13 @@ func (i *IPFIX) mapIncQOS34() *map[string]interface{} {
 		"PARTY":           0,
 		"TYPE":            "PERIODIC",
 	}
-	return &mIncQOS34
+	return &mIncQOS
 }
 
-// mapOutQOS34 retruns a map with QOS33 stats which can be
+// mapOutQOS retruns a map with outgoing RTP QOS stats which can be
 // json encoded and send into homer, or graylog
-func (i *IPFIX) mapOutQOS34() *map[string]interface{} {
-	mOutQOS34 := map[string]interface{}{
+func (i *IPFIX) mapOutQOS() *map[string]interface{} {
+	mOutQOS := map[string]interface{}{
 
 		"CORRELATION_ID":  string(i.Data.QOS.OutCallID),
 		"RTP_SIP_CALL_ID": string(i.Data.QOS.OutCallID),
@@ -227,8 +229,8 @@ func (i *IPFIX) mapOutQOS34() *map[string]interface{} {
 		"JITTER":          i.Data.QOS.OutRtpAvgJitter,
 		"MAX_JITTER":      i.Data.QOS.OutRtpMaxJitter,
 		"MEAN_JITTER":     i.Data.QOS.OutRtpAvgJitter,
-		"DELTA":           0.000,
-		"MAX_DELTA":       0.000,
+		"DELTA":           i.Data.QOS.OutRtcpAvgLat,
+		"MAX_DELTA":       i.Data.QOS.OutRtcpMaxLat,
 		"MAX_SKEW":        0.000,
 		"MIN_MOS":         i.Data.QOS.OutMos,
 		"MEAN_MOS":        i.Data.QOS.OutMos,
@@ -252,13 +254,14 @@ func (i *IPFIX) mapOutQOS34() *map[string]interface{} {
 		"PARTY":           1,
 		"TYPE":            "PERIODIC",
 	}
-	return &mOutQOS34
+	return &mOutQOS
 }
 
-// mapIncQOS35 retruns a map with QOS33 stats which can be
+/*
+// mapIncQOS retruns a map with incomming RTCP QOS stats which can be
 // json encoded and send into homer, or graylog
-func (i *IPFIX) mapIncQOS35() *map[string]interface{} {
-	mIncQOS35 := map[string]interface{}{
+func (i *IPFIX) mapIncQOS() *map[string]interface{} {
+	mIncQOS := map[string]interface{}{
 
 		"CORRELATION_ID":  string(i.Data.QOS.IncCallID),
 		"RTP_SIP_CALL_ID": string(i.Data.QOS.IncCallID),
@@ -297,13 +300,13 @@ func (i *IPFIX) mapIncQOS35() *map[string]interface{} {
 		"PARTY":           0,
 		"TYPE":            "PERIODIC",
 	}
-	return &mIncQOS35
+	return &mIncQOS
 }
 
-// mapOutQOS35 retruns a map with QOS33 stats which can be
+// mapOutQOS retruns a map with outgoing RTCP QOS stats which can be
 // json encoded and send into homer, or graylog
-func (i *IPFIX) mapOutQOS35() *map[string]interface{} {
-	mOutQOS35 := map[string]interface{}{
+func (i *IPFIX) mapOutQOS() *map[string]interface{} {
+	mOutQOS := map[string]interface{}{
 		"CORRELATION_ID":  string(i.Data.QOS.OutCallID),
 		"RTP_SIP_CALL_ID": string(i.Data.QOS.OutCallID),
 		"REPORT_TS":       i.Data.QOS.BeginTimeSec,
@@ -341,5 +344,6 @@ func (i *IPFIX) mapOutQOS35() *map[string]interface{} {
 		"PARTY":           1,
 		"TYPE":            "PERIODIC",
 	}
-	return &mOutQOS35
+	return &mOutQOS
 }
+*/
