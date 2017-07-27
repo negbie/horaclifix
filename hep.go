@@ -170,12 +170,12 @@ func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType stri
 		}
 
 	case 0x0020:
-		chunck = make([]byte, 6+4)
+		chunck = make([]byte, 6+2)
 		switch payloadType {
 		case "incMOS":
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.IncMos)
+			binary.BigEndian.PutUint16(chunck[6:], uint16(i.Data.QOS.IncMos))
 		case "outMOS":
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.OutMos)
+			binary.BigEndian.PutUint16(chunck[6:], uint16(i.Data.QOS.OutMos))
 		}
 	}
 
