@@ -4,29 +4,7 @@ import "fmt"
 
 func (conn Connections) Send(msg *IPFIX, s string) {
 	switch s {
-	case "QOS":
-		// Send only QOS stats with meaningful values
-		if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
-			if *baddr != "" {
-				conn.SendBanshee(msg, "QOS")
-			}
-			if *haddr != "" {
-				conn.SendHep(msg, "allQOS")
-				if *hepicQOS {
-					conn.SendHep(msg, "incQOS")
-					conn.SendHep(msg, "outQOS")
-					conn.SendHep(msg, "incMOS")
-					conn.SendHep(msg, "outMOS")
-				}
-			}
-			if *saddr != "" {
-				conn.SendStatsD(msg, "QOS")
-			}
-		}
-		if *gaddr != "" {
-			conn.SendLog(msg, "QOS")
-		}
-	default:
+	case "SIP":
 		if *haddr != "" {
 			conn.SendHep(msg, "SIP")
 		}
@@ -36,6 +14,30 @@ func (conn Connections) Send(msg *IPFIX, s string) {
 		if *debug {
 			fmt.Println("SIP output:")
 			fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
+		}
+
+	default:
+		// Send only QOS stats with meaningful values
+		if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
+			if *baddr != "" {
+				conn.SendBanshee(msg, "QOS")
+			}
+			if *haddr != "" {
+				if *hepicQOS {
+					conn.SendHep(msg, "incQOS")
+					conn.SendHep(msg, "outQOS")
+					conn.SendHep(msg, "incMOS")
+					conn.SendHep(msg, "outMOS")
+				} else {
+					conn.SendHep(msg, "allQOS")
+				}
+			}
+			if *saddr != "" {
+				conn.SendStatsD(msg, "QOS")
+			}
+		}
+		if *gaddr != "" {
+			conn.SendLog(msg, "QOS")
 		}
 	}
 }
