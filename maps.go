@@ -1,45 +1,5 @@
 package main
 
-import (
-	"fmt"
-
-	"github.com/negbie/siprocket"
-)
-
-// mapLogSIP retruns a map with SIP stats which can be
-// json encoded and send send as gelf to graylog
-func (i *IPFIX) mapLogSIP() *map[string]string {
-	sipMSG := siprocket.Parse(i.Data.SIP.SipMsg)
-	//siprocket.PrintSipStruct(&sipMSG)
-	mLogSIP := map[string]string{
-		"version":       "1.1",
-		"host":          *name,
-		"short_message": string(i.Data.SIP.SipMsg),
-		"level":         "5",
-		"_id":           string(sipMSG.CallId.Value),
-		"_from":         string(sipMSG.From.User),
-		"_to":           string(sipMSG.To.User),
-		"_method":       string(sipMSG.Req.Method),
-		"_statusCode":   string(sipMSG.Req.StatusCode),
-		"_ua":           string(sipMSG.Ua.Value),
-		"_srcIp":        stringIPv4(i.Data.SIP.SrcIP),
-		"_dstIp":        stringIPv4(i.Data.SIP.DstIP),
-		"_srcPort":      fmt.Sprint(i.Data.SIP.SrcPort),
-		"_dstPort":      fmt.Sprint(i.Data.SIP.DstPort),
-		"_ipLen":        fmt.Sprint(i.Data.SIP.IPlen),
-		"_udpLen":       fmt.Sprint(i.Data.SIP.UDPlen),
-		"_intVlan":      fmt.Sprint(i.Data.SIP.IntVlan),
-		"_vl":           fmt.Sprint(i.Data.SIP.VL),
-		"_tos":          fmt.Sprint(i.Data.SIP.TOS),
-		"_tlen":         fmt.Sprint(i.Data.SIP.TLen),
-		"_tid":          fmt.Sprint(i.Data.SIP.TID),
-		"_tflags":       fmt.Sprint(i.Data.SIP.TFlags),
-		"_ttl":          fmt.Sprint(i.Data.SIP.TTL),
-		"_tproto":       fmt.Sprint(i.Data.SIP.TProto),
-	}
-	return &mLogSIP
-}
-
 // mapLogQOS retruns a map with QOS stats which can be
 // json encoded and send as gelf to graylog
 func (i *IPFIX) mapLogQOS() *map[string]interface{} {
