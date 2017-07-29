@@ -10,7 +10,5 @@ Clone the project locally to your Docker host and run from the horaclifix/docker
     $ docker-compose up -d
 
 
-Since we don't want to listen on 0.0.0.0 use the replaceIP script which will replace the preconfigured IP 1.1.1.1 with your own IP.
-
 ## Metrics
 You can define your own metrics in sbc_qos.conf.
