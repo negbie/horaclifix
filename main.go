@@ -13,7 +13,6 @@ import (
 
 var (
 	addr     = flag.String("l", ":4739", "IPFIX listen address")
-	aaddr    = flag.String("a", "", "AMQP gelf TCP server address")
 	baddr    = flag.String("b", "", "Banshee TCP server address")
 	gaddr    = flag.String("g", "", "Graylog gelf UDP server address")
 	gtaddr   = flag.String("gt", "", "Graylog gelf TLS server address")

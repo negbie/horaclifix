@@ -18,23 +18,24 @@ func Read(conn *net.TCPConn) {
 
 	// Close connection when this function ends
 	defer func() {
-		if *aaddr != "" {
-			c.Amqp.Close()
-			c.AmqpChannel.Close()
-		}
 		if *baddr != "" {
+			log.Printf("Close Banshee connection to %v\n", c.Banshee.RemoteAddr())
 			c.Banshee.Close()
 		}
 		if *gaddr != "" {
+			log.Printf("Close Graylog connection to %v\n", c.Graylog.RemoteAddr())
 			c.Graylog.Close()
 		}
 		if *gtaddr != "" {
+			log.Printf("Close GraylogTLS connection to %v\n", c.GraylogTLS.RemoteAddr())
 			c.GraylogTLS.Close()
 		}
 		if *haddr != "" {
+			log.Printf("Close Homer connection to %v\n", c.Homer.RemoteAddr())
 			c.Homer.Close()
 		}
 		if *saddr != "" {
+			log.Printf("Close StatsD connection to %v\n", c.StatsD.RemoteAddr())
 			c.StatsD.Close()
 		}
 		log.Printf("Close IPFIX connection to %s at %v\n", *name, conn.RemoteAddr())

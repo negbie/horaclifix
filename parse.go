@@ -15,6 +15,7 @@ func ParseRecSipUDP(header []byte) *IPFIX {
 		}()
 	*/
 	var i IPFIX
+
 	i.Header.Version = binary.BigEndian.Uint16(header[:2])
 	i.Header.Length = binary.BigEndian.Uint16(header[2:4])
 	i.Header.ExportTime = binary.BigEndian.Uint32(header[4:8])
@@ -22,6 +23,7 @@ func ParseRecSipUDP(header []byte) *IPFIX {
 	i.Header.ObservationID = binary.BigEndian.Uint32(header[12:16])
 	i.SetHeader.ID = binary.BigEndian.Uint16(header[16:18])
 	i.SetHeader.Length = binary.BigEndian.Uint16(header[18:20])
+
 	i.Data.SIP.TimeSec = binary.BigEndian.Uint32(header[20:24])
 	i.Data.SIP.TimeMic = binary.BigEndian.Uint32(header[24:28])
 	i.Data.SIP.IntSlot = uint8(header[28])
@@ -51,6 +53,7 @@ func ParseRecSipUDP(header []byte) *IPFIX {
 // the dataSet 259
 func ParseSendSipUDP(header []byte) *IPFIX {
 	var i IPFIX
+
 	i.Header.Version = binary.BigEndian.Uint16(header[:2])
 	i.Header.Length = binary.BigEndian.Uint16(header[2:4])
 	i.Header.ExportTime = binary.BigEndian.Uint32(header[4:8])
@@ -64,6 +67,7 @@ func ParseSendSipUDP(header []byte) *IPFIX {
 	i.Data.SIP.IntPort = uint8(header[29])
 	i.Data.SIP.IntVlan = binary.BigEndian.Uint16(header[30:32])
 	i.Data.SIP.CallIDLen = uint8(header[32])
+
 	pos := int(i.Data.SIP.CallIDLen)
 	if pos == 0 {
 		pos = 33
@@ -95,6 +99,7 @@ func ParseSendSipUDP(header []byte) *IPFIX {
 // the dataSet 260
 func ParseRecSipTCP(header []byte) *IPFIX {
 	var i IPFIX
+
 	i.Header.Version = binary.BigEndian.Uint16(header[:2])
 	i.Header.Length = binary.BigEndian.Uint16(header[2:4])
 	i.Header.ExportTime = binary.BigEndian.Uint32(header[4:8])
@@ -122,6 +127,7 @@ func ParseRecSipTCP(header []byte) *IPFIX {
 // the dataSet 261
 func ParseSendSipTCP(header []byte) *IPFIX {
 	var i IPFIX
+
 	i.Header.Version = binary.BigEndian.Uint16(header[:2])
 	i.Header.Length = binary.BigEndian.Uint16(header[2:4])
 	i.Header.ExportTime = binary.BigEndian.Uint32(header[4:8])
@@ -140,6 +146,7 @@ func ParseSendSipTCP(header []byte) *IPFIX {
 	i.Data.SIP.SrcPort = binary.BigEndian.Uint16(header[42:44])
 	i.Data.SIP.Context = binary.BigEndian.Uint32(header[44:48])
 	i.Data.SIP.CallIDLen = uint8(header[48])
+
 	pos := int(i.Data.SIP.CallIDLen)
 	if pos == 0 {
 		pos = 49

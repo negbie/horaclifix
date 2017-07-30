@@ -15,8 +15,12 @@ func (conn Connections) SendStatsD(i *IPFIX, s string) {
 		mapQOS = map[string]float32{
 			"qos.inc.rtp.mos":          float32(i.Data.QOS.IncMos) / 100,
 			"qos.out.rtp.mos":          float32(i.Data.QOS.OutMos) / 100,
+			"qos.inc.rtcp.mos":         float32(i.Data.QOS.IncMos) / 100,
+			"qos.out.rtcp.mos":         float32(i.Data.QOS.OutMos) / 100,
 			"qos.inc.rtp.rval":         float32(i.Data.QOS.IncrVal) / 100,
 			"qos.out.rtp.rval":         float32(i.Data.QOS.OutrVal) / 100,
+			"qos.inc.rtcp.rval":        float32(i.Data.QOS.IncrVal) / 100,
+			"qos.out.rtcp.rval":        float32(i.Data.QOS.OutrVal) / 100,
 			"qos.inc.rtp.packets":      float32(i.Data.QOS.IncRtpPackets),
 			"qos.out.rtp.packets":      float32(i.Data.QOS.OutRtpPackets),
 			"qos.inc.rtcp.packets":     float32(i.Data.QOS.IncRtcpPackets),

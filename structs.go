@@ -3,8 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"net"
-
-	"github.com/streadway/amqp"
 )
 
 // IPFIX holds the structure of one IPFIX packet
@@ -192,12 +190,9 @@ type QosSet struct {
 }
 
 type Connections struct {
-	Amqp        *amqp.Connection
-	AmqpChannel *amqp.Channel
-	AmqpQueue   amqp.Queue
-	Graylog     net.Conn
-	GraylogTLS  *tls.Conn
-	Homer       net.Conn
-	StatsD      net.Conn
-	Banshee     net.Conn
+	Graylog    net.Conn
+	GraylogTLS *tls.Conn
+	Homer      net.Conn
+	StatsD     net.Conn
+	Banshee    net.Conn
 }
