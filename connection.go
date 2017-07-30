@@ -5,10 +5,30 @@ import (
 	"encoding/binary"
 	"net"
 	"time"
+
+	"github.com/streadway/amqp"
 )
 
 func NewConnections() *Connections {
 	conn := new(Connections)
+	if *aaddr != "" {
+		aconn, err := amqp.Dial("amqp://rabbitmq:rabbitmq@" + *aaddr)
+		checkCritErr(err)
+		achannel, err := aconn.Channel()
+		checkCritErr(err)
+		conn.Amqp = aconn
+		conn.AmqpChannel = achannel
+		aname, err := achannel.QueueDeclare(
+			"log-messages", // queue name
+			true,           // durable
+			false,          // delete when unused
+			false,          // exclusive
+			false,          // no-wait (wait time for processing)
+			nil,            // arguments
+		)
+		checkCritErr(err)
+		conn.AmqpQueue = aname
+	}
 	if *baddr != "" {
 		sconn, err := net.Dial("tcp", *baddr)
 		checkCritErr(err)

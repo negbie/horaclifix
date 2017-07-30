@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"log"
+
+	"github.com/streadway/amqp"
 )
 
 // SendLog will encode the QOS & SIP maps to json
@@ -28,5 +30,15 @@ func (conn Connections) SendLog(i *IPFIX, s string) {
 	}
 	// Graylog frame delimiter
 	data := append(gLog, '\n', byte(0))
+	if *aaddr != "" {
+		err = conn.AmqpChannel.Publish(
+			"",                  // exchange
+			conn.AmqpQueue.Name, // routing key
+			false,               // mandatory
+			false,               // immediate
+			amqp.Publishing{Body: data},
+		)
+		checkErr(err)
+	}
 	conn.Graylog.Write(data)
 }
