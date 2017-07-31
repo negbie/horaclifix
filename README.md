@@ -7,7 +7,11 @@ horaclifix sends IPFIX messages from Oracle SBC's into Homer
 ### Install:
 
 Get it from the releases:
+* Download it here:
 https://github.com/negbie/horaclifix/releases
+* chmod +x horaclifix
+Run it like:
+* ./horaclifix -H 192.168.2.22:9060&
 
 Or:
 ```bash
