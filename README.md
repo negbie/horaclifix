@@ -11,11 +11,10 @@ Get it from the releases:
 * chmod +x horaclifix
 * ./horaclifix -H 192.168.2.22:9060&
 
-Or:
-```bash
+Or if you have go installed:
 * go install github.com/negbie/horaclifix
 * look inside your go bin folder
-```
+
 
 ### Stats:
 ![netdata_qos](https://user-images.githubusercontent.com/20154956/28118829-01909016-6713-11e7-9b54-80e626af7222.jpeg)
