@@ -1,0 +1,12 @@
+version: '2'
+services:
+  HORACLIFIX-GO:
+    image: qxip/horaclifix-go:master
+    environment:
+      HEP_HOST: '127.0.0.1'
+      HEP_PORT: '9063'
+    tty: true
+    ports:
+    - 4739:4739/tcp
+    labels:
+      io.rancher.container.pull_image: always
