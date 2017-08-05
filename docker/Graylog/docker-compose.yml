@@ -1,0 +1,37 @@
+version: '2'
+
+services:
+  some-mongo:
+    image: "mongo:3"
+  some-elasticsearch:
+    image: "elasticsearch:2"
+    command: "elasticsearch -Des.cluster.name='graylog'"
+  graylog:
+    image: graylog2/server:2.2.3-1
+    environment:
+      GRAYLOG_PASSWORD_SECRET: giveMeSomeSalt!!11!!!
+      GRAYLOG_ROOT_PASSWORD_SHA2: 8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+      GRAYLOG_ELASTICSEARCH_HOSTS: "http://some-elasticsearch:9200"
+      GRAYLOG_WEB_ENDPOINT_URI: "http://1.1.1.1:7123/api"
+    ports:
+      - 7123:9000
+      - 8123:8123/udp
+      - 9123:9123/udp
+      - 10123:10123
+      - 11123:11123
+    links:
+      - some-mongo:mongo
+      - some-elasticsearch:elasticsearch
+  rabbit1:
+    image: "rabbitmq:3-management"
+    hostname: "rabbit1"
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+      RABBITMQ_DEFAULT_USER: "rabbitmq"
+      RABBITMQ_DEFAULT_PASS: "rabbitmq"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    labels:
+      NAME: "rabbitmq1"
