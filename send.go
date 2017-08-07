@@ -19,9 +19,7 @@ func (conn Connections) Send(msg *IPFIX, s string) {
 	default:
 		// Send only QOS stats with meaningful values
 		if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
-			if *baddr != "" {
-				conn.SendBanshee(msg, "QOS")
-			}
+
 			if *haddr != "" {
 				if *hepicQOS {
 					conn.SendHep(msg, "incQOS")
@@ -31,6 +29,9 @@ func (conn Connections) Send(msg *IPFIX, s string) {
 				} else {
 					conn.SendHep(msg, "allQOS")
 				}
+			}
+			if *iaddr != "" {
+				conn.Influx.Send(msg, "QOS")
 			}
 			if *saddr != "" {
 				conn.SendStatsD(msg, "QOS")

@@ -18,10 +18,6 @@ func Read(conn *net.TCPConn) {
 
 	// Close connection when this function ends
 	defer func() {
-		if *baddr != "" {
-			log.Printf("Close Banshee connection to %v\n", c.Banshee.RemoteAddr())
-			c.Banshee.Close()
-		}
 		if *gaddr != "" {
 			log.Printf("Close Graylog connection to %v\n", c.Graylog.RemoteAddr())
 			c.Graylog.Close()

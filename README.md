@@ -26,10 +26,10 @@ Or if you have go installed:
         Homer UDP server address
   -HQ
         Send hepic QOS Stats
+  -I string
+        InfluxDB http server address
   -P string
         HEP capture password (default "myhep")
-  -b string
-        Banshee TCP server address
   -d    Debug output to stdout
   -g string
         Graylog gelf UDP server address
@@ -46,6 +46,7 @@ Or if you have go installed:
 ################################################################
 ./horaclifix -d -v
 ./horaclifix -H 192.168.2.22:9060&
+./horaclifix -H 192.168.2.22:9060 -I 192.168.2.22:8086&
 ./horaclifix -H 192.168.2.22:9060 -g 192.168.2.22:4488 -s 127.0.0.1:8125&
 
 The last command will send HEP messages to Homer, plain UDP logs to Graylog, plain UDP metrics to StatsD.

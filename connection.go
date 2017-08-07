@@ -9,10 +9,17 @@ import (
 
 func NewConnections() *Connections {
 	conn := new(Connections)
-	if *baddr != "" {
-		sconn, err := net.Dial("tcp", *baddr)
+
+	if *iaddr != "" {
+		iconn, err := NewInfluxClient(&InfluxClientConfig{
+			Endpoint:     "http://" + *iaddr,
+			Database:     "horaclifix",
+			BatchSize:    256,
+			FlushTimeout: 5 * time.Second,
+			ErrorFunc:    checkCritErr,
+		})
 		checkCritErr(err)
-		conn.Banshee = sconn
+		conn.Influx = iconn
 	}
 	if *gaddr != "" {
 		gconn, err := net.Dial("udp", *gaddr)

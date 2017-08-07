@@ -13,11 +13,11 @@ import (
 
 var (
 	addr     = flag.String("l", ":4739", "IPFIX listen address")
-	baddr    = flag.String("b", "", "Banshee TCP server address")
 	gaddr    = flag.String("g", "", "Graylog gelf UDP server address")
 	gtaddr   = flag.String("gt", "", "Graylog gelf TLS server address")
 	haddr    = flag.String("H", "", "Homer UDP server address")
 	hepicQOS = flag.Bool("HQ", false, "Send hepic QOS Stats")
+	iaddr    = flag.String("I", "", "InfluxDB http server address")
 	saddr    = flag.String("s", "", "StatsD UDP server address")
 	name     = flag.String("n", "sbc", "SBC name")
 	hepPw    = flag.String("P", "myhep", "HEP capture password")

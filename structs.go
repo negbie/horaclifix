@@ -3,6 +3,9 @@ package main
 import (
 	"crypto/tls"
 	"net"
+	"time"
+
+	influx "github.com/influxdata/influxdb/client/v2"
 )
 
 // IPFIX holds the structure of one IPFIX packet
@@ -194,5 +197,29 @@ type Connections struct {
 	GraylogTLS *tls.Conn
 	Homer      net.Conn
 	StatsD     net.Conn
-	Banshee    net.Conn
+	Influx     *InfluxClient
+}
+
+type Metric struct {
+	measurement string
+	tags        map[string]string
+	fields      map[string]interface{}
+	time        time.Time
+}
+
+type InfluxClient struct {
+	client        influx.Client
+	database      string
+	batchSize     int
+	pointsChannel chan *influx.Point
+	batchConfig   influx.BatchPointsConfig
+	errorFunc     func(err error)
+}
+
+type InfluxClientConfig struct {
+	Endpoint     string
+	Database     string
+	BatchSize    int
+	FlushTimeout time.Duration
+	ErrorFunc    func(err error)
 }
