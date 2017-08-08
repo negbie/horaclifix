@@ -118,6 +118,14 @@ func NewInfluxClient(config *InfluxClientConfig) (*InfluxClient, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Create database if it's not already created
+	_, err = influxDBClient.Query(influx.Query{
+		Command: "CREATE DATABASE horaclifix",
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	iClient := &InfluxClient{
 		client:        influxDBClient,
 		database:      config.Database,

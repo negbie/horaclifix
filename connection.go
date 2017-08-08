@@ -16,7 +16,7 @@ func NewConnections() *Connections {
 			Database:     "horaclifix",
 			BatchSize:    256,
 			FlushTimeout: 5 * time.Second,
-			ErrorFunc:    checkCritErr,
+			ErrorFunc:    checkErr,
 		})
 		checkCritErr(err)
 		conn.Influx = iconn

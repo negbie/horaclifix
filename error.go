@@ -4,12 +4,12 @@ import "log"
 
 func checkErr(err error) {
 	if err != nil {
-		log.Println("Warning:", err)
+		log.Printf("%s warning: %s", *name, err)
 	}
 }
 
 func checkCritErr(err error) {
 	if err != nil {
-		log.Fatalf("Fatal error: %v\n", err)
+		log.Printf("%s critical: %s", *name, err)
 	}
 }
