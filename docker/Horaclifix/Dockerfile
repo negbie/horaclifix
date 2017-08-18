@@ -1,6 +1,5 @@
 FROM golang:latest
-RUN go get -d -v github.com/negbie/horaclifix
-RUN go get -d -v github.com/negbie/siprocket
+RUN go get -d -v -u github.com/negbie/horaclifix
 WORKDIR /go/src/github.com/negbie/horaclifix/
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o horaclifix .
 
