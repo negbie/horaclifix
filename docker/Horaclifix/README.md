@@ -1,32 +1,17 @@
 # HORACLIFIX Docker
 Docker Container running GO [Horaclifix](https://github.com/negbie/horaclifix)
 
-<img src="https://user-images.githubusercontent.com/20154956/28133509-9d9870fa-6740-11e7-9616-3fd0e7e1fa9c.png" />
-
 #### About 
-Horaclifix decodes IPFIX messages from Oracle SBC's and converts them into HEP Messages and Stats
+Horaclifix decodes IPFIX messages from Oracle SBC's and converts them into HEP Messages and Stats.
+It supports HEP, StatsD, InfluxDB and Graylog output, configured with the command argument
+inside the docker-compose.yml
 
-#### Usage
-Horaclifix supports HEP, StatsD and Graylog output, configured by ENV variables
+##### Usage
+Change inside the docker-compose.yml the command argument to the command line argument's you want for horaclifix.
+This example command will send messages to Homer, Graylog and InfluxDB at 192.168.2.22 with the name acme9000.
 
-##### Example
-```docker run --env HEP_HOST=127.0.0.1 --env HEP_PORT=9060 -p 4739:4739 qxip/horaclifix-go```
+```command: "./horaclifix -H 192.168.2.22:9060 -g 192.168.2.22:4488 -I 192.168.2.22:8086 -n acme9000 -v"```
 
+Now you can simply run
 
-##### ENV VARIABLES
-###### HEP
-```
-HEP_HOST 
-HEP_PORT 
-```
-###### GRAYLOG
-```
-GRAYLOG_URL
-```
-###### STATSD
-```
-STATSD_URL 
-```
-
-
-
+```docker-compose up -d```

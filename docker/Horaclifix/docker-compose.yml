@@ -1,12 +1,10 @@
 version: '2'
 services:
-  HORACLIFIX-GO:
-    image: qxip/horaclifix-go:master
-    environment:
-      HEP_HOST: '127.0.0.1'
-      HEP_PORT: '9063'
-    tty: true
+  horaclifix:
+    image: "negbie/horaclifix:latest"
+    command: "./horaclifix -H 192.168.2.22:9060 -g 192.168.2.22:4488 -I 192.168.2.22:8086 -n acme9000 -v"
     ports:
-    - 4739:4739/tcp
-    labels:
-      io.rancher.container.pull_image: always
+      - 4739:4739/tcp
+    container_name: "horaclifix"
+
+
