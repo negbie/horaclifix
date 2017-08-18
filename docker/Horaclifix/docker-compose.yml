@@ -3,8 +3,9 @@ services:
   horaclifix:
     image: "negbie/horaclifix:latest"
     command: "./horaclifix -H 192.168.2.22:9060 -g 192.168.2.22:4488 -I 192.168.2.22:8086 -n acme9000 -v"
+    expose:
+      - 4739
     ports:
       - 4739:4739/tcp
     container_name: "horaclifix"
-
 
