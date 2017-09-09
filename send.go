@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-func (conn Connections) Send(msg *IPFIX, s string) {
+func (conn *Connections) Send(msg *IPFIX, s string) {
 	switch s {
 	case "SIP":
 		if *haddr != "" {
@@ -40,16 +40,8 @@ func (conn Connections) Send(msg *IPFIX, s string) {
 		if *gaddr != "" {
 			conn.SendLog(msg, "QOS")
 		}
+		if *maddr != "" {
+			conn.SendMySQL(msg, "QOS")
+		}
 	}
 }
-
-/*
-// Template for a sync.Pool buffer
-var buffers = &sync.Pool{
-	New: func() interface{} {
-		return make([]byte, 65536)
-	},
-}
-packet := buffers.Get().([]byte)
-buffers.Put(packet)
-*/

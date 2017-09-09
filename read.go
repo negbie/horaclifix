@@ -13,40 +13,29 @@ const headerLen int = 20
 
 // Read handles the incoming packets
 func Read(conn *net.TCPConn) {
-	log.Printf("New IPFIX connection from %s at %v\n", *name, conn.RemoteAddr())
-	c := NewConnections()
-
-	// Close connection when this function ends
-	defer func() {
-		if *gaddr != "" {
-			log.Printf("Close Graylog connection to %v\n", c.Graylog.RemoteAddr())
-			c.Graylog.Close()
-		}
-		if *gtaddr != "" {
-			log.Printf("Close GraylogTLS connection to %v\n", c.GraylogTLS.RemoteAddr())
-			c.GraylogTLS.Close()
-		}
-		if *haddr != "" {
-			log.Printf("Close Homer connection to %v\n", c.Homer.RemoteAddr())
-			c.Homer.Close()
-		}
-		if *saddr != "" {
-			log.Printf("Close StatsD connection to %v\n", c.StatsD.RemoteAddr())
-			c.StatsD.Close()
-		}
-		log.Printf("Close IPFIX connection to %s at %v\n", *name, conn.RemoteAddr())
-		conn.Close()
-	}()
-
-	// Create a buffer for incoming packets
-	r := bufio.NewReader(conn)
-	header := make([]byte, headerLen)
 	var (
 		version int
 		dataLen int
 		setID   int
 		dataSet []byte
 	)
+
+	log.Printf("New IPFIX connection from %s at %v\n", *name, conn.RemoteAddr())
+	c := NewExternalConnections()
+
+	// Close connections when this function ends
+	defer func() {
+		CloseExternalConnections(c)
+		log.Printf("Close IPFIX connection to %s at %v\n", *name, conn.RemoteAddr())
+		err := conn.Close()
+		if err != nil {
+			log.Printf("Close IPFIX connection error: %s", err)
+		}
+	}()
+
+	// Create a buffer for incoming packets
+	r := bufio.NewReader(conn)
+	header := make([]byte, headerLen)
 
 	for {
 		// Read the next 20 bytes which represent

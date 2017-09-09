@@ -7,7 +7,7 @@ import (
 
 // SendLog will encode the QOS & SIP maps to json
 // and send them over UDP to Graylog
-func (conn Connections) SendLog(i *IPFIX, s string) {
+func (conn *Connections) SendLog(i *IPFIX, s string) {
 	var gLog []byte
 	var err error
 	switch s {

@@ -1,17 +1,17 @@
 package main
 
 import (
-	"fmt"
+	"time"
 
 	"github.com/negbie/siprocket"
 )
 
 // mapLogSIP retruns a map with SIP stats which can be
 // json encoded and send send as gelf to graylog
-func (i *IPFIX) mapLogSIP() *map[string]string {
+func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 	sipMSG := siprocket.Parse(i.Data.SIP.SipMsg)
 	//siprocket.PrintSipStruct(&sipMSG)
-	mLogSIP := map[string]string{
+	mLogSIP := map[string]interface{}{
 		"version":       "1.1",
 		"host":          *name,
 		"short_message": string(i.Data.SIP.SipMsg),
@@ -24,18 +24,18 @@ func (i *IPFIX) mapLogSIP() *map[string]string {
 		"_ua":           string(sipMSG.Ua.Value),
 		"_srcIp":        stringIPv4(i.Data.SIP.SrcIP),
 		"_dstIp":        stringIPv4(i.Data.SIP.DstIP),
-		"_srcPort":      fmt.Sprint(i.Data.SIP.SrcPort),
-		"_dstPort":      fmt.Sprint(i.Data.SIP.DstPort),
-		"_ipLen":        fmt.Sprint(i.Data.SIP.IPlen),
-		"_udpLen":       fmt.Sprint(i.Data.SIP.UDPlen),
-		"_intVlan":      fmt.Sprint(i.Data.SIP.IntVlan),
-		"_vl":           fmt.Sprint(i.Data.SIP.VL),
-		"_tos":          fmt.Sprint(i.Data.SIP.TOS),
-		"_tlen":         fmt.Sprint(i.Data.SIP.TLen),
-		"_tid":          fmt.Sprint(i.Data.SIP.TID),
-		"_tflags":       fmt.Sprint(i.Data.SIP.TFlags),
-		"_ttl":          fmt.Sprint(i.Data.SIP.TTL),
-		"_tproto":       fmt.Sprint(i.Data.SIP.TProto),
+		"_srcPort":      i.Data.SIP.SrcPort,
+		"_dstPort":      i.Data.SIP.DstPort,
+		"_ipLen":        i.Data.SIP.IPlen,
+		"_udpLen":       i.Data.SIP.UDPlen,
+		"_intVlan":      i.Data.SIP.IntVlan,
+		"_vl":           i.Data.SIP.VL,
+		"_tos":          i.Data.SIP.TOS,
+		"_tlen":         i.Data.SIP.TLen,
+		"_tid":          i.Data.SIP.TID,
+		"_tflags":       i.Data.SIP.TFlags,
+		"_ttl":          i.Data.SIP.TTL,
+		"_tproto":       i.Data.SIP.TProto,
 	}
 	return &mLogSIP
 }
@@ -60,8 +60,8 @@ func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 		"_incRtcpMaxJitter":   i.Data.QOS.IncRtcpMaxJitter,
 		"_incRtcpAvgLat":      i.Data.QOS.IncRtcpAvgLat,
 		"_incRtcpMaxLat":      i.Data.QOS.IncRtcpMaxLat,
-		"_incrVal":            i.Data.QOS.IncrVal,
-		"_incMos":             i.Data.QOS.IncMos,
+		"_incrVal":            float32(i.Data.QOS.IncrVal) / 100,
+		"_incMos":             float32(i.Data.QOS.IncMos) / 100,
 		"_outRtpBytes":        i.Data.QOS.OutRtpBytes,
 		"_outRtpPackets":      i.Data.QOS.OutRtpPackets,
 		"_outRtpLostPackets":  i.Data.QOS.OutRtpLostPackets,
@@ -74,8 +74,8 @@ func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 		"_outRtcpMaxJitter":   i.Data.QOS.OutRtcpMaxJitter,
 		"_outRtcpAvgLat":      i.Data.QOS.OutRtcpAvgLat,
 		"_outRtcpMaxLat":      i.Data.QOS.OutRtcpMaxLat,
-		"_outrVal":            i.Data.QOS.OutrVal,
-		"_outMos":             i.Data.QOS.OutMos,
+		"_outrVal":            float32(i.Data.QOS.OutrVal) / 100,
+		"_outMos":             float32(i.Data.QOS.OutMos) / 100,
 		"_type":               i.Data.QOS.Type,
 		"_callerIncSrcIP":     stringIPv4(i.Data.QOS.CallerIncSrcIP),
 		"_callerIncDstIP":     stringIPv4(i.Data.QOS.CallerIncDstIP),
@@ -103,7 +103,7 @@ func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 		"_beginTimeMic":       i.Data.QOS.BeginTimeMic,
 		"_endTimeSec":         i.Data.QOS.EndTimeSec,
 		"_endinTimeMic":       i.Data.QOS.EndinTimeMic,
-		"_duration":           (i.Data.QOS.EndTimeSec - i.Data.QOS.BeginTimeSec),
+		"_duration":           int(i.Data.QOS.EndTimeSec - i.Data.QOS.BeginTimeSec),
 		"_seperator":          i.Data.QOS.Seperator,
 		"_incRealm":           string(i.Data.QOS.IncRealm),
 		"_outRealm":           string(i.Data.QOS.OutRealm),
@@ -113,6 +113,102 @@ func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 		"_outCallID":          string(i.Data.QOS.OutCallID),
 	}
 	return &mLogQOS
+}
+
+// mapSqlQOS retruns a map with QOS stats
+func (i *IPFIX) mapSqlQOS() *map[string]interface{} {
+	mSqlQOS := map[string]interface{}{
+		"sbcName":            *name,
+		"incRtpBytes":        i.Data.QOS.IncRtpBytes,
+		"incRtpPackets":      i.Data.QOS.IncRtpPackets,
+		"incRtpLostPackets":  i.Data.QOS.IncRtpLostPackets,
+		"incRtpAvgJitter":    i.Data.QOS.IncRtpAvgJitter,
+		"incRtpMaxJitter":    i.Data.QOS.IncRtpMaxJitter,
+		"incRtcpBytes":       i.Data.QOS.IncRtcpBytes,
+		"incRtcpPackets":     i.Data.QOS.IncRtcpPackets,
+		"incRtcpLostPackets": i.Data.QOS.IncRtcpLostPackets,
+		"incRtcpAvgJitter":   i.Data.QOS.IncRtcpAvgJitter,
+		"incRtcpMaxJitter":   i.Data.QOS.IncRtcpMaxJitter,
+		"incRtcpAvgLat":      i.Data.QOS.IncRtcpAvgLat,
+		"incRtcpMaxLat":      i.Data.QOS.IncRtcpMaxLat,
+		"incrVal":            float32(i.Data.QOS.IncrVal) / 100,
+		"incMos":             float32(i.Data.QOS.IncMos) / 100,
+		"outRtpBytes":        i.Data.QOS.OutRtpBytes,
+		"outRtpPackets":      i.Data.QOS.OutRtpPackets,
+		"outRtpLostPackets":  i.Data.QOS.OutRtpLostPackets,
+		"outRtpAvgJitter":    i.Data.QOS.OutRtpAvgJitter,
+		"outRtpMaxJitter":    i.Data.QOS.OutRtpMaxJitter,
+		"outRtcpBytes":       i.Data.QOS.OutRtcpBytes,
+		"outRtcpPackets":     i.Data.QOS.OutRtcpPackets,
+		"outRtcpLostPackets": i.Data.QOS.OutRtcpLostPackets,
+		"outRtcpAvgJitter":   i.Data.QOS.OutRtcpAvgJitter,
+		"outRtcpMaxJitter":   i.Data.QOS.OutRtcpMaxJitter,
+		"outRtcpAvgLat":      i.Data.QOS.OutRtcpAvgLat,
+		"outRtcpMaxLat":      i.Data.QOS.OutRtcpMaxLat,
+		"outrVal":            float32(i.Data.QOS.OutrVal) / 100,
+		"outMos":             float32(i.Data.QOS.OutMos) / 100,
+		"type":               i.Data.QOS.Type,
+		"callerIncSrcIP":     stringIPv4(i.Data.QOS.CallerIncSrcIP),
+		"callerIncDstIP":     stringIPv4(i.Data.QOS.CallerIncDstIP),
+		"callerIncSrcPort":   i.Data.QOS.CallerIncSrcPort,
+		"callerIncDstPort":   i.Data.QOS.CallerIncDstPort,
+		"calleeIncSrcIP":     stringIPv4(i.Data.QOS.CalleeIncSrcIP),
+		"calleeIncDstIP":     stringIPv4(i.Data.QOS.CalleeIncDstIP),
+		"calleeIncSrcPort":   i.Data.QOS.CalleeIncSrcPort,
+		"calleeIncDstPort":   i.Data.QOS.CalleeIncDstPort,
+		"callerOutSrcIP":     stringIPv4(i.Data.QOS.CallerOutSrcIP),
+		"callerOutDstIP":     stringIPv4(i.Data.QOS.CallerOutDstIP),
+		"callerOutSrcPort":   i.Data.QOS.CallerOutSrcPort,
+		"callerOutDstPort":   i.Data.QOS.CallerOutDstPort,
+		"calleeOutSrcIP":     stringIPv4(i.Data.QOS.CalleeOutSrcIP),
+		"calleeOutDstIP":     stringIPv4(i.Data.QOS.CalleeOutDstIP),
+		"calleeOutSrcPort":   i.Data.QOS.CalleeOutSrcPort,
+		"calleeOutDstPort":   i.Data.QOS.CalleeOutDstPort,
+		"callerIntSlot":      i.Data.QOS.CallerIntSlot,
+		"callerIntPort":      i.Data.QOS.CallerIntPort,
+		"callerIntVlan":      i.Data.QOS.CallerIntVlan,
+		"calleeIntSlot":      i.Data.QOS.CalleeIntSlot,
+		"calleeIntPort":      i.Data.QOS.CalleeIntPort,
+		"calleeIntVlan":      i.Data.QOS.CalleeIntVlan,
+		"beginTime":          time.Unix(int64(i.Data.QOS.BeginTimeSec), 0).Local(),
+		"endTime":            time.Unix(int64(i.Data.QOS.EndTimeSec), 0).Local(),
+		"duration":           int(i.Data.QOS.EndTimeSec - i.Data.QOS.BeginTimeSec),
+		"incRealm":           string(i.Data.QOS.IncRealm),
+		"outRealm":           string(i.Data.QOS.OutRealm),
+		"incCallID":          string(i.Data.QOS.IncCallID),
+		"outCallID":          string(i.Data.QOS.OutCallID),
+	}
+	return &mSqlQOS
+}
+
+func (i *IPFIX) mapMetricQOS() map[string]interface{} {
+	mInfluxQOS := map[string]interface{}{
+		"inc.rtp.mos":          float32(i.Data.QOS.IncMos) / 100,
+		"out.rtp.mos":          float32(i.Data.QOS.OutMos) / 100,
+		"inc.rtp.rval":         float32(i.Data.QOS.IncrVal) / 100,
+		"out.rtp.rval":         float32(i.Data.QOS.OutrVal) / 100,
+		"inc.rtp.packets":      float32(i.Data.QOS.IncRtpPackets),
+		"out.rtp.packets":      float32(i.Data.QOS.OutRtpPackets),
+		"inc.rtcp.packets":     float32(i.Data.QOS.IncRtcpPackets),
+		"out.rtcp.packets":     float32(i.Data.QOS.OutRtcpPackets),
+		"inc.rtp.lostPackets":  float32(i.Data.QOS.IncRtpLostPackets),
+		"out.rtp.lostPackets":  float32(i.Data.QOS.OutRtpLostPackets),
+		"inc.rtcp.lostPackets": float32(i.Data.QOS.IncRtcpLostPackets),
+		"out.rtcp.lostPackets": float32(i.Data.QOS.OutRtcpLostPackets),
+		"inc.rtp.avgJitter":    float32(i.Data.QOS.IncRtpAvgJitter),
+		"out.rtp.avgJitter":    float32(i.Data.QOS.OutRtpAvgJitter),
+		"inc.rtp.maxJitter":    float32(i.Data.QOS.IncRtpMaxJitter),
+		"out.rtp.maxJitter":    float32(i.Data.QOS.OutRtpMaxJitter),
+		"inc.rtcp.avgJitter":   float32(i.Data.QOS.IncRtcpAvgJitter),
+		"out.rtcp.avgJitter":   float32(i.Data.QOS.OutRtcpAvgJitter),
+		"inc.rtcp.maxJitter":   float32(i.Data.QOS.IncRtcpMaxJitter),
+		"out.rtcp.maxJitter":   float32(i.Data.QOS.OutRtcpMaxJitter),
+		"inc.rtcp.avgLat":      float32(i.Data.QOS.IncRtcpAvgLat),
+		"out.rtcp.avgLat":      float32(i.Data.QOS.OutRtcpAvgLat),
+		"inc.rtcp.maxLat":      float32(i.Data.QOS.IncRtcpMaxLat),
+		"out.rtcp.maxLat":      float32(i.Data.QOS.OutRtcpMaxLat),
+	}
+	return mInfluxQOS
 }
 
 // mapAllQOS retruns a map with QOS33 stats which can be

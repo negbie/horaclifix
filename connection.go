@@ -1,13 +1,14 @@
 package main
 
 import (
-	"crypto/tls"
-	"encoding/binary"
+	"database/sql"
+	"fmt"
+	"log"
 	"net"
 	"time"
 )
 
-func NewConnections() *Connections {
+func NewExternalConnections() *Connections {
 	conn := new(Connections)
 
 	if *iaddr != "" {
@@ -26,10 +27,12 @@ func NewConnections() *Connections {
 		checkCritErr(err)
 		conn.Graylog = gconn
 	}
-	if *gtaddr != "" {
-		gtconn, err := tls.DialWithDialer(&net.Dialer{Timeout: 5 * time.Second}, "tcp", *gtaddr, nil)
+	if *maddr != "" {
+		dbconn, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s", *muser, *mpass, *maddr, *mdb))
 		checkCritErr(err)
-		conn.GraylogTLS = gtconn
+		err = dbconn.Ping()
+		checkCritErr(err)
+		conn.MySQL = dbconn
 	}
 	if *haddr != "" {
 		hconn, err := net.Dial("udp", *haddr)
@@ -44,9 +47,33 @@ func NewConnections() *Connections {
 	return conn
 }
 
-// stringIPv4 converts a ipv4 unit32 into a string
-func stringIPv4(n uint32) string {
-	ip := make(net.IP, 4)
-	binary.BigEndian.PutUint32(ip, n)
-	return ip.String()
+func CloseExternalConnections(c *Connections) {
+	if *gaddr != "" {
+		log.Printf("Close Graylog connection to %v\n", c.Graylog.RemoteAddr())
+		err := c.Graylog.Close()
+		if err != nil {
+			log.Printf("Close Graylog connection error: %s", err)
+		}
+	}
+	if *maddr != "" {
+		log.Println("Close MySQL connection")
+		err := c.MySQL.Close()
+		if err != nil {
+			log.Printf("Close MySQL connection error: %s", err)
+		}
+	}
+	if *haddr != "" {
+		log.Printf("Close Homer connection to %v\n", c.Homer.RemoteAddr())
+		err := c.Homer.Close()
+		if err != nil {
+			log.Printf("Close Homer connection error: %s", err)
+		}
+	}
+	if *saddr != "" {
+		log.Printf("Close StatsD connection to %v\n", c.StatsD.RemoteAddr())
+		err := c.StatsD.Close()
+		if err != nil {
+			log.Printf("Close StatsD connection error: %s", err)
+		}
+	}
 }

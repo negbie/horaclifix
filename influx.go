@@ -19,35 +19,11 @@ func NewMetric(measurement string, tags map[string]string, fields map[string]int
 
 func (influxDB *InfluxClient) Send(i *IPFIX, s string) {
 	tags := map[string]string{
-		"Host":       *name,
-		"MetricType": s,
+		"host":       *name,
+		"metricType": s,
 	}
-	fields := map[string]interface{}{
-		"inc.rtp.mos":          float32(i.Data.QOS.IncMos) / 100,
-		"out.rtp.mos":          float32(i.Data.QOS.OutMos) / 100,
-		"inc.rtp.rval":         float32(i.Data.QOS.IncrVal) / 100,
-		"out.rtp.rval":         float32(i.Data.QOS.OutrVal) / 100,
-		"inc.rtp.packets":      float32(i.Data.QOS.IncRtpPackets),
-		"out.rtp.packets":      float32(i.Data.QOS.OutRtpPackets),
-		"inc.rtcp.packets":     float32(i.Data.QOS.IncRtcpPackets),
-		"out.rtcp.packets":     float32(i.Data.QOS.OutRtcpPackets),
-		"inc.rtp.lostPackets":  float32(i.Data.QOS.IncRtpLostPackets),
-		"out.rtp.lostPackets":  float32(i.Data.QOS.OutRtpLostPackets),
-		"inc.rtcp.lostPackets": float32(i.Data.QOS.IncRtcpLostPackets),
-		"out.rtcp.lostPackets": float32(i.Data.QOS.OutRtcpLostPackets),
-		"inc.rtp.avgJitter":    float32(i.Data.QOS.IncRtpAvgJitter),
-		"out.rtp.avgJitter":    float32(i.Data.QOS.OutRtpAvgJitter),
-		"inc.rtp.maxJitter":    float32(i.Data.QOS.IncRtpMaxJitter),
-		"out.rtp.maxJitter":    float32(i.Data.QOS.OutRtpMaxJitter),
-		"inc.rtcp.avgJitter":   float32(i.Data.QOS.IncRtcpAvgJitter),
-		"out.rtcp.avgJitter":   float32(i.Data.QOS.OutRtcpAvgJitter),
-		"inc.rtcp.maxJitter":   float32(i.Data.QOS.IncRtcpMaxJitter),
-		"out.rtcp.maxJitter":   float32(i.Data.QOS.OutRtcpMaxJitter),
-		"inc.rtcp.avgLat":      float32(i.Data.QOS.IncRtcpAvgLat),
-		"out.rtcp.avgLat":      float32(i.Data.QOS.OutRtcpAvgLat),
-		"inc.rtcp.maxLat":      float32(i.Data.QOS.IncRtcpMaxLat),
-		"out.rtcp.maxLat":      float32(i.Data.QOS.OutRtcpMaxLat),
-	}
+
+	fields := i.mapMetricQOS()
 
 	if err := influxDB.send(NewMetric("horaclifix", tags, fields)); err != nil {
 		log.Printf("Could not send metric to influxDB: %s\n", err.Error())

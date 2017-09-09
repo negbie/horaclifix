@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/tls"
+	"database/sql"
 	"net"
 	"time"
 
@@ -193,11 +193,11 @@ type QosSet struct {
 }
 
 type Connections struct {
-	Graylog    net.Conn
-	GraylogTLS *tls.Conn
-	Homer      net.Conn
-	StatsD     net.Conn
-	Influx     *InfluxClient
+	Graylog net.Conn
+	MySQL   *sql.DB
+	Homer   net.Conn
+	StatsD  net.Conn
+	Influx  *InfluxClient
 }
 
 type Metric struct {
