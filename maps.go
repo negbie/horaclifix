@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/negbie/siprocket"
 )
 
@@ -113,72 +111,6 @@ func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 		"_outCallID":          string(i.Data.QOS.OutCallID),
 	}
 	return &mLogQOS
-}
-
-// mapSqlQOS retruns a map with QOS stats
-func (i *IPFIX) mapSqlQOS() *map[string]interface{} {
-	mSqlQOS := map[string]interface{}{
-		"sbcName":            *name,
-		"incRtpBytes":        i.Data.QOS.IncRtpBytes,
-		"incRtpPackets":      i.Data.QOS.IncRtpPackets,
-		"incRtpLostPackets":  i.Data.QOS.IncRtpLostPackets,
-		"incRtpAvgJitter":    i.Data.QOS.IncRtpAvgJitter,
-		"incRtpMaxJitter":    i.Data.QOS.IncRtpMaxJitter,
-		"incRtcpBytes":       i.Data.QOS.IncRtcpBytes,
-		"incRtcpPackets":     i.Data.QOS.IncRtcpPackets,
-		"incRtcpLostPackets": i.Data.QOS.IncRtcpLostPackets,
-		"incRtcpAvgJitter":   i.Data.QOS.IncRtcpAvgJitter,
-		"incRtcpMaxJitter":   i.Data.QOS.IncRtcpMaxJitter,
-		"incRtcpAvgLat":      i.Data.QOS.IncRtcpAvgLat,
-		"incRtcpMaxLat":      i.Data.QOS.IncRtcpMaxLat,
-		"incrVal":            float32(i.Data.QOS.IncrVal) / 100,
-		"incMos":             float32(i.Data.QOS.IncMos) / 100,
-		"outRtpBytes":        i.Data.QOS.OutRtpBytes,
-		"outRtpPackets":      i.Data.QOS.OutRtpPackets,
-		"outRtpLostPackets":  i.Data.QOS.OutRtpLostPackets,
-		"outRtpAvgJitter":    i.Data.QOS.OutRtpAvgJitter,
-		"outRtpMaxJitter":    i.Data.QOS.OutRtpMaxJitter,
-		"outRtcpBytes":       i.Data.QOS.OutRtcpBytes,
-		"outRtcpPackets":     i.Data.QOS.OutRtcpPackets,
-		"outRtcpLostPackets": i.Data.QOS.OutRtcpLostPackets,
-		"outRtcpAvgJitter":   i.Data.QOS.OutRtcpAvgJitter,
-		"outRtcpMaxJitter":   i.Data.QOS.OutRtcpMaxJitter,
-		"outRtcpAvgLat":      i.Data.QOS.OutRtcpAvgLat,
-		"outRtcpMaxLat":      i.Data.QOS.OutRtcpMaxLat,
-		"outrVal":            float32(i.Data.QOS.OutrVal) / 100,
-		"outMos":             float32(i.Data.QOS.OutMos) / 100,
-		"type":               i.Data.QOS.Type,
-		"callerIncSrcIP":     stringIPv4(i.Data.QOS.CallerIncSrcIP),
-		"callerIncDstIP":     stringIPv4(i.Data.QOS.CallerIncDstIP),
-		"callerIncSrcPort":   i.Data.QOS.CallerIncSrcPort,
-		"callerIncDstPort":   i.Data.QOS.CallerIncDstPort,
-		"calleeIncSrcIP":     stringIPv4(i.Data.QOS.CalleeIncSrcIP),
-		"calleeIncDstIP":     stringIPv4(i.Data.QOS.CalleeIncDstIP),
-		"calleeIncSrcPort":   i.Data.QOS.CalleeIncSrcPort,
-		"calleeIncDstPort":   i.Data.QOS.CalleeIncDstPort,
-		"callerOutSrcIP":     stringIPv4(i.Data.QOS.CallerOutSrcIP),
-		"callerOutDstIP":     stringIPv4(i.Data.QOS.CallerOutDstIP),
-		"callerOutSrcPort":   i.Data.QOS.CallerOutSrcPort,
-		"callerOutDstPort":   i.Data.QOS.CallerOutDstPort,
-		"calleeOutSrcIP":     stringIPv4(i.Data.QOS.CalleeOutSrcIP),
-		"calleeOutDstIP":     stringIPv4(i.Data.QOS.CalleeOutDstIP),
-		"calleeOutSrcPort":   i.Data.QOS.CalleeOutSrcPort,
-		"calleeOutDstPort":   i.Data.QOS.CalleeOutDstPort,
-		"callerIntSlot":      i.Data.QOS.CallerIntSlot,
-		"callerIntPort":      i.Data.QOS.CallerIntPort,
-		"callerIntVlan":      i.Data.QOS.CallerIntVlan,
-		"calleeIntSlot":      i.Data.QOS.CalleeIntSlot,
-		"calleeIntPort":      i.Data.QOS.CalleeIntPort,
-		"calleeIntVlan":      i.Data.QOS.CalleeIntVlan,
-		"beginTime":          time.Unix(int64(i.Data.QOS.BeginTimeSec), 0).Local(),
-		"endTime":            time.Unix(int64(i.Data.QOS.EndTimeSec), 0).Local(),
-		"duration":           int(i.Data.QOS.EndTimeSec - i.Data.QOS.BeginTimeSec),
-		"incRealm":           string(i.Data.QOS.IncRealm),
-		"outRealm":           string(i.Data.QOS.OutRealm),
-		"incCallID":          string(i.Data.QOS.IncCallID),
-		"outCallID":          string(i.Data.QOS.OutCallID),
-	}
-	return &mSqlQOS
 }
 
 func (i *IPFIX) mapMetricQOS() map[string]interface{} {

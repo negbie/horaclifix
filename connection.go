@@ -1,8 +1,6 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"log"
 	"net"
 	"time"
@@ -10,6 +8,7 @@ import (
 
 func NewExternalConnections() *Connections {
 	conn := new(Connections)
+	var err error
 
 	if *iaddr != "" {
 		iconn, err := NewInfluxClient(&InfluxClientConfig{
@@ -28,11 +27,8 @@ func NewExternalConnections() *Connections {
 		conn.Graylog = gconn
 	}
 	if *maddr != "" {
-		dbconn, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s", *muser, *mpass, *maddr, *mdb))
+		conn.MySQL, err = newMySQLDB()
 		checkCritErr(err)
-		err = dbconn.Ping()
-		checkCritErr(err)
-		conn.MySQL = dbconn
 	}
 	if *haddr != "" {
 		hconn, err := net.Dial("udp", *haddr)
@@ -57,7 +53,7 @@ func CloseExternalConnections(c *Connections) {
 	}
 	if *maddr != "" {
 		log.Println("Close MySQL connection")
-		err := c.MySQL.Close()
+		err := c.MySQL.conn.Close()
 		if err != nil {
 			log.Printf("Close MySQL connection error: %s", err)
 		}

@@ -194,7 +194,7 @@ type QosSet struct {
 
 type Connections struct {
 	Graylog net.Conn
-	MySQL   *sql.DB
+	MySQL   *mysqlDB
 	Homer   net.Conn
 	StatsD  net.Conn
 	Influx  *InfluxClient
@@ -222,4 +222,9 @@ type InfluxClientConfig struct {
 	BatchSize    int
 	FlushTimeout time.Duration
 	ErrorFunc    func(err error)
+}
+
+type mysqlDB struct {
+	conn   *sql.DB
+	insert *sql.Stmt
 }

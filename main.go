@@ -17,7 +17,6 @@ var (
 	maddr    = flag.String("m", "", "MySQL server address")
 	muser    = flag.String("mu", "", "MySQL user")
 	mpass    = flag.String("mp", "", "MySQL password")
-	mdb      = flag.String("md", "", "MySQL database")
 	haddr    = flag.String("H", "", "Homer UDP server address")
 	hepicQOS = flag.Bool("HQ", false, "Send hepic QOS Stats")
 	iaddr    = flag.String("I", "", "InfluxDB http server address")
