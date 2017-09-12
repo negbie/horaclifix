@@ -16,7 +16,7 @@ var createTableStatements = []string{
 	`CREATE TABLE IF NOT EXISTS qos_report (
 		id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 		start TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		end TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		end TIMESTAMP NULL DEFAULT NULL,
 		duration INT NOT NULL DEFAULT '0',
 		sbcName VARCHAR(127) NOT NULL DEFAULT '',
 		mediaType TINYINT UNSIGNED NOT NULL DEFAULT '0',
@@ -142,6 +142,7 @@ func (conn *Connections) SendMySQL(i *IPFIX, s string) {
 
 	if i.Data.QOS.BeginTimeSec == 0 {
 		start = time.Now().Local()
+		end = start
 		duration = 0
 	} else if i.Data.QOS.EndTimeSec == 0 {
 		end = time.Now().Local()

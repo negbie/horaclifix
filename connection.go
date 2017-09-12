@@ -10,6 +10,11 @@ func NewExternalConnections() *Connections {
 	conn := new(Connections)
 	var err error
 
+	if *maddr != "" {
+		conn.MySQL, err = newMySQLDB()
+		checkCritErr(err)
+	}
+
 	if *iaddr != "" {
 		iconn, err := NewInfluxClient(&InfluxClientConfig{
 			Endpoint:     "http://" + *iaddr,
@@ -21,15 +26,13 @@ func NewExternalConnections() *Connections {
 		checkCritErr(err)
 		conn.Influx = iconn
 	}
+
 	if *gaddr != "" {
 		gconn, err := net.Dial("udp", *gaddr)
 		checkCritErr(err)
 		conn.Graylog = gconn
 	}
-	if *maddr != "" {
-		conn.MySQL, err = newMySQLDB()
-		checkCritErr(err)
-	}
+
 	if *haddr != "" {
 		hconn, err := net.Dial("udp", *haddr)
 		checkCritErr(err)

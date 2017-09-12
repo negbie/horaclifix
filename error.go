@@ -10,6 +10,6 @@ func checkErr(err error) {
 
 func checkCritErr(err error) {
 	if err != nil {
-		log.Printf("%s critical: %s", *name, err)
+		log.Fatalf("%s critical: %s", *name, err)
 	}
 }
