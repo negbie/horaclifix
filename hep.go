@@ -20,7 +20,8 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 	copy(hepMsg[6:], chuncks)
 	binary.BigEndian.PutUint32(hepMsg[:4], uint32(0x48455033))   // ASCII "HEP3"
 	binary.BigEndian.PutUint16(hepMsg[4:6], uint16(len(hepMsg))) // Total length
-	conn.Homer.Write(hepMsg)
+	_, err := conn.Homer.Write(hepMsg)
+	checkErr(err)
 }
 
 // MakeChunck will construct the respective HEP chunck

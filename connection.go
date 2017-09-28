@@ -7,8 +7,8 @@ import (
 )
 
 func NewExternalConnections() *Connections {
-	conn := new(Connections)
 	var err error
+	conn := new(Connections)
 
 	if *maddr != "" {
 		conn.MySQL, err = newMySQLDB()
@@ -28,7 +28,7 @@ func NewExternalConnections() *Connections {
 	}
 
 	if *gaddr != "" {
-		gconn, err := net.Dial("udp", *gaddr)
+		gconn, err := net.Dial("tcp", *gaddr)
 		checkCritErr(err)
 		conn.Graylog = gconn
 	}
@@ -50,29 +50,21 @@ func CloseExternalConnections(c *Connections) {
 	if *gaddr != "" {
 		log.Printf("Close Graylog connection to %v\n", c.Graylog.RemoteAddr())
 		err := c.Graylog.Close()
-		if err != nil {
-			log.Printf("Close Graylog connection error: %s", err)
-		}
+		checkErr(err)
 	}
 	if *maddr != "" {
-		log.Println("Close MySQL connection")
+		log.Printf("Close MySQL connection")
 		err := c.MySQL.conn.Close()
-		if err != nil {
-			log.Printf("Close MySQL connection error: %s", err)
-		}
+		checkErr(err)
 	}
 	if *haddr != "" {
 		log.Printf("Close Homer connection to %v\n", c.Homer.RemoteAddr())
 		err := c.Homer.Close()
-		if err != nil {
-			log.Printf("Close Homer connection error: %s", err)
-		}
+		checkErr(err)
 	}
 	if *saddr != "" {
 		log.Printf("Close StatsD connection to %v\n", c.StatsD.RemoteAddr())
 		err := c.StatsD.Close()
-		if err != nil {
-			log.Printf("Close StatsD connection error: %s", err)
-		}
+		checkErr(err)
 	}
 }

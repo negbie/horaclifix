@@ -28,9 +28,7 @@ func Read(conn *net.TCPConn) {
 		CloseExternalConnections(c)
 		log.Printf("Close IPFIX connection to %s at %v\n", *name, conn.RemoteAddr())
 		err := conn.Close()
-		if err != nil {
-			log.Printf("Close IPFIX connection error: %s", err)
-		}
+		checkErr(err)
 	}()
 
 	// Create a buffer for incoming packets
@@ -49,7 +47,7 @@ func Read(conn *net.TCPConn) {
 			setID = int(uint16(header[16])<<8 + uint16(header[17]))
 			// Check if we have valid setID's and IPFIX packets
 			if setID > 280 || setID < 256 || version != 10 {
-				log.Printf("Malformed IPFIX header: %v", header)
+				log.Printf("[WARN] Malformed IPFIX header: %v\n", header)
 				break
 			}
 			// Create a buffer which holds exactly one
@@ -59,15 +57,13 @@ func Read(conn *net.TCPConn) {
 
 		} else if err != nil {
 			if err != io.EOF {
-				log.Printf("Header read error: %s", err)
+				log.Printf("[WARN] Couldn't read header: %s\n", err)
 			}
 			break
 		}
 		// Read the next (dataLen-headerLen) bytes into
 		// the dataSet buffer at once
 		if _, err := io.ReadFull(r, dataSet); err == nil {
-			// Now merge the header with the dataSet.
-			data := append(header, dataSet...)
 
 			if *verbose {
 				fmt.Println("########################################################################")
@@ -76,33 +72,36 @@ func Read(conn *net.TCPConn) {
 			}
 			if *debug {
 				fmt.Println("Hexdump output:")
-				fmt.Printf("%s\n", hex.Dump(data))
+				fmt.Printf("%s\n", hex.Dump(header))
+				fmt.Printf("%s\n", hex.Dump(dataSet))
 			}
 
 			switch setID {
 			case 256:
+				// Merge the header with the dataSet.
+				data := append(header, dataSet...)
 				SendHandshake(conn, data)
 			case 258:
-				msg := ParseRecSipUDP(data)
+				msg := ParseRecSipUDP(dataSet)
 				c.Send(msg, "SIP")
 			case 259:
-				msg := ParseSendSipUDP(data)
+				msg := ParseSendSipUDP(dataSet)
 				c.Send(msg, "SIP")
 			case 260:
-				msg := ParseRecSipTCP(data)
+				msg := ParseRecSipTCP(dataSet)
 				c.Send(msg, "SIP")
 			case 261:
-				msg := ParseSendSipTCP(data)
+				msg := ParseSendSipTCP(dataSet)
 				c.Send(msg, "SIP")
 			case 268:
-				msg := ParseQosStats(data)
+				msg := ParseQosStats(dataSet)
 				c.Send(msg, "QOS")
 			default:
-				log.Printf("Unhandled setID %v\n", setID)
+				log.Printf("[WARN] Unhandled SetID %v\n", setID)
 			}
 		} else if err != nil {
 			if err != io.EOF {
-				log.Printf("Dataset read error: %s", err)
+				log.Printf("[WARN] Couldn't read dataset: %s\n", err)
 			}
 			break
 		}

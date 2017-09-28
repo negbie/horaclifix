@@ -16,5 +16,6 @@ func (conn *Connections) SendStatsD(i *IPFIX, s string) {
 			buf.Write([]byte(fmt.Sprintf("%s.%s:%.2f|h\n", *name, metric, value)))
 		}
 	}
-	conn.StatsD.Write(buf.Bytes())
+	_, err := conn.StatsD.Write(buf.Bytes())
+	checkErr(err)
 }

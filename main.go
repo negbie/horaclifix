@@ -4,12 +4,14 @@ import (
 	"flag"
 	"log"
 	"net"
+	"os"
+	"path/filepath"
+
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 	/*
 		"net"
 		_ "net/http/pprof"
-	*/
-	"os"
-)
+	*/)
 
 var (
 	addr     = flag.String("l", ":4739", "IPFIX listen address")
@@ -30,10 +32,25 @@ var (
 func main() {
 	//go http.ListenAndServe(":8080", http.DefaultServeMux)
 	flag.Parse()
-	f, err := os.OpenFile("horaclifix.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	ex, err := os.Executable()
 	checkCritErr(err)
-	defer f.Close()
-	log.SetOutput(f)
+	exPath := filepath.Dir(ex)
+	exPathName := exPath + "/" + "horaclifix_" + *name + ".log"
+	f, err := os.OpenFile(exPathName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	checkCritErr(err)
+	// Close file when this function ends
+	defer func() {
+		err := f.Close()
+		checkErr(err)
+	}()
+
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   exPathName,
+		MaxSize:    10, // mb
+		MaxBackups: 7,
+		MaxAge:     28, //days
+		Compress:   true,
+	})
 
 	log.Printf("Start horaclifix interfaces IPFIX:%v Homer:%v Graylog:%v\n", *addr, *haddr, *gaddr)
 

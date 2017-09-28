@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -201,9 +200,7 @@ func (conn *Connections) SendMySQL(i *IPFIX, s string) {
 		float32(i.Data.QOS.OutrVal)/100,
 		float32(i.Data.QOS.OutMos)/100)
 
-	if err != nil {
-		log.Printf("insert error: %s", err)
-	}
+	checkErr(err)
 }
 
 // newMySQLDB creates a new horaclifix database backed by a given MySQL server.
@@ -220,7 +217,8 @@ func newMySQLDB() (*mysqlDB, error) {
 	}
 	// Check the connection.
 	if err := conn.Ping(); err != nil {
-		conn.Close()
+		err = conn.Close()
+		checkErr(err)
 		return nil, fmt.Errorf("mysql: could not establish a connection: %v", err)
 	}
 
@@ -242,7 +240,11 @@ func ensureTableExists() error {
 	if err != nil {
 		return fmt.Errorf("mysql: could not get a connection: %v", err)
 	}
-	defer conn.Close()
+	// Close MySQL connection when this function ends
+	defer func() {
+		err := conn.Close()
+		checkErr(err)
+	}()
 
 	// Check the connection.
 	if conn.Ping() == driver.ErrBadConn {

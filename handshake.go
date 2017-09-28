@@ -10,21 +10,19 @@ import (
 // SendHandshake will write the binary Handshake representation
 // into the buffer and send it to wire
 func SendHandshake(c *net.TCPConn, hs []byte) {
-	var i IPFIX
-	r := bytes.NewReader(hs)
-	binary.Read(r, binary.BigEndian, &i.Header)
-	binary.Read(r, binary.BigEndian, &i.SetHeader)
-	binary.Read(r, binary.BigEndian, &i.Data.Hs)
+	h := &HandShake{}
+	r := reader{r: bytes.NewReader(hs)}
+	r.binRead(h)
 
 	// increment setID to 257
-	i.SetHeader.ID++
+	h.IpfixSetHeader.ID++
+
 	// disable timeout
-	i.Data.Hs.Timeout = 0
+	h.Timeout = 0
 
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.BigEndian, &i.Header)
-	binary.Write(buf, binary.BigEndian, &i.SetHeader)
-	binary.Write(buf, binary.BigEndian, &i.Data.Hs)
+	err := binary.Write(buf, binary.BigEndian, h)
+	checkErr(err)
 
 	// Convert []byte into []int8
 	b := buf.Bytes()
@@ -34,8 +32,6 @@ func SendHandshake(c *net.TCPConn, hs []byte) {
 	}
 
 	log.Printf("Send handshake message %v to %s at %v\n", bi, *name, c.RemoteAddr())
-	err := binary.Write(c, binary.BigEndian, bi)
-	if err != nil {
-		log.Println("binary.Write failed:", err)
-	}
+	err = binary.Write(c, binary.BigEndian, bi)
+	checkErr(err)
 }

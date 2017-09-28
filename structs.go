@@ -27,12 +27,6 @@ import (
 //         |                                 Dataset..................                     |
 //         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
-// IPFIX messages struct
-type IPFIX struct {
-	Header    IpfixHeader
-	SetHeader IpfixSetHeader
-	Data      DataSet
-}
 
 // IpfixHeader holds the ipfix header fields
 type IpfixHeader struct {
@@ -49,15 +43,10 @@ type IpfixSetHeader struct {
 	Length uint16
 }
 
-// DataSet holds different IPFIX datasets
-type DataSet struct {
-	Hs  HandShake
-	SIP SipSet
-	QOS QosSet
-}
-
-// HandShake holds the HandShake dataset fields
+// HandShake holds the HandShake header and dataset fields
 type HandShake struct {
+	IpfixHeader
+	IpfixSetHeader
 	MaVer    uint16
 	MiVer    uint16
 	CFlags1  uint16
@@ -70,7 +59,18 @@ type HandShake struct {
 	SMiVer   uint8
 	Revision uint8
 	//HostnameLen uint8
-	//Hostname    ByteString
+	//Hostname    []byte
+}
+
+// IPFIX messages struct
+type IPFIX struct {
+	Data DataSet
+}
+
+// DataSet holds different IPFIX datasets
+type DataSet struct {
+	SIP SipSet
+	QOS QosSet
 }
 
 // SipSet holds the SIP related fields

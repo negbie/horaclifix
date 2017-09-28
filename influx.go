@@ -19,14 +19,16 @@ func NewMetric(measurement string, tags map[string]string, fields map[string]int
 
 func (influxDB *InfluxClient) Send(i *IPFIX, s string) {
 	tags := map[string]string{
-		"host":       *name,
-		"metricType": s,
+		"host":          *name,
+		"metricType":    s,
+		"incomingRealm": string(i.Data.QOS.IncRealm),
+		"outgoingRealm": string(i.Data.QOS.OutRealm),
 	}
 
 	fields := i.mapMetricQOS()
 
 	if err := influxDB.send(NewMetric("horaclifix", tags, fields)); err != nil {
-		log.Printf("Could not send metric to influxDB: %s\n", err.Error())
+		log.Printf("[WARN] Could not send metric to influxDB: %s\n", err.Error())
 		if influxDB.errorFunc != nil {
 			influxDB.errorFunc(err)
 		}
