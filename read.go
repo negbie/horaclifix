@@ -21,11 +21,11 @@ func Read(conn *net.TCPConn) {
 	)
 
 	log.Printf("New IPFIX connection from %s at %v\n", *name, conn.RemoteAddr())
-	c := NewExternalConnections()
+	c := NewExtConns()
 
 	// Close connections when this function ends
 	defer func() {
-		CloseExternalConnections(c)
+		CloseExtConns(c)
 		log.Printf("Close IPFIX connection to %s at %v\n", *name, conn.RemoteAddr())
 		err := conn.Close()
 		checkErr(err)

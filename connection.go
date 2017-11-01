@@ -3,15 +3,16 @@ package main
 import (
 	"log"
 	"net"
+	"sync"
 	"time"
 )
 
-func NewExternalConnections() *Connections {
+func NewExtConns() *Connections {
 	var err error
-	conn := new(Connections)
+	conns := new(Connections)
 
 	if *maddr != "" {
-		conn.MySQL, err = newMySQLDB()
+		conns.MySQL, err = newMySQLDB()
 		checkCritErr(err)
 	}
 
@@ -19,51 +20,55 @@ func NewExternalConnections() *Connections {
 		iconn, err := NewInfluxClient(&InfluxClientConfig{
 			Endpoint:     "http://" + *iaddr,
 			Database:     "horaclifix",
-			BatchSize:    256,
+			BatchSize:    300,
 			FlushTimeout: 5 * time.Second,
 			ErrorFunc:    checkErr,
 		})
 		checkCritErr(err)
-		conn.Influx = iconn
+		conns.Influx = iconn
 	}
 
 	if *gaddr != "" {
-		gconn, err := net.Dial("tcp", *gaddr)
+		tcpAddr, err := net.ResolveTCPAddr("tcp", *gaddr)
 		checkCritErr(err)
-		conn.Graylog = gconn
+
+		gconn, err := net.DialTCP("tcp", nil, tcpAddr)
+		conns.Graylog.TCPConn = gconn
+		conns.Graylog.RWMutex = new(sync.RWMutex)
+		checkCritErr(err)
 	}
 
 	if *haddr != "" {
 		hconn, err := net.Dial("udp", *haddr)
 		checkCritErr(err)
-		conn.Homer = hconn
+		conns.Homer = hconn
 	}
 	if *saddr != "" {
 		sconn, err := net.Dial("udp", *saddr)
 		checkCritErr(err)
-		conn.StatsD = sconn
+		conns.StatsD = sconn
 	}
-	return conn
+	return conns
 }
 
-func CloseExternalConnections(c *Connections) {
+func CloseExtConns(c *Connections) {
 	if *gaddr != "" {
-		log.Printf("Close Graylog connection to %v\n", c.Graylog.RemoteAddr())
+		log.Printf("Close Graylog connection.\n")
 		err := c.Graylog.Close()
 		checkErr(err)
 	}
 	if *maddr != "" {
-		log.Printf("Close MySQL connection")
+		log.Printf("Close MySQL connection.\n")
 		err := c.MySQL.conn.Close()
 		checkErr(err)
 	}
 	if *haddr != "" {
-		log.Printf("Close Homer connection to %v\n", c.Homer.RemoteAddr())
+		log.Printf("Close Homer connection.\n")
 		err := c.Homer.Close()
 		checkErr(err)
 	}
 	if *saddr != "" {
-		log.Printf("Close StatsD connection to %v\n", c.StatsD.RemoteAddr())
+		log.Printf("Close StatsD connection.\n")
 		err := c.StatsD.Close()
 		checkErr(err)
 	}

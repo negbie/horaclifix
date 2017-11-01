@@ -225,7 +225,7 @@ func ParseQosStats(msg []byte) *IPFIX {
 
 	r.binRead(&i.Data.QOS.OutCallIDLen)
 	//i.Data.QOS.OutCallID = make([]byte, r.Len())
-	i.Data.QOS.IncCallID = make([]byte, i.Data.QOS.OutCallIDLen)
+	i.Data.QOS.OutCallID = make([]byte, i.Data.QOS.OutCallIDLen)
 	r.binRead(&i.Data.QOS.OutCallID)
 
 	return &i

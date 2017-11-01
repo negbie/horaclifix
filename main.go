@@ -6,12 +6,11 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	//"net"
+	//_ "net/http/pprof"
 
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
-	/*
-		"net"
-		_ "net/http/pprof"
-	*/)
+)
 
 var (
 	addr     = flag.String("l", ":4739", "IPFIX listen address")
@@ -31,6 +30,7 @@ var (
 
 func main() {
 	//go http.ListenAndServe(":8080", http.DefaultServeMux)
+	//trace.Start(os.Stdout)
 	flag.Parse()
 	ex, err := os.Executable()
 	checkCritErr(err)

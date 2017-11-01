@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"net"
+	"sync"
 	"time"
 
 	influx "github.com/influxdata/influxdb/client/v2"
@@ -193,11 +194,17 @@ type QosSet struct {
 }
 
 type Connections struct {
-	Graylog net.Conn
+	Graylog GraylogClient
 	MySQL   *mysqlDB
 	Homer   net.Conn
 	StatsD  net.Conn
 	Influx  *InfluxClient
+}
+
+type GraylogClient struct {
+	*net.TCPConn
+	*sync.RWMutex
+	disconnected bool
 }
 
 type Metric struct {

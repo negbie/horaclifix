@@ -175,8 +175,8 @@ func (conn *Connections) SendMySQL(i *IPFIX, s string) {
 		i.Data.QOS.IncRtcpMaxJitter,
 		i.Data.QOS.IncRtcpAvgLat,
 		i.Data.QOS.IncRtcpMaxLat,
-		float32(i.Data.QOS.IncrVal)/100,
-		float32(i.Data.QOS.IncMos)/100,
+		float64(i.Data.QOS.IncrVal)/100,
+		float64(i.Data.QOS.IncMos)/100,
 		string(i.Data.QOS.OutCallID),
 		string(i.Data.QOS.OutRealm),
 		stringIPv4(i.Data.QOS.CallerOutSrcIP),
@@ -197,8 +197,8 @@ func (conn *Connections) SendMySQL(i *IPFIX, s string) {
 		i.Data.QOS.OutRtcpMaxJitter,
 		i.Data.QOS.OutRtcpAvgLat,
 		i.Data.QOS.OutRtcpMaxLat,
-		float32(i.Data.QOS.OutrVal)/100,
-		float32(i.Data.QOS.OutMos)/100)
+		float64(i.Data.QOS.OutrVal)/100,
+		float64(i.Data.QOS.OutMos)/100)
 
 	checkErr(err)
 }
