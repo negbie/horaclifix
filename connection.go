@@ -9,10 +9,10 @@ import (
 
 func NewExtConns() *Connections {
 	var err error
-	conns := new(Connections)
+	conn := new(Connections)
 
 	if *maddr != "" {
-		conns.MySQL, err = newMySQLDB()
+		conn.MySQL, err = newMySQLDB()
 		checkCritErr(err)
 	}
 
@@ -25,7 +25,7 @@ func NewExtConns() *Connections {
 			ErrorFunc:    checkErr,
 		})
 		checkCritErr(err)
-		conns.Influx = iconn
+		conn.Influx = iconn
 	}
 
 	if *gaddr != "" {
@@ -33,43 +33,44 @@ func NewExtConns() *Connections {
 		checkCritErr(err)
 
 		gconn, err := net.DialTCP("tcp", nil, tcpAddr)
-		conns.Graylog.TCPConn = gconn
-		conns.Graylog.RWMutex = new(sync.RWMutex)
 		checkCritErr(err)
+		conn.Graylog.TCPConn = gconn
+		conn.Graylog.RWMutex = new(sync.RWMutex)
+
 	}
 
 	if *haddr != "" {
 		hconn, err := net.Dial("udp", *haddr)
 		checkCritErr(err)
-		conns.Homer = hconn
+		conn.Homer = hconn
 	}
 	if *saddr != "" {
 		sconn, err := net.Dial("udp", *saddr)
 		checkCritErr(err)
-		conns.StatsD = sconn
+		conn.StatsD = sconn
 	}
-	return conns
+	return conn
 }
 
-func CloseExtConns(c *Connections) {
+func CloseExtConns(conn *Connections) {
 	if *gaddr != "" {
 		log.Printf("Close Graylog connection.\n")
-		err := c.Graylog.Close()
+		err := conn.Graylog.Close()
 		checkErr(err)
 	}
 	if *maddr != "" {
 		log.Printf("Close MySQL connection.\n")
-		err := c.MySQL.conn.Close()
+		err := conn.MySQL.conn.Close()
 		checkErr(err)
 	}
 	if *haddr != "" {
 		log.Printf("Close Homer connection.\n")
-		err := c.Homer.Close()
+		err := conn.Homer.Close()
 		checkErr(err)
 	}
 	if *saddr != "" {
 		log.Printf("Close StatsD connection.\n")
-		err := c.StatsD.Close()
+		err := conn.StatsD.Close()
 		checkErr(err)
 	}
 }

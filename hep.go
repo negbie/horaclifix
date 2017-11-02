@@ -201,7 +201,7 @@ func (i *IPFIX) NewHEPChuncks(s string) []byte {
 	buf.Write(i.MakeChunck(0x0000, 0x000b, s))
 	buf.Write(i.MakeChunck(0x0000, 0x000c, s))
 	buf.Write(i.MakeChunck(0x0000, 0x000e, s))
-	if s != "incMOS" || s != "outMOS" {
+	if s != "incMOS" && s != "outMOS" {
 		buf.Write(i.MakeChunck(0x0000, 0x000f, s))
 	}
 	if s != "SIP" {

@@ -20,8 +20,8 @@ func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 		"_method":       string(sipMSG.Req.Method),
 		"_statusCode":   string(sipMSG.Req.StatusCode),
 		"_ua":           string(sipMSG.Ua.Value),
-		"_srcIp":        stringIPv4(i.Data.SIP.SrcIP),
-		"_dstIp":        stringIPv4(i.Data.SIP.DstIP),
+		"_srcIP":        stringIPv4(i.Data.SIP.SrcIP),
+		"_dstIP":        stringIPv4(i.Data.SIP.DstIP),
 		"_srcPort":      i.Data.SIP.SrcPort,
 		"_dstPort":      i.Data.SIP.DstPort,
 		"_ipLen":        i.Data.SIP.IPlen,
@@ -114,7 +114,7 @@ func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 }
 
 func (i *IPFIX) mapMetricQOS() map[string]interface{} {
-	mInfluxQOS := map[string]interface{}{
+	mMetricQOS := map[string]interface{}{
 		"inc.rtp.mos":          float64(i.Data.QOS.IncMos) / 100,
 		"out.rtp.mos":          float64(i.Data.QOS.OutMos) / 100,
 		"inc.rtp.rval":         float64(i.Data.QOS.IncrVal) / 100,
@@ -140,7 +140,7 @@ func (i *IPFIX) mapMetricQOS() map[string]interface{} {
 		"inc.rtcp.maxLat":      float64(i.Data.QOS.IncRtcpMaxLat),
 		"out.rtcp.maxLat":      float64(i.Data.QOS.OutRtcpMaxLat),
 	}
-	return mInfluxQOS
+	return mMetricQOS
 }
 
 // mapAllQOS retruns a map with QOS33 stats which can be
@@ -224,7 +224,7 @@ func (i *IPFIX) mapIncQOS() *map[string]interface{} {
 		"SRC_IP":          stringIPv4(i.Data.QOS.CallerIncSrcIP),
 		"SRC_PORT":        i.Data.QOS.CallerIncSrcPort,
 		"DST_IP":          stringIPv4(i.Data.QOS.CallerIncDstIP),
-		"DST_PORT":        i.Data.QOS.CallerIncSrcPort,
+		"DST_PORT":        i.Data.QOS.CallerIncDstPort,
 		"SRC_MAC":         "00-00-00-00-00-00",
 		"DST_MAC":         "00-00-00-00-00-00",
 		"OUT_ORDER":       0,
@@ -269,7 +269,7 @@ func (i *IPFIX) mapOutQOS() *map[string]interface{} {
 		"SRC_IP":          stringIPv4(i.Data.QOS.CalleeOutSrcIP),
 		"SRC_PORT":        i.Data.QOS.CalleeOutSrcPort,
 		"DST_IP":          stringIPv4(i.Data.QOS.CalleeOutDstIP),
-		"DST_PORT":        i.Data.QOS.CalleeOutSrcPort,
+		"DST_PORT":        i.Data.QOS.CalleeOutDstPort,
 		"SRC_MAC":         "00-00-00-00-00-00",
 		"DST_MAC":         "00-00-00-00-00-00",
 		"OUT_ORDER":       0,
@@ -315,7 +315,7 @@ func (i *IPFIX) mapIncQOS() *map[string]interface{} {
 		"SRC_IP":          stringIPv4(i.Data.QOS.CallerIncSrcIP),
 		"SRC_PORT":        i.Data.QOS.CallerIncSrcPort,
 		"DST_IP":          stringIPv4(i.Data.QOS.CallerIncDstIP),
-		"DST_PORT":        i.Data.QOS.CallerIncSrcPort,
+		"DST_PORT":        i.Data.QOS.CallerIncDstPort,
 		"SRC_MAC":         "00-00-00-00-00-00",
 		"DST_MAC":         "00-00-00-00-00-00",
 		"OUT_ORDER":       0,
@@ -359,7 +359,7 @@ func (i *IPFIX) mapOutQOS() *map[string]interface{} {
 		"SRC_IP":          stringIPv4(i.Data.QOS.CalleeOutSrcIP),
 		"SRC_PORT":        i.Data.QOS.CalleeOutSrcPort,
 		"DST_IP":          stringIPv4(i.Data.QOS.CalleeOutDstIP),
-		"DST_PORT":        i.Data.QOS.CalleeOutSrcPort,
+		"DST_PORT":        i.Data.QOS.CalleeOutDstPort,
 		"SRC_MAC":         "00-00-00-00-00-00",
 		"DST_MAC":         "00-00-00-00-00-00",
 		"OUT_ORDER":       0,

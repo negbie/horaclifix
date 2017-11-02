@@ -207,7 +207,7 @@ type GraylogClient struct {
 	disconnected bool
 }
 
-type Metric struct {
+type InfluxMetric struct {
 	measurement string
 	tags        map[string]string
 	fields      map[string]interface{}

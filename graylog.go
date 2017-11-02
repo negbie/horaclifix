@@ -21,50 +21,50 @@ func (conn *Connections) SendLog(i *IPFIX, s string) {
 	case "QOS":
 		gLog, err = json.Marshal(i.mapLogQOS())
 		checkErr(err)
-		/*	err := json.NewEncoder(conn.Graylog).Encode(i.PrepLogQOS()); err != nil {
+		/*	err := json.NewEncoder(conn.Graylog).Encode(i.PrepLogQOS())
 			checkErr(err)
 		*/
 	}
 	// Graylog frame delimiter
 	data := append(gLog, '\n', byte(0))
 
-	_, err = conn.WriteTCP(data)
+	_, err = conn.writeTCP(data)
 	checkErr(err)
 }
 
-func (c *Connections) reconnect() error {
-	c.Graylog.Lock()
-	defer c.Graylog.Unlock()
+func (conn *Connections) reconnect() error {
+	conn.Graylog.Lock()
+	defer conn.Graylog.Unlock()
 
-	raddr := c.Graylog.TCPConn.RemoteAddr()
+	raddr := conn.Graylog.TCPConn.RemoteAddr()
 	gconn, err := net.DialTCP(raddr.Network(), nil, raddr.(*net.TCPAddr))
 	if err != nil {
 		return err
 	}
 
-	c.Graylog.TCPConn.Close()
-	c.Graylog.TCPConn = gconn
+	conn.Graylog.TCPConn.Close()
+	conn.Graylog.TCPConn = gconn
 	return nil
 }
 
-func (c *Connections) WriteTCP(b []byte) (int, error) {
-	c.Graylog.RLock()
-	defer c.Graylog.RUnlock()
+func (conn *Connections) writeTCP(b []byte) (int, error) {
+	conn.Graylog.RLock()
+	defer conn.Graylog.RUnlock()
 
-	if c.Graylog.disconnected {
-		c.Graylog.RUnlock()
-		if err := c.reconnect(); err != nil {
-			c.Graylog.disconnected = true
-			c.Graylog.RLock()
+	if conn.Graylog.disconnected {
+		conn.Graylog.RUnlock()
+		if err := conn.reconnect(); err != nil {
+			conn.Graylog.disconnected = true
+			conn.Graylog.RLock()
 			return -1, err
 		}
-		c.Graylog.disconnected = false
-		c.Graylog.RLock()
+		conn.Graylog.disconnected = false
+		conn.Graylog.RLock()
 	}
-	n, err := c.Graylog.TCPConn.Write(b)
+	n, err := conn.Graylog.TCPConn.Write(b)
 	if err == nil {
 		return n, err
 	}
-	c.Graylog.disconnected = true
+	conn.Graylog.disconnected = true
 	return -1, err
 }

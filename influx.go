@@ -8,8 +8,8 @@ import (
 	influx "github.com/influxdata/influxdb/client/v2"
 )
 
-func NewMetric(measurement string, tags map[string]string, fields map[string]interface{}) *Metric {
-	return &Metric{
+func NewMetric(measurement string, tags map[string]string, fields map[string]interface{}) *InfluxMetric {
+	return &InfluxMetric{
 		measurement: measurement,
 		tags:        tags,
 		fields:      fields,
@@ -35,12 +35,12 @@ func (influxDB *InfluxClient) Send(i *IPFIX, s string) {
 	}
 }
 
-func (influxDB *InfluxClient) send(metric *Metric) error {
+func (influxDB *InfluxClient) send(im *InfluxMetric) error {
 	if influxDB == nil {
 		return errors.New("Failed to create influxDB client")
 	}
 
-	pt, err := influx.NewPoint(metric.measurement, metric.tags, metric.fields, metric.time)
+	pt, err := influx.NewPoint(im.measurement, im.tags, im.fields, im.time)
 	if err != nil {
 		return err
 	}

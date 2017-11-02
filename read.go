@@ -12,7 +12,7 @@ import (
 const headerLen int = 20
 
 // Read handles the incoming packets
-func Read(conn *net.TCPConn) {
+func Read(ic *net.TCPConn) {
 	var (
 		version int
 		dataLen int
@@ -20,19 +20,19 @@ func Read(conn *net.TCPConn) {
 		dataSet []byte
 	)
 
-	log.Printf("New IPFIX connection from %s at %v\n", *name, conn.RemoteAddr())
-	c := NewExtConns()
+	log.Printf("New IPFIX connection from %s at %v\n", *name, ic.RemoteAddr())
+	conn := NewExtConns()
 
 	// Close connections when this function ends
 	defer func() {
-		CloseExtConns(c)
-		log.Printf("Close IPFIX connection to %s at %v\n", *name, conn.RemoteAddr())
-		err := conn.Close()
+		CloseExtConns(conn)
+		log.Printf("Close IPFIX connection to %s at %v\n", *name, ic.RemoteAddr())
+		err := ic.Close()
 		checkErr(err)
 	}()
 
 	// Create a buffer for incoming packets
-	r := bufio.NewReader(conn)
+	r := bufio.NewReader(ic)
 	header := make([]byte, headerLen)
 
 	for {
@@ -80,22 +80,22 @@ func Read(conn *net.TCPConn) {
 			case 256:
 				// Merge the header with the dataSet.
 				data := append(header, dataSet...)
-				SendHandshake(conn, data)
+				SendHandshake(ic, data)
 			case 258:
 				msg := ParseRecSipUDP(dataSet)
-				c.Send(msg, "SIP")
+				conn.Send(msg, "SIP")
 			case 259:
 				msg := ParseSendSipUDP(dataSet)
-				c.Send(msg, "SIP")
+				conn.Send(msg, "SIP")
 			case 260:
 				msg := ParseRecSipTCP(dataSet)
-				c.Send(msg, "SIP")
+				conn.Send(msg, "SIP")
 			case 261:
 				msg := ParseSendSipTCP(dataSet)
-				c.Send(msg, "SIP")
+				conn.Send(msg, "SIP")
 			case 268:
 				msg := ParseQosStats(dataSet)
-				c.Send(msg, "QOS")
+				conn.Send(msg, "QOS")
 			default:
 				log.Printf("[WARN] Unhandled SetID %v\n", setID)
 			}

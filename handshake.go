@@ -9,7 +9,7 @@ import (
 
 // SendHandshake will write the binary Handshake representation
 // into the buffer and send it to wire
-func SendHandshake(c *net.TCPConn, hs []byte) {
+func SendHandshake(ic *net.TCPConn, hs []byte) {
 	h := &HandShake{}
 	r := reader{r: bytes.NewReader(hs)}
 	r.binRead(h)
@@ -31,7 +31,7 @@ func SendHandshake(c *net.TCPConn, hs []byte) {
 		bi[i] = int8(v)
 	}
 
-	log.Printf("Send handshake message %v to %s at %v\n", bi, *name, c.RemoteAddr())
-	err = binary.Write(c, binary.BigEndian, bi)
+	log.Printf("Send handshake message %v to %s at %v\n", bi, *name, ic.RemoteAddr())
+	err = binary.Write(ic, binary.BigEndian, bi)
 	checkErr(err)
 }
