@@ -27,21 +27,28 @@ Or if you have go installed:
   -HQ
         Send hepic QOS Stats
   -I string
-        InfluxDB http server address
+        InfluxDB HTTP server address
   -P string
         HEP capture password (default "myhep")
-  -d    Debug output to stdout
   -g string
-        Graylog gelf UDP server address
-  -gt string
-        Graylog gelf TLS server address
+        Graylog gelf TCP server address
   -l string
-        IPFIX listen address (default ":4739")
+        IPFIX TCP listen address (default ":4739")
+  -m string
+        MySQL TCP server address
+  -mp string
+        MySQL password
+  -mu string
+        MySQL user
   -n string
         SBC name (default "sbc")
   -s string
         StatsD UDP server address
+
   -v    Verbose output to stdout
+  -d    Debug output to stdout
+  -V    Show version
+
   
 ################################################################
 ./horaclifix -d -v

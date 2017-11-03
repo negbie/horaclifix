@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -12,26 +13,35 @@ import (
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
+const version = "horaclifix 1.1.0"
+
 var (
-	addr     = flag.String("l", ":4739", "IPFIX listen address")
-	gaddr    = flag.String("g", "", "Graylog gelf UDP server address")
-	maddr    = flag.String("m", "", "MySQL server address")
-	muser    = flag.String("mu", "", "MySQL user")
-	mpass    = flag.String("mp", "", "MySQL password")
-	haddr    = flag.String("H", "", "Homer UDP server address")
-	hepicQOS = flag.Bool("HQ", false, "Send hepic QOS Stats")
-	iaddr    = flag.String("I", "", "InfluxDB http server address")
-	saddr    = flag.String("s", "", "StatsD UDP server address")
-	name     = flag.String("n", "sbc", "SBC name")
-	hepPw    = flag.String("P", "myhep", "HEP capture password")
-	debug    = flag.Bool("d", false, "Debug output to stdout")
-	verbose  = flag.Bool("v", false, "Verbose output to stdout")
+	addr        = flag.String("l", ":4739", "IPFIX TCP listen address")
+	gaddr       = flag.String("g", "", "Graylog gelf TCP server address")
+	maddr       = flag.String("m", "", "MySQL TCP server address")
+	muser       = flag.String("mu", "", "MySQL user")
+	mpass       = flag.String("mp", "", "MySQL password")
+	haddr       = flag.String("H", "", "Homer UDP server address")
+	hepicQOS    = flag.Bool("HQ", false, "Send hepic QOS Stats")
+	iaddr       = flag.String("I", "", "InfluxDB HTTP server address")
+	saddr       = flag.String("s", "", "StatsD UDP server address")
+	name        = flag.String("n", "sbc", "SBC name")
+	hepPw       = flag.String("P", "myhep", "HEP capture password")
+	debug       = flag.Bool("d", false, "Debug output to stdout")
+	verbose     = flag.Bool("v", false, "Verbose output to stdout")
+	showVersion = flag.Bool("V", false, "Show version")
 )
 
 func main() {
 	//go http.ListenAndServe(":8080", http.DefaultServeMux)
 	//trace.Start(os.Stdout)
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println(version)
+		os.Exit(0)
+	}
+
 	ex, err := os.Executable()
 	checkCritErr(err)
 	exPath := filepath.Dir(ex)
