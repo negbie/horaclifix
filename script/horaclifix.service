@@ -1,0 +1,19 @@
+# cp horaclifix.service /etc/systemd/system/
+# systemctl daemon-reload
+# systemctl start horaclifix
+# systemctl enable horaclifix
+
+[Unit]
+Description=horaclifix IPFIX Receiver
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/horaclifix
+ExecStart=/opt/horaclifix/horaclifix -H 127.0.0.1:9060
+ExecStop=/bin/kill ${MAINPID}
+Restart=on-failure
+RestartSec=10s
+Type=simple
+
+[Install]
+WantedBy=multi-user.target 
