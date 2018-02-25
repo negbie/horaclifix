@@ -87,19 +87,19 @@ func Read(ic *net.TCPConn) {
 				SendHandshake(ic, data)
 			case 258:
 				msg := ParseRecSipUDP(dataSet)
-				conn.Send(msg, "SIP")
+				conn.Send(msg)
 			case 259:
 				msg := ParseSendSipUDP(dataSet)
-				conn.Send(msg, "SIP")
+				conn.Send(msg)
 			case 260:
 				msg := ParseRecSipTCP(dataSet)
-				conn.Send(msg, "SIP")
+				conn.Send(msg)
 			case 261:
 				msg := ParseSendSipTCP(dataSet)
-				conn.Send(msg, "SIP")
+				conn.Send(msg)
 			case 268:
 				msg := ParseQosStats(dataSet)
-				conn.Send(msg, "QOS")
+				conn.Send(msg)
 			default:
 				log.Printf("[WARN] Unhandled SetID %v\n", setID)
 			}
