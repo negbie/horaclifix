@@ -33,6 +33,9 @@ func (conn *Connections) Send(msg *IPFIX, s string) {
 			if *iaddr != "" {
 				conn.Influx.Send(msg, "QOS")
 			}
+			if *paddr != "" {
+				conn.SendMetric(msg, "QOS")
+			}
 			if *saddr != "" {
 				conn.SendStatsD(msg, "QOS")
 			}

@@ -25,6 +25,7 @@ var (
 	hepicQOS    = flag.Bool("HQ", false, "Send hepic QOS Stats")
 	iaddr       = flag.String("I", "", "InfluxDB HTTP server address")
 	saddr       = flag.String("s", "", "StatsD UDP server address")
+	paddr       = flag.String("p", "", "Prometheus address")
 	name        = flag.String("n", "sbc", "SBC name")
 	hepPw       = flag.String("P", "myhep", "HEP capture password")
 	debug       = flag.Bool("d", false, "Debug output to stdout")
