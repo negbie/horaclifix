@@ -6,6 +6,16 @@ import (
 	"encoding/json"
 )
 
+var (
+	hepVer   = []byte{0x48, 0x45, 0x50, 0x33} // "HEP3"
+	hepLen   = []byte{0x00, 0x00}
+	hepLen7  = []byte{0x00, 0x07}
+	hepLen8  = []byte{0x00, 0x08}
+	hepLen10 = []byte{0x00, 0x0a}
+	chunck16 = []byte{0x00, 0x00}
+	chunck32 = []byte{0x00, 0x00, 0x00, 0x00}
+)
+
 // SendHep will write the final HEP message into the buffer and send it to wire
 // The first 4 bytes are the string "HEP3". The next 2 bytes are the length of the
 // whole message (len("HEP3") + length of all the chucks we have). The next bytes
@@ -15,200 +25,180 @@ import (
 //        | "HEP3"|len|chuncks(0x0001|0x0002|0x0003|0x0004|0x0007|0x0008|0x0009|0x000a|0x000b|......)
 //        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 func (conn *Connections) SendHep(i *IPFIX, s string) {
-	chuncks := i.NewHEPChuncks(s)
-	hepMsg := make([]byte, len(chuncks)+6)
-	copy(hepMsg[6:], chuncks)
-	binary.BigEndian.PutUint32(hepMsg[:4], uint32(0x48455033))   // ASCII "HEP3"
-	binary.BigEndian.PutUint16(hepMsg[4:6], uint16(len(hepMsg))) // Total length
+	hepMsg := makeChuncks(i, s)
+	binary.BigEndian.PutUint16(hepMsg[4:6], uint16(len(hepMsg)))
 	_, err := conn.Homer.Write(hepMsg)
 	checkErr(err)
 }
 
-// MakeChunck will construct the respective HEP chunck
-func (i *IPFIX) MakeChunck(chunckVen uint16, chunckType uint16, payloadType string) []byte {
-	var chunck []byte
-	switch chunckType {
-	// Chunk IP protocol family (0x02=IPv4)
-	case 0x0001:
-		chunck = make([]byte, 6+1)
-		chunck[6] = 0x02
+// makeChuncks will construct the respective HEP chunck
+func makeChuncks(i *IPFIX, payloadType string) []byte {
+	w := new(bytes.Buffer)
+	w.Write(hepVer)
+	// hepMsg length placeholder. Will be written later
+	w.Write(hepLen)
 
-	// Chunk IP protocol ID (0x11=UDP)
-	case 0x0002:
-		chunck = make([]byte, 6+1)
-		chunck[6] = 0x11
+	// Chunk IP protocol family (0x02=IPv4, 0x0a=IPv6)
+	w.Write([]byte{0x00, 0x00, 0x00, 0x01})
+	w.Write(hepLen7)
+	w.WriteByte(0x02)
+
+	// Chunk IP protocol ID (0x06=TCP, 0x11=UDP)
+	w.Write([]byte{0x00, 0x00, 0x00, 0x02})
+	w.Write(hepLen7)
+	w.WriteByte(0x11)
 
 	// Chunk IPv4 source address
-	case 0x0003:
-		chunck = make([]byte, 6+4)
-		switch payloadType {
-		case "SIP":
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.SIP.SrcIP)
-		default:
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.CallerIncSrcIP)
-		}
+	w.Write([]byte{0x00, 0x00, 0x00, 0x03})
+	w.Write(hepLen10)
+	if payloadType == "SIP" {
+		binary.BigEndian.PutUint32(chunck32, i.Data.SIP.SrcIP)
+	} else {
+		binary.BigEndian.PutUint32(chunck32, i.Data.QOS.CallerIncSrcIP)
+	}
+	w.Write(chunck32)
 
 	// Chunk IPv4 destination address
-	case 0x0004:
-		chunck = make([]byte, 6+4)
-		switch payloadType {
-		case "SIP":
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.SIP.DstIP)
-		default:
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.CallerIncDstIP)
-		}
-
-	// Chunk IPv6 source address
-	// case 0x0005:
-
-	// Chunk IPv6 destination address
-	// case 0x0006:
+	w.Write([]byte{0x00, 0x00, 0x00, 0x04})
+	w.Write(hepLen10)
+	if payloadType == "SIP" {
+		binary.BigEndian.PutUint32(chunck32, i.Data.SIP.DstIP)
+	} else {
+		binary.BigEndian.PutUint32(chunck32, i.Data.QOS.CallerIncDstIP)
+	}
+	w.Write(chunck32)
 
 	// Chunk protocol source port
-	case 0x0007:
-		chunck = make([]byte, 6+2)
-		switch payloadType {
-		case "SIP":
-			binary.BigEndian.PutUint16(chunck[6:], i.Data.SIP.SrcPort)
-		default:
-			binary.BigEndian.PutUint16(chunck[6:], i.Data.QOS.CallerIncSrcPort)
-		}
+	w.Write([]byte{0x00, 0x00, 0x00, 0x07})
+	w.Write(hepLen8)
+	if payloadType == "SIP" {
+		binary.BigEndian.PutUint16(chunck16, i.Data.SIP.SrcPort)
+	} else {
+		binary.BigEndian.PutUint16(chunck16, i.Data.QOS.CallerIncSrcPort)
+	}
+	w.Write(chunck16)
 
-	// Chunk destination source port
-	case 0x0008:
-		chunck = make([]byte, 6+2)
-		switch payloadType {
-		case "SIP":
-			binary.BigEndian.PutUint16(chunck[6:], i.Data.SIP.DstPort)
-		default:
-			binary.BigEndian.PutUint16(chunck[6:], i.Data.QOS.CallerIncDstPort)
-		}
+	// Chunk protocol destination port
+	w.Write([]byte{0x00, 0x00, 0x00, 0x08})
+	w.Write(hepLen8)
+	if payloadType == "SIP" {
+		binary.BigEndian.PutUint16(chunck16, i.Data.SIP.DstPort)
+	} else {
+		binary.BigEndian.PutUint16(chunck16, i.Data.QOS.CallerIncDstPort)
+	}
+	w.Write(chunck16)
 
 	// Chunk unix timestamp, seconds
-	case 0x0009:
-		chunck = make([]byte, 6+4)
-		switch payloadType {
-		case "SIP":
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.SIP.TimeSec)
-		default:
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.EndTimeSec)
-		}
+	w.Write([]byte{0x00, 0x00, 0x00, 0x09})
+	w.Write(hepLen10)
+	if payloadType == "SIP" {
+		binary.BigEndian.PutUint32(chunck32, i.Data.SIP.TimeSec)
+	} else {
+		binary.BigEndian.PutUint32(chunck32, i.Data.QOS.EndTimeSec)
+	}
+	w.Write(chunck32)
 
 	// Chunk unix timestamp, microseconds offset
-	case 0x000a:
-		chunck = make([]byte, 6+4)
-		switch payloadType {
-		case "SIP":
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.SIP.TimeMic)
-		default:
-			binary.BigEndian.PutUint32(chunck[6:], i.Data.QOS.EndinTimeMic)
-		}
+	w.Write([]byte{0x00, 0x00, 0x00, 0x0a})
+	w.Write(hepLen10)
+	if payloadType == "SIP" {
+		binary.BigEndian.PutUint32(chunck32, i.Data.SIP.TimeMic)
+	} else {
+		binary.BigEndian.PutUint32(chunck32, i.Data.QOS.EndinTimeMic)
+	}
+	w.Write(chunck32)
 
-	// Chunk protocol type (SIP/H323/RTP/MGCP/M2UA)
-	case 0x000b:
-		chunck = make([]byte, 6+1)
-		switch payloadType {
-		case "allQOS":
-			chunck[6] = 38
-		case "incQOS":
-			chunck[6] = 34
-		case "outQOS":
-			chunck[6] = 34
-		case "incMOS":
-			chunck[6] = 35
-		case "outMOS":
-			chunck[6] = 35
-		case "LOG":
-			chunck[6] = 100
-		default:
-			chunck[6] = 1 // SIP
-		}
+	// Chunk protocol type (DNS, LOG, RTCP, SIP)
+	w.Write([]byte{0x00, 0x00, 0x00, 0x0b})
+	w.Write(hepLen7)
+	switch payloadType {
+	case "SIP":
+		w.WriteByte(1)
+	case "allQOS":
+		w.WriteByte(38)
+	case "incQOS":
+		w.WriteByte(34)
+	case "outQOS":
+		w.WriteByte(34)
+	case "incMOS":
+		w.WriteByte(35)
+	case "outMOS":
+		w.WriteByte(35)
+	case "LOG":
+		w.WriteByte(100)
+	}
 
 	// Chunk capture agent ID
-	case 0x000c:
-		chunck = make([]byte, 6+4)
-		binary.BigEndian.PutUint32(chunck[6:], 0x00000BEE)
+	w.Write([]byte{0x00, 0x00, 0x00, 0x0c})
+	w.Write(hepLen10)
+	binary.BigEndian.PutUint32(chunck32, uint32(*hepID))
+	w.Write(chunck32)
 
-	// case 0x000d:
 	// Chunk keep alive timer
+	//w.Write([]byte{0x00, 0x00, 0x00, 0x0d})
 
 	// Chunk authenticate key (plain text / TLS connection)
-	case 0x000e:
-		chunck = make([]byte, len(*hepPw)+6)
-		copy(chunck[6:], *hepPw)
+	w.Write([]byte{0x00, 0x00, 0x00, 0x0e})
+	binary.BigEndian.PutUint16(hepLen, 6+uint16(len(*hepPW)))
+	w.Write(hepLen)
+	w.Write([]byte(*hepPW))
 
-	// Chunk captured packet payload
-	case 0x000f:
+	if payloadType != "incMOS" && payloadType != "outMOS" {
+		// Chunk captured packet payload
+		w.Write([]byte{0x00, 0x00, 0x00, 0x0f})
 		switch payloadType {
+		case "SIP":
+			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.Data.SIP.SipMsg)))
+			w.Write(hepLen)
+			w.Write(i.Data.SIP.SipMsg)
 		case "allQOS":
-			payload, _ := json.Marshal(i.mapAllQOS())
-			chunck = make([]byte, len(payload)+6)
-			copy(chunck[6:], payload)
+			payload, err := json.Marshal(i.mapAllQOS())
+			checkErr(err)
+			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(payload)))
+			w.Write(hepLen)
+			w.Write(payload)
 		case "incQOS":
-			payload, _ := json.Marshal(i.mapIncQOS())
-			chunck = make([]byte, len(payload)+6)
-			copy(chunck[6:], payload)
+			payload, err := json.Marshal(i.mapIncQOS())
+			checkErr(err)
+			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(payload)))
+			w.Write(hepLen)
+			w.Write(payload)
 		case "outQOS":
-			payload, _ := json.Marshal(i.mapOutQOS())
-			chunck = make([]byte, len(payload)+6)
-			copy(chunck[6:], payload)
-		default:
-			chunck = make([]byte, len(i.Data.SIP.SipMsg)+6)
-			copy(chunck[6:], i.Data.SIP.SipMsg)
+			payload, err := json.Marshal(i.mapOutQOS())
+			checkErr(err)
+			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(payload)))
+			w.Write(hepLen)
+			w.Write(payload)
 		}
+	}
 
-	// case 0x0010:
 	// Chunk captured compressed payload (gzip/inflate)
+	//w.Write([]byte{0x00,0x00, 0x00,0x10})
 
-	// Chunk internal correlation id
-	case 0x0011:
+	if payloadType != "SIP" {
+		// Chunk internal correlation id
+		w.Write([]byte{0x00, 0x00, 0x00, 0x11})
 		if len(i.Data.QOS.IncCallID) > 0 {
-			chunck = make([]byte, len(i.Data.QOS.IncCallID)+6)
-			copy(chunck[6:], i.Data.QOS.IncCallID)
+			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.Data.QOS.IncCallID)))
+			w.Write(hepLen)
+			w.Write(i.Data.QOS.IncCallID)
 		} else {
-			chunck = make([]byte, len(i.Data.QOS.OutCallID)+6)
-			copy(chunck[6:], i.Data.QOS.OutCallID)
-		}
-
-	case 0x0020:
-		chunck = make([]byte, 6+2)
-		switch payloadType {
-		case "incMOS":
-			binary.BigEndian.PutUint16(chunck[6:], uint16(i.Data.QOS.IncMos))
-		case "outMOS":
-			binary.BigEndian.PutUint16(chunck[6:], uint16(i.Data.QOS.OutMos))
+			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.Data.QOS.OutCallID)))
+			w.Write(hepLen)
+			w.Write(i.Data.QOS.OutCallID)
 		}
 	}
 
-	binary.BigEndian.PutUint16(chunck[:2], chunckVen)
-	binary.BigEndian.PutUint16(chunck[2:4], chunckType)
-	binary.BigEndian.PutUint16(chunck[4:6], uint16(len(chunck)))
-	return chunck
-}
-
-// NewHEPChuncks will fill a buffer with all the chuncks
-func (i *IPFIX) NewHEPChuncks(s string) []byte {
-	buf := new(bytes.Buffer)
-
-	buf.Write(i.MakeChunck(0x0000, 0x0001, s))
-	buf.Write(i.MakeChunck(0x0000, 0x0002, s))
-	buf.Write(i.MakeChunck(0x0000, 0x0003, s))
-	buf.Write(i.MakeChunck(0x0000, 0x0004, s))
-	buf.Write(i.MakeChunck(0x0000, 0x0007, s))
-	buf.Write(i.MakeChunck(0x0000, 0x0008, s))
-	buf.Write(i.MakeChunck(0x0000, 0x0009, s))
-	buf.Write(i.MakeChunck(0x0000, 0x000a, s))
-	buf.Write(i.MakeChunck(0x0000, 0x000b, s))
-	buf.Write(i.MakeChunck(0x0000, 0x000c, s))
-	buf.Write(i.MakeChunck(0x0000, 0x000e, s))
-	if s != "incMOS" && s != "outMOS" {
-		buf.Write(i.MakeChunck(0x0000, 0x000f, s))
+	if payloadType == "incMOS" || payloadType == "outMOS" {
+		// Chunk MOS only
+		w.Write([]byte{0x00, 0x00, 0x00, 0x20})
+		w.Write(hepLen8)
+		if payloadType == "incMOS" {
+			binary.BigEndian.PutUint16(chunck16, uint16(i.Data.QOS.IncMos))
+		} else {
+			binary.BigEndian.PutUint16(chunck16, uint16(i.Data.QOS.OutMos))
+		}
+		w.Write(chunck16)
 	}
-	if s != "SIP" {
-		buf.Write(i.MakeChunck(0x0000, 0x0011, s))
-	}
-	if s == "incMOS" || s == "outMOS" {
-		buf.Write(i.MakeChunck(0x0000, 0x0020, s))
-	}
-	return buf.Bytes()
+	return w.Bytes()
 }
