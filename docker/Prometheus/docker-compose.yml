@@ -1,102 +1,125 @@
-version: '2'
+version: '2.1'
+
+networks:
+  monitor-net:
+    driver: bridge
 
 volumes:
     prometheus_data: {}
     grafana_data: {}
 
-networks:
-  front-tier:
-    driver: bridge
-  back-tier:
-    driver: bridge
-
 services:
+
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:latest
     container_name: prometheus
     volumes:
       - ./prometheus/:/etc/prometheus/
       - prometheus_data:/prometheus
     command:
-      - '-config.file=/etc/prometheus/prometheus.yml'
-      - '-storage.local.path=/prometheus'
-      - '-alertmanager.url=http://alertmanager:9093'
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention=200h'
+      - '--web.enable-lifecycle'
+    # restart: unless-stopped
     expose:
       - 9090
-    ports:
-      - 1.1.1.1:9090:9090
-    links:
-      - cadvisor:cadvisor
-      - alertmanager:alertmanager
-    depends_on:
-      - cadvisor
     networks:
-      - back-tier
-
-  statsd-exporter:
-    image: prom/statsd-exporter
-    container_name: statsd-exporter
-    volumes:
-      - ./statsd/statsd_mapping.conf:/tmp/statsd-exporter.conf:ro
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+  
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    volumes: 
+      - ./alertmanager/:/etc/alertmanager/
     command:
-      - '-statsd.mapping-config=/tmp/statsd-exporter.conf'
-      - '-statsd.add-suffix=false'
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    restart: unless-stopped
     expose:
-      - 9102
-      - 9125
-    ports:
-      - 1.1.1.1:9102:9102
-      - 1.1.1.1:9125:9125/udp
+      - 9093
     networks:
-      - back-tier
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
 
-  node-exporter:
-    container_name: node-exporter
-    image: prom/node-exporter
+  nodeexporter:
+    image: prom/node-exporter:latest
+    container_name: nodeexporter
+    user: root
+    privileged: true
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
-    command: '-collector.procfs=/host/proc -collector.sysfs=/host/sys -collector.filesystem.ignored-mount-points="^(/rootfs|/host|)/(sys|proc|dev|host|etc)($$|/)" collector.filesystem.ignored-fs-types="^(sys|proc|auto|cgroup|devpts|ns|au|fuse\.lxc|mqueue)(fs|)$$"'
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
     expose:
       - 9100
     networks:
-      - back-tier
-
-  alertmanager:
-    image: prom/alertmanager
-    ports:
-      - 1.1.1.1:9093:9093
-    volumes:
-      - ./alertmanager/:/etc/alertmanager/
-    networks:
-      - back-tier
-    command:
-      - '-config.file=/etc/alertmanager/config.yml'
-      - '-storage.path=/alertmanager'
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
 
   cadvisor:
-    image: google/cadvisor
+    image: google/cadvisor:latest
+    container_name: cadvisor
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+      #- /cgroup:/cgroup:ro #doesn't work on MacOS only for Linux
+    restart: unless-stopped
     expose:
       - 8080
     networks:
-      - back-tier
-
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+  
   grafana:
-    image: grafana/grafana
-    depends_on:
-      - prometheus
-    ports:
-      - 1.1.1.1:3000:3000
+    image: grafana/grafana:latest
+    container_name: grafana
     volumes:
       - grafana_data:/var/lib/grafana
-    env_file:
-      - config.monitoring
+      - ./grafana/datasources:/etc/grafana/datasources
+      - ./grafana/dashboards:/etc/grafana/dashboards
+      - ./grafana/setup.sh:/setup.sh
+    entrypoint: /setup.sh
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+    expose:
+      - 3000
     networks:
-      - back-tier
-      - front-tier
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+  caddy:
+    image: stefanprodan/caddy
+    container_name: caddy
+    ports:
+      - "3000:3000"
+      - "9090:9090"
+      - "9093:9093"
+    volumes:
+      - ./caddy/:/etc/caddy/
+    environment:
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+    restart: unless-stopped
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"

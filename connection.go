@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -84,7 +83,7 @@ func NewExtConns() *Connections {
 		conn.Prometheus.GaugeMetrics[*name+"_inc_rtcp_maxLat"] = prometheus.NewGauge(prometheus.GaugeOpts{Name: *name + "_inc_rtcp_maxLat", Help: "Incoming RTCP maxLat"})
 		conn.Prometheus.GaugeMetrics[*name+"_out_rtcp_maxLat"] = prometheus.NewGauge(prometheus.GaugeOpts{Name: *name + "_out_rtcp_maxLat", Help: "Outgoing RTCP maxLat"})
 		conn.Prometheus.GaugeMetrics[*name+"_duration"] = prometheus.NewGauge(prometheus.GaugeOpts{Name: *name + "_duration", Help: "Call duration"})
-		fmt.Println("HUHU")
+
 		for k := range conn.Prometheus.GaugeMetrics {
 			log.Printf("register prometheus gaugeMetric %s", k)
 			prometheus.MustRegister(conn.Prometheus.GaugeMetrics[k])

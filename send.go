@@ -18,7 +18,7 @@ func (conn *Connections) Send(msg *IPFIX, s string) {
 
 	default:
 		// Send only QOS stats with meaningful values
-		if msg.Data.QOS.IncMos > 0 && msg.Data.QOS.OutMos > 0 {
+		if msg.Data.QOS.IncMos > 0 || msg.Data.QOS.OutMos > 0 {
 
 			if *haddr != "" {
 				if *hepicQOS {
