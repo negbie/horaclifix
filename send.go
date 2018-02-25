@@ -1,50 +1,59 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
-func (conn *Connections) Send(i *IPFIX, s string) {
-	switch s {
-	case "SIP":
-		if *haddr != "" {
-			conn.SendHep(i, "SIP")
-		}
-		if *gaddr != "" {
-			conn.SendLog(i, "SIP")
-		}
-		if *debug {
-			fmt.Println("SIP output:")
-			fmt.Printf("%s\n", i.Data.SIP.SipMsg)
+func (conn *Connections) Send(ich chan *IPFIX) {
+	var (
+		msg *IPFIX
+		ok  bool
+	)
+
+	for {
+		msg, ok = <-ich
+		if !ok {
+			break
 		}
 
-	default:
-		// Send only QOS stats with meaningful values
-		if i.Data.QOS.IncMos > 0 || i.Data.QOS.OutMos > 0 {
-
+		if msg.Data.SIP.CallID != nil {
+			if *haddr != "" {
+				conn.SendHep(msg, "SIP")
+			}
+			if *gaddr != "" {
+				conn.SendLog(msg, "SIP")
+			}
+			if *debug {
+				fmt.Println("SIP output:")
+				fmt.Printf("%s\n", msg.Data.SIP.SipMsg)
+			}
+		} else if msg.Data.QOS.IncMos > 0 || msg.Data.QOS.OutMos > 0 {
 			if *haddr != "" {
 				if *hepicQOS {
-					conn.SendHep(i, "incQOS")
-					conn.SendHep(i, "outQOS")
-					conn.SendHep(i, "incMOS")
-					conn.SendHep(i, "outMOS")
+					conn.SendHep(msg, "incQOS")
+					conn.SendHep(msg, "outQOS")
+					conn.SendHep(msg, "incMOS")
+					conn.SendHep(msg, "outMOS")
 				} else {
-					conn.SendHep(i, "allQOS")
+					conn.SendHep(msg, "allQOS")
 				}
 			}
 			if *iaddr != "" {
-				conn.Influx.Send(i, "QOS")
+				conn.Influx.Send(msg, "QOS")
 			}
 			if *paddr != "" {
-				conn.SendMetric(i, "QOS")
+				conn.SendMetric(msg, "QOS")
 			}
 			if *saddr != "" {
-				conn.SendStatsD(i, "QOS")
+				conn.SendStatsD(msg, "QOS")
 			}
-		}
-		if *gaddr != "" {
-			conn.SendLog(i, "QOS")
-		}
-		if *maddr != "" {
-			conn.SendMySQL(i, "QOS")
+
+			if *gaddr != "" {
+				conn.SendLog(msg, "QOS")
+			}
+			if *maddr != "" {
+				conn.SendMySQL(msg, "QOS")
+			}
 		}
 	}
 }
