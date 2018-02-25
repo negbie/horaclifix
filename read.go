@@ -7,12 +7,9 @@ import (
 	"io"
 	"log"
 	"net"
-	"runtime"
 )
 
 const headerLen int = 20
-
-var sendCh = make(chan *IPFIX, 1000)
 
 // Read handles the incoming packets
 func Read(ic *net.TCPConn) {
@@ -33,10 +30,6 @@ func Read(ic *net.TCPConn) {
 		err := ic.Close()
 		checkErr(err)
 	}()
-
-	for i := 0; i < runtime.NumCPU(); i++ {
-		go conn.Send(sendCh)
-	}
 
 	// Create a buffer for incoming packets
 	r := bufio.NewReader(ic)
@@ -89,15 +82,20 @@ func Read(ic *net.TCPConn) {
 				data := append(header, dataSet...)
 				SendHandshake(ic, data)
 			case 258:
-				sendCh <- ParseRecSipUDP(dataSet)
+				msg := ParseRecSipUDP(dataSet)
+				conn.Send(msg, "SIP")
 			case 259:
-				sendCh <- ParseSendSipUDP(dataSet)
+				msg := ParseSendSipUDP(dataSet)
+				conn.Send(msg, "SIP")
 			case 260:
-				sendCh <- ParseRecSipTCP(dataSet)
+				msg := ParseRecSipTCP(dataSet)
+				conn.Send(msg, "SIP")
 			case 261:
-				sendCh <- ParseSendSipTCP(dataSet)
+				msg := ParseSendSipTCP(dataSet)
+				conn.Send(msg, "SIP")
 			case 268:
-				sendCh <- ParseQosStats(dataSet)
+				msg := ParseQosStats(dataSet)
+				conn.Send(msg, "QOS")
 			default:
 				log.Printf("[WARN] Unhandled SetID %v\n", setID)
 			}
