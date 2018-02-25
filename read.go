@@ -76,7 +76,9 @@ func Read(ic *net.TCPConn) {
 				fmt.Printf("%s\n", hex.Dump(dataSet))
 			}
 
-			conn.Prometheus.CounterMetrics[*name+"_packets"].Inc()
+			if *paddr != "" {
+				prom.CounterMetrics[*name+"_packets"].Inc()
+			}
 
 			switch setID {
 			case 256:

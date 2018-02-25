@@ -72,6 +72,8 @@ func main() {
 	listener, err := net.ListenTCP("tcp", laddr)
 	checkCritErr(err)
 
+	regProm()
+
 	for {
 		conn, err := listener.AcceptTCP()
 		checkCritErr(err)

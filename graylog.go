@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net"
 )
+
+var gErrCnt int
 
 // SendLog will encode the QOS & SIP maps to json
 // and send them over UDP to Graylog
@@ -29,7 +32,13 @@ func (conn *Connections) SendLog(i *IPFIX, s string) {
 	data := append(gLog, '\n', byte(0))
 
 	_, err = conn.writeTCP(data)
-	checkErr(err)
+	if err != nil {
+		gErrCnt++
+		if gErrCnt%256 == 0 {
+			gErrCnt = 0
+			log.Printf("[WARN] <%s> %s\n", *name, err)
+		}
+	}
 }
 
 func (conn *Connections) reconnect() error {

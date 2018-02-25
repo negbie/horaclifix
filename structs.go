@@ -195,12 +195,11 @@ type QosSet struct {
 }
 
 type Connections struct {
-	Graylog    GraylogClient
-	MySQL      *mysqlDB
-	Homer      net.Conn
-	Prometheus PrometheusClient
-	StatsD     net.Conn
-	Influx     *InfluxClient
+	Graylog GraylogClient
+	MySQL   *mysqlDB
+	Homer   net.Conn
+	StatsD  net.Conn
+	Influx  *InfluxClient
 }
 
 type GraylogClient struct {
@@ -238,7 +237,7 @@ type mysqlDB struct {
 	insert *sql.Stmt
 }
 
-type PrometheusClient struct {
+type Prometheus struct {
 	CounterMetrics map[string]prometheus.Counter
 	GaugeMetrics   map[string]prometheus.Gauge
 }

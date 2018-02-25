@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"log"
 )
 
 var (
+	hErrCnt  int
 	hepVer   = []byte{0x48, 0x45, 0x50, 0x33} // "HEP3"
 	hepLen   = []byte{0x00, 0x00}
 	hepLen7  = []byte{0x00, 0x07}
@@ -28,7 +30,13 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 	hepMsg := makeChuncks(i, s)
 	binary.BigEndian.PutUint16(hepMsg[4:6], uint16(len(hepMsg)))
 	_, err := conn.Homer.Write(hepMsg)
-	checkErr(err)
+	if err != nil {
+		hErrCnt++
+		if hErrCnt%256 == 0 {
+			hErrCnt = 0
+			log.Printf("[WARN] <%s> %s\n", *name, err)
+		}
+	}
 }
 
 // makeChuncks will construct the respective HEP chunck
