@@ -239,5 +239,6 @@ type mysqlDB struct {
 }
 
 type PrometheusClient struct {
-	GaugeMetrics map[string]prometheus.Gauge
+	CounterMetrics map[string]prometheus.Counter
+	GaugeMetrics   map[string]prometheus.Gauge
 }

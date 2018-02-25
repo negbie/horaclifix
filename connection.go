@@ -57,7 +57,9 @@ func NewExtConns() *Connections {
 
 	if *paddr != "" {
 		conn.Prometheus.GaugeMetrics = map[string]prometheus.Gauge{}
+		conn.Prometheus.CounterMetrics = map[string]prometheus.Counter{}
 
+		conn.Prometheus.CounterMetrics[*name+"_packets"] = prometheus.NewCounter(prometheus.CounterOpts{Name: *name + "_packets", Help: "Received packets"})
 		conn.Prometheus.GaugeMetrics[*name+"_inc_rtp_mos"] = prometheus.NewGauge(prometheus.GaugeOpts{Name: *name + "_inc_rtp_mos", Help: "Incoming RTP MOS"})
 		conn.Prometheus.GaugeMetrics[*name+"_out_rtp_mos"] = prometheus.NewGauge(prometheus.GaugeOpts{Name: *name + "_out_rtp_mos", Help: "Outgoing RTP MOS"})
 		conn.Prometheus.GaugeMetrics[*name+"_inc_rtp_rval"] = prometheus.NewGauge(prometheus.GaugeOpts{Name: *name + "_inc_rtp_rval", Help: "Incoming RTP rVal"})
@@ -87,6 +89,10 @@ func NewExtConns() *Connections {
 		for k := range conn.Prometheus.GaugeMetrics {
 			log.Printf("register prometheus gaugeMetric %s", k)
 			prometheus.MustRegister(conn.Prometheus.GaugeMetrics[k])
+		}
+		for k := range conn.Prometheus.CounterMetrics {
+			log.Printf("register prometheus counterMetric %s", k)
+			prometheus.MustRegister(conn.Prometheus.CounterMetrics[k])
 		}
 
 		go func() {

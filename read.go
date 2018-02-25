@@ -76,6 +76,8 @@ func Read(ic *net.TCPConn) {
 				fmt.Printf("%s\n", hex.Dump(dataSet))
 			}
 
+			conn.Prometheus.CounterMetrics[*name+"_packets"].Inc()
+
 			switch setID {
 			case 256:
 				// Merge the header with the dataSet.
