@@ -45,8 +45,8 @@ func Read(ic *net.TCPConn) {
 			dataLen = int(uint16(header[2])<<8 + uint16(header[3]))
 			// Extract the setID
 			setID = int(uint16(header[16])<<8 + uint16(header[17]))
-			// Check if we have valid setID's and IPFIX packets
-			if setID > 280 || setID < 256 || version != 10 {
+			// Check if we have a valid IPFIX packet
+			if version != 10 || dataLen < headerLen {
 				log.Printf("[WARN] Malformed IPFIX header: %v\n", header)
 				break
 			}
@@ -67,22 +67,21 @@ func Read(ic *net.TCPConn) {
 
 			if *verbose {
 				fmt.Println("########################################################################")
-				fmt.Printf("Headerversion: %d, Headerlength: %d, SetID: %d\n", version, dataLen, setID)
-				fmt.Println("Header in raw:", header)
+				fmt.Printf("headerversion: %d, headerlength: %d, setID: %d\n", version, dataLen, setID)
+				fmt.Println("raw header:", header)
 			}
 			if *debug {
-				fmt.Println("Hexdump output:")
+				fmt.Println("hexdump output:")
 				fmt.Printf("%s\n", hex.Dump(header))
 				fmt.Printf("%s\n", hex.Dump(dataSet))
 			}
-
 			if *paddr != "" {
 				prom.CounterMetrics[*name+"_packets"].Inc()
 			}
 
 			switch setID {
 			case 256:
-				// Merge the header with the dataSet.
+				// Append the dataSet to the header.
 				data := append(header, dataSet...)
 				SendHandshake(ic, data)
 			case 258:
@@ -101,7 +100,7 @@ func Read(ic *net.TCPConn) {
 				msg := ParseQosStats(dataSet)
 				conn.Send(msg)
 			default:
-				log.Printf("[WARN] Unhandled SetID %v\n", setID)
+				log.Printf("[WARN] Unhandled setID: %v\nfor dataset: %v\n", setID, dataSet)
 			}
 		} else if err != nil {
 			if err != io.EOF {
