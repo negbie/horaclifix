@@ -192,6 +192,16 @@ type QosSet struct {
 
 	OutCallIDLen uint16
 	OutCallID    []byte
+
+	CallerSsrc  uint32
+	CallerSeqNo uint32
+	CallerPt    uint8
+
+	CalleeSsrc  uint32
+	CalleeSeqNo uint32
+	CalleePt    uint8
+
+	TransID uint32
 }
 
 type Connections struct {
