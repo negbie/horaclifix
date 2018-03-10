@@ -60,9 +60,9 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 	w.Write([]byte{0x00, 0x00, 0x00, 0x03})
 	w.Write(hepLen10)
 	if payloadType == "SIP" {
-		binary.BigEndian.PutUint32(chunck32, i.Data.SIP.SrcIP)
+		binary.BigEndian.PutUint32(chunck32, i.SIP.SrcIP)
 	} else {
-		binary.BigEndian.PutUint32(chunck32, i.Data.QOS.CallerIncSrcIP)
+		binary.BigEndian.PutUint32(chunck32, i.QOS.CallerIncSrcIP)
 	}
 	w.Write(chunck32)
 
@@ -70,9 +70,9 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 	w.Write([]byte{0x00, 0x00, 0x00, 0x04})
 	w.Write(hepLen10)
 	if payloadType == "SIP" {
-		binary.BigEndian.PutUint32(chunck32, i.Data.SIP.DstIP)
+		binary.BigEndian.PutUint32(chunck32, i.SIP.DstIP)
 	} else {
-		binary.BigEndian.PutUint32(chunck32, i.Data.QOS.CallerIncDstIP)
+		binary.BigEndian.PutUint32(chunck32, i.QOS.CallerIncDstIP)
 	}
 	w.Write(chunck32)
 
@@ -80,9 +80,9 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 	w.Write([]byte{0x00, 0x00, 0x00, 0x07})
 	w.Write(hepLen8)
 	if payloadType == "SIP" {
-		binary.BigEndian.PutUint16(chunck16, i.Data.SIP.SrcPort)
+		binary.BigEndian.PutUint16(chunck16, i.SIP.SrcPort)
 	} else {
-		binary.BigEndian.PutUint16(chunck16, i.Data.QOS.CallerIncSrcPort)
+		binary.BigEndian.PutUint16(chunck16, i.QOS.CallerIncSrcPort)
 	}
 	w.Write(chunck16)
 
@@ -90,9 +90,9 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 	w.Write([]byte{0x00, 0x00, 0x00, 0x08})
 	w.Write(hepLen8)
 	if payloadType == "SIP" {
-		binary.BigEndian.PutUint16(chunck16, i.Data.SIP.DstPort)
+		binary.BigEndian.PutUint16(chunck16, i.SIP.DstPort)
 	} else {
-		binary.BigEndian.PutUint16(chunck16, i.Data.QOS.CallerIncDstPort)
+		binary.BigEndian.PutUint16(chunck16, i.QOS.CallerIncDstPort)
 	}
 	w.Write(chunck16)
 
@@ -100,9 +100,9 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 	w.Write([]byte{0x00, 0x00, 0x00, 0x09})
 	w.Write(hepLen10)
 	if payloadType == "SIP" {
-		binary.BigEndian.PutUint32(chunck32, i.Data.SIP.TimeSec)
+		binary.BigEndian.PutUint32(chunck32, i.SIP.TimeSec)
 	} else {
-		binary.BigEndian.PutUint32(chunck32, i.Data.QOS.EndTimeSec)
+		binary.BigEndian.PutUint32(chunck32, i.QOS.EndTimeSec)
 	}
 	w.Write(chunck32)
 
@@ -110,9 +110,9 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 	w.Write([]byte{0x00, 0x00, 0x00, 0x0a})
 	w.Write(hepLen10)
 	if payloadType == "SIP" {
-		binary.BigEndian.PutUint32(chunck32, i.Data.SIP.TimeMic)
+		binary.BigEndian.PutUint32(chunck32, i.SIP.TimeMic)
 	} else {
-		binary.BigEndian.PutUint32(chunck32, i.Data.QOS.EndinTimeMic)
+		binary.BigEndian.PutUint32(chunck32, i.QOS.EndinTimeMic)
 	}
 	w.Write(chunck32)
 
@@ -156,9 +156,9 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 		w.Write([]byte{0x00, 0x00, 0x00, 0x0f})
 		switch payloadType {
 		case "SIP":
-			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.Data.SIP.SipMsg)))
+			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.SIP.RawMsg)))
 			w.Write(hepLen)
-			w.Write(i.Data.SIP.SipMsg)
+			w.Write(i.SIP.RawMsg)
 		case "allQOS":
 			payload, err := json.Marshal(i.mapAllQOS())
 			checkErr(err)
@@ -186,14 +186,14 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 	if payloadType != "SIP" {
 		// Chunk internal correlation id
 		w.Write([]byte{0x00, 0x00, 0x00, 0x11})
-		if len(i.Data.QOS.IncCallID) > 0 {
-			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.Data.QOS.IncCallID)))
+		if len(i.QOS.IncCallID) > 0 {
+			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.QOS.IncCallID)))
 			w.Write(hepLen)
-			w.Write(i.Data.QOS.IncCallID)
+			w.Write(i.QOS.IncCallID)
 		} else {
-			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.Data.QOS.OutCallID)))
+			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.QOS.OutCallID)))
 			w.Write(hepLen)
-			w.Write(i.Data.QOS.OutCallID)
+			w.Write(i.QOS.OutCallID)
 		}
 	}
 
@@ -202,9 +202,9 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 		w.Write([]byte{0x00, 0x00, 0x00, 0x20})
 		w.Write(hepLen8)
 		if payloadType == "incMOS" {
-			binary.BigEndian.PutUint16(chunck16, uint16(i.Data.QOS.IncMos))
+			binary.BigEndian.PutUint16(chunck16, uint16(i.QOS.IncMos))
 		} else {
-			binary.BigEndian.PutUint16(chunck16, uint16(i.Data.QOS.OutMos))
+			binary.BigEndian.PutUint16(chunck16, uint16(i.QOS.OutMos))
 		}
 		w.Write(chunck16)
 	}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	influx "github.com/influxdata/influxdb/client/v2"
+	"github.com/negbie/sipparser"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -66,7 +67,7 @@ type HandShake struct {
 
 // IPFIX messages struct
 type IPFIX struct {
-	Data DataSet
+	DataSet
 }
 
 // DataSet holds different IPFIX datasets
@@ -101,7 +102,8 @@ type SipSet struct {
 	Context   uint32
 	UDPlen    uint16
 	MsgLen    uint16
-	SipMsg    []byte
+	RawMsg    []byte
+	SipMsg    *sipparser.SipMsg
 }
 
 // QosSet holds the QoS related fields

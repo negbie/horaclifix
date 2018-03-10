@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 func (conn *Connections) Send(i *IPFIX) {
-	if i.Data.SIP.SipMsg != nil {
+	if i.SIP.RawMsg != nil {
 		if *haddr != "" {
 			conn.SendHep(i, "SIP")
 		}
@@ -12,9 +12,9 @@ func (conn *Connections) Send(i *IPFIX) {
 		}
 		if *debug {
 			fmt.Println("SIP output:")
-			fmt.Printf("%s\n", i.Data.SIP.SipMsg)
+			fmt.Printf("%s\n", i.SIP.RawMsg)
 		}
-	} else if i.Data.QOS.IncMos > 0 || i.Data.QOS.OutMos > 0 {
+	} else if i.QOS.IncMos > 0 || i.QOS.OutMos > 0 {
 		if *haddr != "" {
 			if *hepicQOS {
 				conn.SendHep(i, "incQOS")

@@ -135,15 +135,15 @@ INSERT INTO qos_report (
 
 // SendMySQL inserts a given qos value into the qos_report table
 func (conn *Connections) SendMySQL(i *IPFIX, s string) {
-	start := time.Unix(int64(i.Data.QOS.BeginTimeSec), 0).Local()
-	end := time.Unix(int64(i.Data.QOS.EndTimeSec), 0).Local()
-	duration := int(i.Data.QOS.EndTimeSec - i.Data.QOS.BeginTimeSec)
+	start := time.Unix(int64(i.QOS.BeginTimeSec), 0).Local()
+	end := time.Unix(int64(i.QOS.EndTimeSec), 0).Local()
+	duration := int(i.QOS.EndTimeSec - i.QOS.BeginTimeSec)
 
-	if i.Data.QOS.BeginTimeSec == 0 {
+	if i.QOS.BeginTimeSec == 0 {
 		start = time.Now().Local()
 		end = start
 		duration = 0
-	} else if i.Data.QOS.EndTimeSec == 0 {
+	} else if i.QOS.EndTimeSec == 0 {
 		end = time.Now().Local()
 		duration = 0
 	}
@@ -154,51 +154,51 @@ func (conn *Connections) SendMySQL(i *IPFIX, s string) {
 		end,
 		duration,
 		*name,
-		i.Data.QOS.Type,
-		string(i.Data.QOS.IncCallID),
-		string(i.Data.QOS.IncRealm),
-		stringIPv4(i.Data.QOS.CallerIncSrcIP),
-		stringIPv4(i.Data.QOS.CallerIncDstIP),
-		i.Data.QOS.CallerIncSrcPort,
-		i.Data.QOS.CallerIncDstPort,
-		stringIPv4(i.Data.QOS.CalleeIncSrcIP),
-		stringIPv4(i.Data.QOS.CalleeIncDstIP),
-		i.Data.QOS.CalleeIncSrcPort,
-		i.Data.QOS.CalleeIncDstPort,
-		i.Data.QOS.IncRtpPackets,
-		i.Data.QOS.IncRtpLostPackets,
-		i.Data.QOS.IncRtpAvgJitter,
-		i.Data.QOS.IncRtpMaxJitter,
-		i.Data.QOS.IncRtcpPackets,
-		i.Data.QOS.IncRtcpLostPackets,
-		i.Data.QOS.IncRtcpAvgJitter,
-		i.Data.QOS.IncRtcpMaxJitter,
-		i.Data.QOS.IncRtcpAvgLat,
-		i.Data.QOS.IncRtcpMaxLat,
-		float64(i.Data.QOS.IncrVal)/100,
-		float64(i.Data.QOS.IncMos)/100,
-		string(i.Data.QOS.OutCallID),
-		string(i.Data.QOS.OutRealm),
-		stringIPv4(i.Data.QOS.CallerOutSrcIP),
-		stringIPv4(i.Data.QOS.CallerOutDstIP),
-		i.Data.QOS.CallerOutSrcPort,
-		i.Data.QOS.CallerOutDstPort,
-		stringIPv4(i.Data.QOS.CalleeOutSrcIP),
-		stringIPv4(i.Data.QOS.CalleeOutDstIP),
-		i.Data.QOS.CalleeOutSrcPort,
-		i.Data.QOS.CalleeOutDstPort,
-		i.Data.QOS.OutRtpPackets,
-		i.Data.QOS.OutRtpLostPackets,
-		i.Data.QOS.OutRtpAvgJitter,
-		i.Data.QOS.OutRtpMaxJitter,
-		i.Data.QOS.OutRtcpPackets,
-		i.Data.QOS.OutRtcpLostPackets,
-		i.Data.QOS.OutRtcpAvgJitter,
-		i.Data.QOS.OutRtcpMaxJitter,
-		i.Data.QOS.OutRtcpAvgLat,
-		i.Data.QOS.OutRtcpMaxLat,
-		float64(i.Data.QOS.OutrVal)/100,
-		float64(i.Data.QOS.OutMos)/100)
+		i.QOS.Type,
+		string(i.QOS.IncCallID),
+		string(i.QOS.IncRealm),
+		stringIPv4(i.QOS.CallerIncSrcIP),
+		stringIPv4(i.QOS.CallerIncDstIP),
+		i.QOS.CallerIncSrcPort,
+		i.QOS.CallerIncDstPort,
+		stringIPv4(i.QOS.CalleeIncSrcIP),
+		stringIPv4(i.QOS.CalleeIncDstIP),
+		i.QOS.CalleeIncSrcPort,
+		i.QOS.CalleeIncDstPort,
+		i.QOS.IncRtpPackets,
+		i.QOS.IncRtpLostPackets,
+		i.QOS.IncRtpAvgJitter,
+		i.QOS.IncRtpMaxJitter,
+		i.QOS.IncRtcpPackets,
+		i.QOS.IncRtcpLostPackets,
+		i.QOS.IncRtcpAvgJitter,
+		i.QOS.IncRtcpMaxJitter,
+		i.QOS.IncRtcpAvgLat,
+		i.QOS.IncRtcpMaxLat,
+		float64(i.QOS.IncrVal)/100,
+		float64(i.QOS.IncMos)/100,
+		string(i.QOS.OutCallID),
+		string(i.QOS.OutRealm),
+		stringIPv4(i.QOS.CallerOutSrcIP),
+		stringIPv4(i.QOS.CallerOutDstIP),
+		i.QOS.CallerOutSrcPort,
+		i.QOS.CallerOutDstPort,
+		stringIPv4(i.QOS.CalleeOutSrcIP),
+		stringIPv4(i.QOS.CalleeOutDstIP),
+		i.QOS.CalleeOutSrcPort,
+		i.QOS.CalleeOutDstPort,
+		i.QOS.OutRtpPackets,
+		i.QOS.OutRtpLostPackets,
+		i.QOS.OutRtpAvgJitter,
+		i.QOS.OutRtpMaxJitter,
+		i.QOS.OutRtcpPackets,
+		i.QOS.OutRtcpLostPackets,
+		i.QOS.OutRtcpAvgJitter,
+		i.QOS.OutRtcpMaxJitter,
+		i.QOS.OutRtcpAvgLat,
+		i.QOS.OutRtcpMaxLat,
+		float64(i.QOS.OutrVal)/100,
+		float64(i.QOS.OutMos)/100)
 
 	checkErr(err)
 }

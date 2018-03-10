@@ -21,8 +21,8 @@ func (influxDB *InfluxClient) Send(i *IPFIX, s string) {
 	tags := map[string]string{
 		"host":          *name,
 		"metricType":    s,
-		"incomingRealm": string(i.Data.QOS.IncRealm),
-		"outgoingRealm": string(i.Data.QOS.OutRealm),
+		"incomingRealm": string(i.QOS.IncRealm),
+		"outgoingRealm": string(i.QOS.OutRealm),
 	}
 
 	fields := i.mapMetricQOS()
