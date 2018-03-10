@@ -3,11 +3,11 @@ package main
 // mapLogSIP retruns a map with SIP stats which can be
 // json encoded and send send as gelf to graylog
 func (i *IPFIX) mapLogSIP() *map[string]interface{} {
-	mLogSIP := map[string]interface{}{
+	m := map[string]interface{}{
 		"version":       "1.1",
 		"host":          *name,
 		"short_message": i.SIP.SipMsg.Msg,
-		"level":         "5",
+		"level":         5,
 		"_id":           i.SIP.SipMsg.CallId,
 		"_from":         i.SIP.SipMsg.From.URI.User,
 		"_to":           i.SIP.SipMsg.To.URI.User,
@@ -29,13 +29,13 @@ func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 		"_ttl":          i.SIP.TTL,
 		"_tproto":       i.SIP.TProto,
 	}
-	return &mLogSIP
+	return &m
 }
 
 // mapLogQOS retruns a map with QOS stats which can be
 // json encoded and send as gelf to graylog
 func (i *IPFIX) mapLogQOS() *map[string]interface{} {
-	mLogQOS := map[string]interface{}{
+	m := map[string]interface{}{
 		"version":             "1.1",
 		"host":                *name,
 		"short_message":       "LogQOS",
@@ -104,11 +104,11 @@ func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 		"_outCallIDLen":       i.QOS.OutCallIDLen,
 		"_outCallID":          string(i.QOS.OutCallID),
 	}
-	return &mLogQOS
+	return &m
 }
 
 func (i *IPFIX) mapMetricQOS() map[string]interface{} {
-	mMetricQOS := map[string]interface{}{
+	m := map[string]interface{}{
 		"inc.rtp.mos":          float64(i.QOS.IncMos) / 100,
 		"out.rtp.mos":          float64(i.QOS.OutMos) / 100,
 		"inc.rtp.rval":         float64(i.QOS.IncrVal) / 100,
@@ -134,13 +134,13 @@ func (i *IPFIX) mapMetricQOS() map[string]interface{} {
 		"inc.rtcp.maxLat":      float64(i.QOS.IncRtcpMaxLat),
 		"out.rtcp.maxLat":      float64(i.QOS.OutRtcpMaxLat),
 	}
-	return mMetricQOS
+	return m
 }
 
 // mapAllQOS retruns a map with QOS33 stats which can be
 // json encoded and send into homer, or graylog
 func (i *IPFIX) mapAllQOS() *map[string]interface{} {
-	mAllQOS := map[string]interface{}{
+	m := map[string]interface{}{
 		"INC_ID":              string(i.QOS.IncCallID),
 		"INC_RTP_BYTE":        i.QOS.IncRtpBytes,
 		"INC_RTP_PK":          i.QOS.IncRtpPackets,
@@ -186,7 +186,7 @@ func (i *IPFIX) mapAllQOS() *map[string]interface{} {
 		"OUT_REALM":           string(i.QOS.OutRealm),
 		"MEDIA_TYPE":          i.QOS.Type,
 	}
-	return &mAllQOS
+	return &m
 }
 
 // mapIncQOS retruns a map with incomming RTP QOS stats which can be

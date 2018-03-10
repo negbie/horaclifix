@@ -44,6 +44,9 @@ func ParseRecSipUDP(msg []byte) *IPFIX {
 	if *gaddr != "" {
 		err := i.parseSIP()
 		checkErr(err)
+		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
+			i.SIP.RawMsg = nil
+		}
 	}
 	return i
 }
@@ -88,6 +91,9 @@ func ParseSendSipUDP(msg []byte) *IPFIX {
 	if *gaddr != "" {
 		err := i.parseSIP()
 		checkErr(err)
+		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
+			i.SIP.RawMsg = nil
+		}
 	}
 	return i
 }
@@ -114,6 +120,9 @@ func ParseRecSipTCP(msg []byte) *IPFIX {
 	if *gaddr != "" {
 		err := i.parseSIP()
 		checkErr(err)
+		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
+			i.SIP.RawMsg = nil
+		}
 	}
 	return i
 }
@@ -149,6 +158,9 @@ func ParseSendSipTCP(msg []byte) *IPFIX {
 	if *gaddr != "" {
 		err := i.parseSIP()
 		checkErr(err)
+		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
+			i.SIP.RawMsg = nil
+		}
 	}
 	return i
 }

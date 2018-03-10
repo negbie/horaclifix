@@ -27,21 +27,27 @@ func NewExtConns() *Connections {
 		conn.Influx = iconn
 	}
 	if *gaddr != "" {
-		tcpAddr, err := net.ResolveTCPAddr("tcp", *gaddr)
+		tcpGAddr, err := net.ResolveTCPAddr("tcp", *gaddr)
 		checkCritErr(err)
 
-		gconn, err := net.DialTCP("tcp", nil, tcpAddr)
+		gconn, err := net.DialTCP("tcp", nil, tcpGAddr)
 		checkCritErr(err)
 		conn.Graylog.TCPConn = gconn
 		conn.Graylog.RWMutex = new(sync.RWMutex)
 	}
 	if *haddr != "" {
-		hconn, err := net.Dial("udp", *haddr)
+		udpHAddr, err := net.ResolveUDPAddr("udp", *haddr)
+		checkCritErr(err)
+
+		hconn, err := net.DialUDP("udp", nil, udpHAddr)
 		checkCritErr(err)
 		conn.Homer = hconn
 	}
 	if *saddr != "" {
-		sconn, err := net.Dial("udp", *saddr)
+		udpSAddr, err := net.ResolveUDPAddr("udp", *saddr)
+		checkCritErr(err)
+
+		sconn, err := net.DialUDP("udp", nil, udpSAddr)
 		checkCritErr(err)
 		conn.StatsD = sconn
 	}

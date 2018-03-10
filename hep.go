@@ -32,7 +32,7 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 	_, err := conn.Homer.Write(hepMsg)
 	if err != nil {
 		hErrCnt++
-		if hErrCnt%256 == 0 {
+		if hErrCnt%128 == 0 {
 			hErrCnt = 0
 			log.Printf("[WARN] <%s> %s\n", *name, err)
 		}

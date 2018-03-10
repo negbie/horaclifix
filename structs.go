@@ -207,14 +207,14 @@ type QosSet struct {
 }
 
 type Connections struct {
-	Graylog GraylogClient
-	MySQL   *mysqlDB
-	Homer   net.Conn
-	StatsD  net.Conn
-	Influx  *InfluxClient
+	Graylog
+	Homer  *net.UDPConn
+	StatsD *net.UDPConn
+	MySQL  *mysqlDB
+	Influx *InfluxClient
 }
 
-type GraylogClient struct {
+type Graylog struct {
 	*net.TCPConn
 	*sync.RWMutex
 	disconnected bool

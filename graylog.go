@@ -19,12 +19,12 @@ func (conn *Connections) SendLog(i *IPFIX, s string) {
 	switch s {
 	case "SIP":
 		//gLog, err = json.Marshal(i.mapLogSIP())
-		gLog = []byte(fmt.Sprintf("{\"version\":1.1,\"host\":\"%s\",\"short_message\":%s,\"level\":5,\"_id\":\"%s\",\"_from\":\"%s\",\"_to\":\"%s\",\"_method\":\"%s\",\"_statusCode\":\"%s\",\"_ua\":\"%s\",\"_srcIP\":\"%s\",\"_dstIP\":\"%s\",\"_srcPort\":\"%d\",\"_dstPort\":\"%d\",\"_intVlan\":\"%d\",\"_ipLen\":\"%d\"}",
+		gLog = []byte(fmt.Sprintf("{\"version\":1.1,\"host\":\"%s\",\"short_message\":%s,\"level\":5,\"_id\":\"%s\",\"_from\":\"%s\",\"_to\":\"%s\",\"_method\":\"%s\",\"_statusCode\":\"%s\",\"_ua\":\"%s\",\"_srcIP\":\"%s\",\"_dstIP\":\"%s\",\"_srcPort\":%d,\"_dstPort\":%d,\"_intVlan\":%d,\"_ipLen\":%d}",
 			*name, strconv.Quote(i.SIP.SipMsg.Msg), i.SIP.SipMsg.CallId, i.SIP.SipMsg.From.URI.User, i.SIP.SipMsg.To.URI.User,
 			i.SIP.SipMsg.StartLine.Method, i.SIP.SipMsg.StartLine.Resp, i.SIP.SipMsg.UserAgent,
 			stringIPv4(i.SIP.SrcIP), stringIPv4(i.SIP.DstIP), i.SIP.SrcPort, i.SIP.DstPort, i.SIP.IntVlan, i.SIP.IPlen))
 
-	case "QOSS":
+	case "QOS":
 		gLog, err = json.Marshal(i.mapLogQOS())
 		checkErr(err)
 	}
@@ -32,17 +32,18 @@ func (conn *Connections) SendLog(i *IPFIX, s string) {
 	// Graylog frame delimiter
 	data := append(gLog, '\n', byte(0))
 
-	_, err = conn.writeTCP(data)
+	_, err = conn.Graylog.TCPConn.Write(data)
 	if err != nil {
 		gErrCnt++
-		if gErrCnt%256 == 0 {
-			gErrCnt = 0
+		if gErrCnt%128 == 0 {
 			log.Printf("[WARN] <%s> %s\n", *name, err)
+			gErrCnt = 0
+			conn.ReWrite(data)
 		}
 	}
 }
 
-func (conn *Connections) reconnect() error {
+func reconnect(conn *Connections) error {
 	conn.Graylog.Lock()
 	defer conn.Graylog.Unlock()
 
@@ -57,13 +58,13 @@ func (conn *Connections) reconnect() error {
 	return nil
 }
 
-func (conn *Connections) writeTCP(b []byte) (int, error) {
+func (conn *Connections) ReWrite(b []byte) (int, error) {
 	conn.Graylog.RLock()
 	defer conn.Graylog.RUnlock()
 
 	if conn.Graylog.disconnected {
 		conn.Graylog.RUnlock()
-		if err := conn.reconnect(); err != nil {
+		if err := reconnect(conn); err != nil {
 			conn.Graylog.disconnected = true
 			conn.Graylog.RLock()
 			return -1, err
