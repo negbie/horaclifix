@@ -8,7 +8,6 @@ import (
 
 	influx "github.com/influxdata/influxdb/client/v2"
 	"github.com/negbie/sipparser"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // IPFIX holds the structure of one IPFIX packet
@@ -247,9 +246,4 @@ type InfluxClientConfig struct {
 type mysqlDB struct {
 	conn   *sql.DB
 	insert *sql.Stmt
-}
-
-type Prometheus struct {
-	CounterMetrics map[string]prometheus.Counter
-	GaugeMetrics   map[string]prometheus.Gauge
 }

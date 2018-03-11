@@ -1,7 +1,5 @@
 package main
 
-// mapLogSIP retruns a map with SIP stats which can be
-// json encoded and send send as gelf to graylog
 func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 	m := map[string]interface{}{
 		"version":       "1.1",
@@ -32,8 +30,6 @@ func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 	return &m
 }
 
-// mapLogQOS retruns a map with QOS stats which can be
-// json encoded and send as gelf to graylog
 func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 	m := map[string]interface{}{
 		"version":             "1.1",
@@ -137,8 +133,6 @@ func (i *IPFIX) mapMetricQOS() map[string]interface{} {
 	return m
 }
 
-// mapAllQOS retruns a map with QOS33 stats which can be
-// json encoded and send into homer, or graylog
 func (i *IPFIX) mapAllQOS() *map[string]interface{} {
 	m := map[string]interface{}{
 		"INC_ID":              string(i.QOS.IncCallID),
@@ -189,10 +183,8 @@ func (i *IPFIX) mapAllQOS() *map[string]interface{} {
 	return &m
 }
 
-// mapIncQOS retruns a map with incomming RTP QOS stats which can be
-// json encoded and send into homer, or graylog
 func (i *IPFIX) mapIncQOS() *map[string]interface{} {
-	mIncQOS := map[string]interface{}{
+	m := map[string]interface{}{
 
 		"CORRELATION_ID":  string(i.QOS.IncCallID),
 		"RTP_SIP_CALL_ID": string(i.QOS.IncCallID),
@@ -231,13 +223,11 @@ func (i *IPFIX) mapIncQOS() *map[string]interface{} {
 		"PARTY":           0,
 		"TYPE":            "PERIODIC",
 	}
-	return &mIncQOS
+	return &m
 }
 
-// mapOutQOS retruns a map with outgoing RTP QOS stats which can be
-// json encoded and send into homer, or graylog
 func (i *IPFIX) mapOutQOS() *map[string]interface{} {
-	mOutQOS := map[string]interface{}{
+	m := map[string]interface{}{
 
 		"CORRELATION_ID":  string(i.QOS.OutCallID),
 		"RTP_SIP_CALL_ID": string(i.QOS.OutCallID),
@@ -276,96 +266,5 @@ func (i *IPFIX) mapOutQOS() *map[string]interface{} {
 		"PARTY":           1,
 		"TYPE":            "PERIODIC",
 	}
-	return &mOutQOS
+	return &m
 }
-
-/*
-// mapIncQOS retruns a map with incomming RTCP QOS stats which can be
-// json encoded and send into homer, or graylog
-func (i *IPFIX) mapIncQOS() *map[string]interface{} {
-	mIncQOS := map[string]interface{}{
-
-		"CORRELATION_ID":  string(i.QOS.IncCallID),
-		"RTP_SIP_CALL_ID": string(i.QOS.IncCallID),
-		"REPORT_TS":       i.QOS.BeginTimeSec,
-		"TL_BYTE":         i.QOS.IncRtcpBytes,
-		"SKEW":            0.000,
-		"TOTAL_PK":        i.QOS.IncRtcpPackets,
-		"EXPECTED_PK":     (i.QOS.IncRtcpPackets + i.QOS.IncRtcpLostPackets),
-		"PACKET_LOSS":     i.QOS.IncRtcpLostPackets,
-		"SEQ":             0,
-		"JITTER":          i.QOS.IncRtcpAvgJitter,
-		"MAX_JITTER":      i.QOS.IncRtcpMaxJitter,
-		"MEAN_JITTER":     i.QOS.IncRtcpAvgJitter,
-		"DELTA":           i.QOS.IncRtcpAvgLat,
-		"MAX_DELTA":       i.QOS.IncRtcpMaxLat,
-		"MAX_SKEW":        0.000,
-		"MIN_MOS":         i.QOS.IncMos,
-		"MEAN_MOS":        i.QOS.IncMos,
-		"MOS":             i.QOS.IncMos,
-		"RFACTOR":         i.QOS.IncrVal,
-		"MIN_RFACTOR":     i.QOS.IncrVal,
-		"MEAN_RFACTOR":    i.QOS.IncrVal,
-		"SRC_IP":          stringIPv4(i.QOS.CallerIncSrcIP),
-		"SRC_PORT":        i.QOS.CallerIncSrcPort,
-		"DST_IP":          stringIPv4(i.QOS.CallerIncDstIP),
-		"DST_PORT":        i.QOS.CallerIncDstPort,
-		"SRC_MAC":         "00-00-00-00-00-00",
-		"DST_MAC":         "00-00-00-00-00-00",
-		"OUT_ORDER":       0,
-		"SSRC_CHG":        0,
-		"CODEC_PT":        i.QOS.Type,
-		"CLOCK":           8000,
-		"CODEC_NAME":      i.QOS.Type,
-		"DIR":             0,
-		"REPORT_NAME":     string(i.QOS.IncRealm),
-		"PARTY":           0,
-		"TYPE":            "PERIODIC",
-	}
-	return &mIncQOS
-}
-
-// mapOutQOS retruns a map with outgoing RTCP QOS stats which can be
-// json encoded and send into homer, or graylog
-func (i *IPFIX) mapOutQOS() *map[string]interface{} {
-	mOutQOS := map[string]interface{}{
-		"CORRELATION_ID":  string(i.QOS.OutCallID),
-		"RTP_SIP_CALL_ID": string(i.QOS.OutCallID),
-		"REPORT_TS":       i.QOS.BeginTimeSec,
-		"TL_BYTE":         i.QOS.OutRtcpBytes,
-		"SKEW":            0.000,
-		"TOTAL_PK":        i.QOS.OutRtcpPackets,
-		"EXPECTED_PK":     (i.QOS.OutRtcpPackets + i.QOS.OutRtcpLostPackets),
-		"PACKET_LOSS":     i.QOS.OutRtcpLostPackets,
-		"SEQ":             0,
-		"JITTER":          i.QOS.OutRtcpAvgJitter,
-		"MAX_JITTER":      i.QOS.OutRtcpMaxJitter,
-		"MEAN_JITTER":     i.QOS.OutRtcpAvgJitter,
-		"DELTA":           i.QOS.OutRtcpAvgLat,
-		"MAX_DELTA":       i.QOS.OutRtcpMaxLat,
-		"MAX_SKEW":        0.000,
-		"MIN_MOS":         i.QOS.OutMos,
-		"MEAN_MOS":        i.QOS.OutMos,
-		"MOS":             i.QOS.OutMos,
-		"RFACTOR":         i.QOS.OutrVal,
-		"MIN_RFACTOR":     i.QOS.OutrVal,
-		"MEAN_RFACTOR":    i.QOS.OutrVal,
-		"SRC_IP":          stringIPv4(i.QOS.CalleeOutSrcIP),
-		"SRC_PORT":        i.QOS.CalleeOutSrcPort,
-		"DST_IP":          stringIPv4(i.QOS.CalleeOutDstIP),
-		"DST_PORT":        i.QOS.CalleeOutDstPort,
-		"SRC_MAC":         "00-00-00-00-00-00",
-		"DST_MAC":         "00-00-00-00-00-00",
-		"OUT_ORDER":       0,
-		"SSRC_CHG":        0,
-		"CODEC_PT":        i.QOS.Type,
-		"CLOCK":           8000,
-		"CODEC_NAME":      i.QOS.Type,
-		"DIR":             0,
-		"REPORT_NAME":     string(i.QOS.OutRealm),
-		"PARTY":           1,
-		"TYPE":            "PERIODIC",
-	}
-	return &mOutQOS
-}
-*/

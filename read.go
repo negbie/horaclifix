@@ -76,7 +76,7 @@ func Read(ic *net.TCPConn) {
 				fmt.Printf("%s\n", hex.Dump(dataSet))
 			}
 			if *paddr != "" {
-				prom.CounterMetrics[*name+"_packets"].Inc()
+				prom.CounterVecMetrics["horaclifix_packets_total"].WithLabelValues(*name).Inc()
 			}
 
 			switch setID {

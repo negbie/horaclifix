@@ -19,10 +19,10 @@ func (conn *Connections) SendLog(i *IPFIX, s string) {
 	switch s {
 	case "SIP":
 		//gLog, err = json.Marshal(i.mapLogSIP())
-		gLog = []byte(fmt.Sprintf("{\"version\":1.1,\"host\":\"%s\",\"short_message\":%s,\"level\":5,\"_id\":\"%s\",\"_from\":\"%s\",\"_to\":\"%s\",\"_method\":\"%s\",\"_statusCode\":\"%s\",\"_ua\":\"%s\",\"_srcIP\":\"%s\",\"_dstIP\":\"%s\",\"_srcPort\":%d,\"_dstPort\":%d,\"_intVlan\":%d,\"_ipLen\":%d}",
+		gLog = []byte(fmt.Sprintf("{\"version\":1.1,\"host\":\"%s\",\"short_message\":%s,\"level\":5,\"_id\":\"%s\",\"_from\":\"%s\",\"_to\":\"%s\",\"_method\":\"%s\",\"_response\":\"%s\",\"_ua\":\"%s\",\"_srcIP\":\"%s\",\"_dstIP\":\"%s\",\"_srcPort\":%d,\"_dstPort\":%d,\"_intVlan\":%d,\"_udpLen\":%d}",
 			*name, strconv.Quote(i.SIP.SipMsg.Msg), i.SIP.SipMsg.CallId, i.SIP.SipMsg.From.URI.User, i.SIP.SipMsg.To.URI.User,
 			i.SIP.SipMsg.StartLine.Method, i.SIP.SipMsg.StartLine.Resp, i.SIP.SipMsg.UserAgent,
-			stringIPv4(i.SIP.SrcIP), stringIPv4(i.SIP.DstIP), i.SIP.SrcPort, i.SIP.DstPort, i.SIP.IntVlan, i.SIP.IPlen))
+			stringIPv4(i.SIP.SrcIP), stringIPv4(i.SIP.DstIP), i.SIP.SrcPort, i.SIP.DstPort, i.SIP.IntVlan, i.SIP.UDPlen))
 
 	case "QOS":
 		gLog, err = json.Marshal(i.mapLogQOS())
