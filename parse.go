@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"log"
+	"strconv"
 
 	"github.com/negbie/sipparser"
 )
@@ -43,7 +45,9 @@ func ParseRecSipUDP(msg []byte) *IPFIX {
 
 	if *gaddr != "" {
 		err := i.parseSIP()
-		checkErr(err)
+		if err != nil {
+			log.Printf("Could not parse SIP msg: %s", strconv.Quote(string(i.SIP.RawMsg)))
+		}
 		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
 			i.SIP.RawMsg = nil
 		}
@@ -90,7 +94,9 @@ func ParseSendSipUDP(msg []byte) *IPFIX {
 
 	if *gaddr != "" {
 		err := i.parseSIP()
-		checkErr(err)
+		if err != nil {
+			log.Printf("Could not parse SIP msg: %s", strconv.Quote(string(i.SIP.RawMsg)))
+		}
 		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
 			i.SIP.RawMsg = nil
 		}
@@ -119,7 +125,9 @@ func ParseRecSipTCP(msg []byte) *IPFIX {
 
 	if *gaddr != "" {
 		err := i.parseSIP()
-		checkErr(err)
+		if err != nil {
+			log.Printf("Could not parse SIP msg: %s", strconv.Quote(string(i.SIP.RawMsg)))
+		}
 		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
 			i.SIP.RawMsg = nil
 		}
@@ -157,7 +165,9 @@ func ParseSendSipTCP(msg []byte) *IPFIX {
 
 	if *gaddr != "" {
 		err := i.parseSIP()
-		checkErr(err)
+		if err != nil {
+			log.Printf("Could not parse SIP msg: %s", strconv.Quote(string(i.SIP.RawMsg)))
+		}
 		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
 			i.SIP.RawMsg = nil
 		}
@@ -271,9 +281,6 @@ func (i *IPFIX) parseSIP() error {
 
 	if i.SIP.SipMsg.StartLine == nil {
 		i.SIP.SipMsg.StartLine = new(sipparser.StartLine)
-	}
-	if i.SIP.SipMsg.StartLine.Method == "" {
-		i.SIP.SipMsg.StartLine.Method = i.SIP.SipMsg.StartLine.Resp
 	}
 	if i.SIP.SipMsg.StartLine.URI == nil {
 		i.SIP.SipMsg.StartLine.URI = new(sipparser.URI)
