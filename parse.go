@@ -48,7 +48,7 @@ func ParseRecSipUDP(msg []byte) *IPFIX {
 		if err != nil {
 			log.Printf("Could not parse SIP msg: %s", strconv.Quote(string(i.SIP.RawMsg)))
 		}
-		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
+		if *filter != "" && i.SIP.SipMsg.CseqMethod == *filter {
 			i.SIP.RawMsg = nil
 		}
 	}
@@ -97,7 +97,7 @@ func ParseSendSipUDP(msg []byte) *IPFIX {
 		if err != nil {
 			log.Printf("Could not parse SIP msg: %s", strconv.Quote(string(i.SIP.RawMsg)))
 		}
-		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
+		if *filter != "" && i.SIP.SipMsg.CseqMethod == *filter {
 			i.SIP.RawMsg = nil
 		}
 	}
@@ -128,7 +128,7 @@ func ParseRecSipTCP(msg []byte) *IPFIX {
 		if err != nil {
 			log.Printf("Could not parse SIP msg: %s", strconv.Quote(string(i.SIP.RawMsg)))
 		}
-		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
+		if *filter != "" && i.SIP.SipMsg.CseqMethod == *filter {
 			i.SIP.RawMsg = nil
 		}
 	}
@@ -168,7 +168,7 @@ func ParseSendSipTCP(msg []byte) *IPFIX {
 		if err != nil {
 			log.Printf("Could not parse SIP msg: %s", strconv.Quote(string(i.SIP.RawMsg)))
 		}
-		if *filter != "" && i.SIP.SipMsg.Cseq.Method == *filter {
+		if *filter != "" && i.SIP.SipMsg.CseqMethod == *filter {
 			i.SIP.RawMsg = nil
 		}
 	}
@@ -276,7 +276,6 @@ func ParseQosStats(msg []byte) *IPFIX {
 }
 
 func (i *IPFIX) parseSIP() error {
-
 	i.SIP.SipMsg = sipparser.ParseMsg(string(i.SIP.RawMsg))
 
 	if i.SIP.SipMsg.StartLine == nil {
@@ -285,43 +284,15 @@ func (i *IPFIX) parseSIP() error {
 	if i.SIP.SipMsg.StartLine.URI == nil {
 		i.SIP.SipMsg.StartLine.URI = new(sipparser.URI)
 	}
-	if i.SIP.SipMsg.From == nil {
-		i.SIP.SipMsg.From = new(sipparser.From)
-	}
-	if i.SIP.SipMsg.From.URI == nil {
-		i.SIP.SipMsg.From.URI = new(sipparser.URI)
-	}
-	if i.SIP.SipMsg.To == nil {
-		i.SIP.SipMsg.To = new(sipparser.From)
-	}
-	if i.SIP.SipMsg.To.URI == nil {
-		i.SIP.SipMsg.To.URI = new(sipparser.URI)
-	}
-	if i.SIP.SipMsg.Contact == nil {
-		i.SIP.SipMsg.Contact = new(sipparser.From)
-	}
-	if i.SIP.SipMsg.Contact.URI == nil {
-		i.SIP.SipMsg.Contact.URI = new(sipparser.URI)
-	}
-	if i.SIP.SipMsg.Authorization == nil {
-		i.SIP.SipMsg.Authorization = new(sipparser.Authorization)
-	}
-	if i.SIP.SipMsg.Via == nil {
-		i.SIP.SipMsg.Via = make([]*sipparser.Via, 1)
-		i.SIP.SipMsg.Via[0] = new(sipparser.Via)
-	}
-	if i.SIP.SipMsg.Cseq == nil {
-		i.SIP.SipMsg.Cseq = new(sipparser.Cseq)
-	}
-	if i.SIP.SipMsg.Reason == nil {
-		i.SIP.SipMsg.Reason = new(sipparser.Reason)
+	if i.SIP.SipMsg.StartLine.Method == "" {
+		i.SIP.SipMsg.StartLine.Method = i.SIP.SipMsg.StartLine.Resp
 	}
 
 	if i.SIP.SipMsg.Error != nil {
 		return i.SIP.SipMsg.Error
-	} else if len(i.SIP.SipMsg.Cseq.Method) < 3 {
+	} else if len(i.SIP.SipMsg.CseqMethod) < 3 {
 		return errors.New("Could not find a valid CSeq in packet")
-	} else if len(i.SIP.SipMsg.CallId) < 3 {
+	} else if len(i.SIP.SipMsg.CallID) < 3 {
 		return errors.New("Could not find a valid Call-ID in packet")
 	}
 
