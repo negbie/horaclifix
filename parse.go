@@ -284,9 +284,6 @@ func (i *IPFIX) parseSIP() error {
 	if i.SIP.SipMsg.StartLine.URI == nil {
 		i.SIP.SipMsg.StartLine.URI = new(sipparser.URI)
 	}
-	if i.SIP.SipMsg.StartLine.Method == "" {
-		i.SIP.SipMsg.StartLine.Method = i.SIP.SipMsg.StartLine.Resp
-	}
 
 	if i.SIP.SipMsg.Error != nil {
 		return i.SIP.SipMsg.Error
