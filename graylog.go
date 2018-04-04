@@ -52,6 +52,8 @@ func formGelf(b *bytebufferpool.ByteBuffer, i *IPFIX) []byte {
 	b.WriteString(",\"level\":5")
 	b.WriteString(",\"_id\":\"")
 	b.WriteString(i.SIP.SipMsg.CallID)
+	b.WriteString("\",\"_ruri\":\"")
+	b.WriteString(i.SIP.SipMsg.StartLine.URI.User)
 	b.WriteString("\",\"_from\":\"")
 	b.WriteString(i.SIP.SipMsg.FromUser)
 	b.WriteString("\",\"_to\":\"")
