@@ -22,7 +22,7 @@ func (conn *Connections) Send(i *IPFIX) {
 				conn.SendHep(i, "incMOS")
 				conn.SendHep(i, "outMOS")
 			} else {
-				conn.SendHep(i, "allQOS")
+				conn.SendHep(i, "QOS")
 			}
 		}
 		if *iaddr != "" {

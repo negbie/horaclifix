@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/tls"
+	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -32,16 +34,34 @@ func NewExtConns() *Connections {
 
 		gconn, err := net.DialTCP("tcp", nil, tcpGAddr)
 		checkCritErr(err)
-		conn.Graylog.TCPConn = gconn
+		conn.Graylog.TCP = gconn
 		conn.Graylog.RWMutex = new(sync.RWMutex)
 	}
 	if *haddr != "" {
-		udpHAddr, err := net.ResolveUDPAddr("udp", *haddr)
-		checkCritErr(err)
+		if *network == "udp" {
+			udpHAddr, err := net.ResolveUDPAddr("udp", *haddr)
+			checkCritErr(err)
 
-		hconn, err := net.DialUDP("udp", nil, udpHAddr)
-		checkCritErr(err)
-		conn.Homer = hconn
+			hconn, err := net.DialUDP("udp", nil, udpHAddr)
+			checkCritErr(err)
+			conn.Homer.UDP = hconn
+		} else if *network == "tcp" {
+			tcpHAddr, err := net.ResolveTCPAddr("tcp", *haddr)
+			checkCritErr(err)
+
+			hconn, err := net.DialTCP("tcp", nil, tcpHAddr)
+			checkCritErr(err)
+			conn.Homer.TCP = hconn
+			conn.Homer.RWMutex = new(sync.RWMutex)
+		} else if *network == "tls" {
+			hconn, err := tls.Dial("tcp", *haddr, &tls.Config{InsecureSkipVerify: true})
+			checkCritErr(err)
+			conn.Homer.TLS = hconn
+			conn.Homer.RWMutex = new(sync.RWMutex)
+		} else {
+			checkCritErr(fmt.Errorf("Not supported network type %s", *network))
+		}
+
 	}
 	if *saddr != "" {
 		udpSAddr, err := net.ResolveUDPAddr("udp", *saddr)
@@ -58,7 +78,7 @@ func NewExtConns() *Connections {
 func CloseExtConns(conn *Connections) {
 	if *gaddr != "" {
 		log.Printf("Close Graylog connection.\n")
-		err := conn.Graylog.Close()
+		err := conn.Graylog.TCP.Close()
 		checkErr(err)
 	}
 	if *maddr != "" {
@@ -68,8 +88,16 @@ func CloseExtConns(conn *Connections) {
 	}
 	if *haddr != "" {
 		log.Printf("Close Homer connection.\n")
-		err := conn.Homer.Close()
-		checkErr(err)
+		if *network == "udp" {
+			err := conn.Homer.UDP.Close()
+			checkErr(err)
+		} else if *network == "tcp" {
+			err := conn.Homer.TCP.Close()
+			checkErr(err)
+		} else if *network == "tls" {
+			err := conn.Homer.TLS.Close()
+			checkErr(err)
+		}
 	}
 	if *saddr != "" {
 		log.Printf("Close StatsD connection.\n")

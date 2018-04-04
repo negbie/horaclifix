@@ -33,50 +33,49 @@ func (conn *Connections) SendLog(i *IPFIX, s string) {
 	// Graylog frame delimiter
 	data := append(gLog, '\n', byte(0))
 
-	_, err = conn.Graylog.TCPConn.Write(data)
+	_, err = conn.Graylog.TCP.Write(data)
 	if err != nil {
 		gErrCnt++
 		if gErrCnt%128 == 0 {
 			log.Printf("[WARN] <%s> %s\n", *name, err)
 			gErrCnt = 0
-			conn.ReWrite(data)
+			reWriteGraylog(conn, data)
 		}
 	}
 }
 
-func reconnect(conn *Connections) error {
+func reConnectGraylog(conn *Connections) error {
 	conn.Graylog.Lock()
 	defer conn.Graylog.Unlock()
 
-	raddr := conn.Graylog.TCPConn.RemoteAddr()
+	raddr := conn.Graylog.TCP.RemoteAddr()
 	gconn, err := net.DialTCP(raddr.Network(), nil, raddr.(*net.TCPAddr))
 	if err != nil {
 		return err
 	}
-
-	conn.Graylog.TCPConn.Close()
-	conn.Graylog.TCPConn = gconn
+	conn.Graylog.TCP.Close()
+	conn.Graylog.TCP = gconn
 	return nil
 }
 
-func (conn *Connections) ReWrite(b []byte) (int, error) {
+func reWriteGraylog(conn *Connections, b []byte) error {
 	conn.Graylog.RLock()
 	defer conn.Graylog.RUnlock()
 
 	if conn.Graylog.disconnected {
 		conn.Graylog.RUnlock()
-		if err := reconnect(conn); err != nil {
+		if err := reConnectGraylog(conn); err != nil {
 			conn.Graylog.disconnected = true
 			conn.Graylog.RLock()
-			return -1, err
+			return err
 		}
 		conn.Graylog.disconnected = false
 		conn.Graylog.RLock()
 	}
-	n, err := conn.Graylog.TCPConn.Write(b)
+	_, err := conn.Graylog.TCP.Write(b)
 	if err == nil {
-		return n, err
+		return err
 	}
 	conn.Graylog.disconnected = true
-	return -1, err
+	return err
 }

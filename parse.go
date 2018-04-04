@@ -249,7 +249,7 @@ func ParseQosStats(msg []byte) *IPFIX {
 	r.binRead(&i.QOS.BeginTimeMic)
 
 	r.binRead(&i.QOS.EndTimeSec)
-	r.binRead(&i.QOS.EndinTimeMic)
+	r.binRead(&i.QOS.EndTimeMic)
 
 	r.binRead(&i.QOS.Seperator)
 

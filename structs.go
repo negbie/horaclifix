@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"net"
 	"sync"
@@ -174,8 +175,8 @@ type QosSet struct {
 	BeginTimeSec uint32
 	BeginTimeMic uint32
 
-	EndTimeSec   uint32
-	EndinTimeMic uint32
+	EndTimeSec uint32
+	EndTimeMic uint32
 
 	Seperator uint8
 
@@ -207,14 +208,23 @@ type QosSet struct {
 
 type Connections struct {
 	Graylog
-	Homer  *net.UDPConn
+	Homer
 	StatsD *net.UDPConn
 	MySQL  *mysqlDB
 	Influx *InfluxClient
 }
 
 type Graylog struct {
-	*net.TCPConn
+	TCP *net.TCPConn
+	UDP *net.UDPConn
+	*sync.RWMutex
+	disconnected bool
+}
+
+type Homer struct {
+	TCP *net.TCPConn
+	UDP *net.UDPConn
+	TLS *tls.Conn
 	*sync.RWMutex
 	disconnected bool
 }

@@ -90,7 +90,7 @@ func (i *IPFIX) mapLogQOS() *map[string]interface{} {
 		"_beginTimeSec":       i.QOS.BeginTimeSec,
 		"_beginTimeMic":       i.QOS.BeginTimeMic,
 		"_endTimeSec":         i.QOS.EndTimeSec,
-		"_endinTimeMic":       i.QOS.EndinTimeMic,
+		"_endTimeMic":         i.QOS.EndTimeMic,
 		"_duration":           int(i.QOS.EndTimeSec - i.QOS.BeginTimeSec),
 		"_seperator":          i.QOS.Seperator,
 		"_incRealm":           string(i.QOS.IncRealm),
@@ -133,7 +133,7 @@ func (i *IPFIX) mapMetricQOS() map[string]interface{} {
 	return m
 }
 
-func (i *IPFIX) mapAllQOS() *map[string]interface{} {
+func (i *IPFIX) mapQOS() *map[string]interface{} {
 	m := map[string]interface{}{
 		"INC_ID":              string(i.QOS.IncCallID),
 		"INC_RTP_BYTE":        i.QOS.IncRtpBytes,

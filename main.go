@@ -13,7 +13,7 @@ import (
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
-const version = "horaclifix 1.1.1"
+const version = "horaclifix 1.1.2"
 
 var (
 	addr        = flag.String("l", ":4739", "IPFIX TCP listen address")
@@ -27,6 +27,8 @@ var (
 	saddr       = flag.String("s", "", "StatsD UDP server address")
 	paddr       = flag.String("p", "", "Prometheus address")
 	name        = flag.String("n", "sbc", "SBC name")
+	network     = flag.String("nt", "udp", "Network types are [udp, tcp, tls]")
+	protobuf    = flag.Bool("protobuf", false, "Use Protobuf on wire")
 	filter      = flag.String("di", "", "Discard SIP method")
 	hepID       = flag.Int("N", 2004, "HEP capture node ID")
 	hepPW       = flag.String("P", "myhep", "HEP capture password")

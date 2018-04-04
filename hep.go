@@ -2,9 +2,13 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/binary"
 	"encoding/json"
 	"log"
+	"net"
+
+	proto "github.com/gogo/protobuf/proto"
 )
 
 var (
@@ -27,14 +31,72 @@ var (
 //        | "HEP3"|len|chuncks(0x0001|0x0002|0x0003|0x0004|0x0007|0x0008|0x0009|0x000a|0x000b|......)
 //        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 func (conn *Connections) SendHep(i *IPFIX, s string) {
-	hepMsg := makeChuncks(i, s)
-	binary.BigEndian.PutUint16(hepMsg[4:6], uint16(len(hepMsg)))
-	_, err := conn.Homer.Write(hepMsg)
+	hep := &HEP{}
+	var hepMsg []byte
+	var err error
+	if *protobuf {
+		if s == "SIP" {
+			hep = &HEP{
+				Version:   2,
+				Protocol:  17,
+				SrcIP:     stringIPv4(i.SIP.SrcIP),
+				DstIP:     stringIPv4(i.SIP.DstIP),
+				SrcPort:   uint32(i.SIP.SrcPort),
+				DstPort:   uint32(i.SIP.DstPort),
+				Tsec:      i.SIP.TimeSec,
+				Tmsec:     i.SIP.TimeMic,
+				ProtoType: 1,
+				NodeID:    uint32(*hepID),
+				NodePW:    *hepPW,
+				Payload:   string(i.SIP.RawMsg),
+				CID:       string(i.SIP.CallID),
+				Vlan:      uint32(i.SIP.IntVlan),
+			}
+		} else {
+			payload, err := json.Marshal(i.mapQOS())
+			checkErr(err)
+			hep = &HEP{
+				Version:   2,
+				Protocol:  17,
+				SrcIP:     stringIPv4(i.QOS.CallerIncSrcIP),
+				DstIP:     stringIPv4(i.QOS.CallerIncDstIP),
+				SrcPort:   uint32(i.QOS.CallerIncSrcPort),
+				DstPort:   uint32(i.QOS.CallerIncDstPort),
+				Tsec:      i.QOS.EndTimeSec,
+				Tmsec:     i.QOS.EndTimeMic,
+				ProtoType: 38,
+				NodeID:    uint32(*hepID),
+				NodePW:    *hepPW,
+				Payload:   string(payload),
+				CID:       string(i.QOS.IncCallID),
+				Vlan:      0,
+			}
+		}
+		hepMsg, err = proto.Marshal(hep)
+		if err != nil {
+			log.Printf("[WARN] <%s> %s\n", *name, err)
+		}
+	} else {
+		hepMsg = makeChuncks(i, s)
+		binary.BigEndian.PutUint16(hepMsg[4:6], uint16(len(hepMsg)))
+	}
+
+	if *network == "udp" {
+		_, err = conn.Homer.UDP.Write(hepMsg)
+	} else if *network == "tcp" {
+		_, err = conn.Homer.TCP.Write(hepMsg)
+	} else if *network == "tls" {
+		_, err = conn.Homer.TLS.Write(hepMsg)
+	}
+
 	if err != nil {
 		hErrCnt++
 		if hErrCnt%128 == 0 {
 			hErrCnt = 0
 			log.Printf("[WARN] <%s> %s\n", *name, err)
+			if *network == "tcp" || *network == "tls" {
+				reWriteHomer(conn, hepMsg)
+			}
 		}
 	}
 }
@@ -112,7 +174,7 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 	if payloadType == "SIP" {
 		binary.BigEndian.PutUint32(chunck32, i.SIP.TimeMic)
 	} else {
-		binary.BigEndian.PutUint32(chunck32, i.QOS.EndinTimeMic)
+		binary.BigEndian.PutUint32(chunck32, i.QOS.EndTimeMic)
 	}
 	w.Write(chunck32)
 
@@ -122,7 +184,7 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 	switch payloadType {
 	case "SIP":
 		w.WriteByte(1)
-	case "allQOS":
+	case "QOS":
 		w.WriteByte(38)
 	case "incQOS":
 		w.WriteByte(34)
@@ -159,8 +221,8 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.SIP.RawMsg)))
 			w.Write(hepLen)
 			w.Write(i.SIP.RawMsg)
-		case "allQOS":
-			payload, err := json.Marshal(i.mapAllQOS())
+		case "QOS":
+			payload, err := json.Marshal(i.mapQOS())
 			checkErr(err)
 			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(payload)))
 			w.Write(hepLen)
@@ -209,4 +271,49 @@ func makeChuncks(i *IPFIX, payloadType string) []byte {
 		w.Write(chunck16)
 	}
 	return w.Bytes()
+}
+
+func reConnectHomer(conn *Connections) error {
+	conn.Homer.Lock()
+	defer conn.Homer.Unlock()
+
+	if *network == "tcp" {
+		raddr := conn.Homer.TCP.RemoteAddr()
+		hconn, err := net.DialTCP(raddr.Network(), nil, raddr.(*net.TCPAddr))
+		if err != nil {
+			return err
+		}
+		conn.Homer.TCP.Close()
+		conn.Homer.TCP = hconn
+	} else if *network == "tls" {
+		hconn, err := tls.Dial("tcp", *haddr, &tls.Config{InsecureSkipVerify: true})
+		if err != nil {
+			return err
+		}
+		conn.Homer.TLS.Close()
+		conn.Homer.TLS = hconn
+	}
+	return nil
+}
+
+func reWriteHomer(conn *Connections, b []byte) error {
+	conn.Homer.RLock()
+	defer conn.Homer.RUnlock()
+
+	if conn.Homer.disconnected {
+		conn.Homer.RUnlock()
+		if err := reConnectHomer(conn); err != nil {
+			conn.Homer.disconnected = true
+			conn.Homer.RLock()
+			return err
+		}
+		conn.Homer.disconnected = false
+		conn.Homer.RLock()
+	}
+	_, err := conn.Homer.TCP.Write(b)
+	if err == nil {
+		return err
+	}
+	conn.Homer.disconnected = true
+	return err
 }
