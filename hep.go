@@ -38,7 +38,7 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 		if s == "SIP" {
 			hep = &HEP{
 				Version:   2,
-				Protocol:  17,
+				Protocol:  uint32(i.SIP.TProto),
 				SrcIP:     stringIPv4(i.SIP.SrcIP),
 				DstIP:     stringIPv4(i.SIP.DstIP),
 				SrcPort:   uint32(i.SIP.SrcPort),
@@ -48,8 +48,8 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 				ProtoType: 1,
 				NodeID:    uint32(*hepID),
 				NodePW:    *hepPW,
-				Payload:   string(i.SIP.RawMsg),
-				CID:       string(i.SIP.CallID),
+				Payload:   unsafeBytesToStr(i.SIP.RawMsg),
+				CID:       unsafeBytesToStr(i.SIP.CallID),
 				Vlan:      uint32(i.SIP.IntVlan),
 			}
 		} else {
@@ -67,9 +67,9 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 				ProtoType: 38,
 				NodeID:    uint32(*hepID),
 				NodePW:    *hepPW,
-				Payload:   string(payload),
-				CID:       string(i.QOS.IncCallID),
-				Vlan:      0,
+				Payload:   unsafeBytesToStr(payload),
+				CID:       unsafeBytesToStr(i.QOS.IncCallID),
+				Vlan:      uint32(i.QOS.CalleeIntVlan),
 			}
 		}
 		hepMsg, err = proto.Marshal(hep)
@@ -77,7 +77,7 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 			log.Printf("[WARN] <%s> %s\n", *name, err)
 		}
 	} else {
-		hepMsg = makeChuncks(i, s)
+		hepMsg = makeHEPChuncks(i, s)
 		binary.BigEndian.PutUint16(hepMsg[4:6], uint16(len(hepMsg)))
 	}
 
@@ -101,8 +101,8 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 	}
 }
 
-// makeChuncks will construct the respective HEP chunck
-func makeChuncks(i *IPFIX, payloadType string) []byte {
+// makeHEPChuncks will construct the respective HEP chunck
+func makeHEPChuncks(i *IPFIX, payloadType string) []byte {
 	w := new(bytes.Buffer)
 	w.Write(hepVer)
 	// hepMsg length placeholder. Will be written later
@@ -297,6 +297,7 @@ func reConnectHomer(conn *Connections) error {
 }
 
 func reWriteHomer(conn *Connections, b []byte) error {
+	var err error
 	conn.Homer.RLock()
 	defer conn.Homer.RUnlock()
 
@@ -310,7 +311,11 @@ func reWriteHomer(conn *Connections, b []byte) error {
 		conn.Homer.disconnected = false
 		conn.Homer.RLock()
 	}
-	_, err := conn.Homer.TCP.Write(b)
+	if *network == "tcp" {
+		_, err = conn.Homer.TCP.Write(b)
+	} else if *network == "tls" {
+		_, err = conn.Homer.TLS.Write(b)
+	}
 	if err == nil {
 		return err
 	}

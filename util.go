@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"unsafe"
 )
 
 type reader struct {
@@ -34,4 +35,8 @@ func stringIPv4(n uint32) string {
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, n)
 	return ip.String()
+}
+
+func unsafeBytesToStr(z []byte) string {
+	return *(*string)(unsafe.Pointer(&z))
 }
