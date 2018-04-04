@@ -39,8 +39,8 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 			hep = &HEP{
 				Version:   2,
 				Protocol:  uint32(i.SIP.TProto),
-				SrcIP:     stringIPv4(i.SIP.SrcIP),
-				DstIP:     stringIPv4(i.SIP.DstIP),
+				SrcIP:     i.SIP.SrcIPString,
+				DstIP:     i.SIP.DstIPString,
 				SrcPort:   uint32(i.SIP.SrcPort),
 				DstPort:   uint32(i.SIP.DstPort),
 				Tsec:      i.SIP.TimeSec,

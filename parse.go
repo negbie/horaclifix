@@ -43,6 +43,9 @@ func ParseRecSipUDP(msg []byte) *IPFIX {
 	i.SIP.MsgLen = binary.BigEndian.Uint16(msg[41:43])
 	i.SIP.RawMsg = msg[43:]
 
+	i.SIP.SrcIPString = stringIPv4(i.SIP.SrcIP)
+	i.SIP.DstIPString = stringIPv4(i.SIP.DstIP)
+
 	if *gaddr != "" {
 		err := i.parseSIP()
 		if err != nil {
@@ -92,6 +95,9 @@ func ParseSendSipUDP(msg []byte) *IPFIX {
 	i.SIP.MsgLen = binary.BigEndian.Uint16(msg[pos+29 : pos+31])
 	i.SIP.RawMsg = []byte(msg[pos+31:])
 
+	i.SIP.SrcIPString = stringIPv4(i.SIP.SrcIP)
+	i.SIP.DstIPString = stringIPv4(i.SIP.DstIP)
+
 	if *gaddr != "" {
 		err := i.parseSIP()
 		if err != nil {
@@ -122,6 +128,9 @@ func ParseRecSipTCP(msg []byte) *IPFIX {
 	i.SIP.CallIDEnd = uint8(msg[28])
 	i.SIP.MsgLen = binary.BigEndian.Uint16(msg[29:31])
 	i.SIP.RawMsg = msg[31:]
+
+	i.SIP.SrcIPString = stringIPv4(i.SIP.SrcIP)
+	i.SIP.DstIPString = stringIPv4(i.SIP.DstIP)
 
 	if *gaddr != "" {
 		err := i.parseSIP()
@@ -162,6 +171,9 @@ func ParseSendSipTCP(msg []byte) *IPFIX {
 	i.SIP.CallIDEnd = uint8(msg[pos])
 	i.SIP.MsgLen = binary.BigEndian.Uint16(msg[pos+1 : pos+3])
 	i.SIP.RawMsg = []byte(msg[pos+3:])
+
+	i.SIP.SrcIPString = stringIPv4(i.SIP.SrcIP)
+	i.SIP.DstIPString = stringIPv4(i.SIP.DstIP)
 
 	if *gaddr != "" {
 		err := i.parseSIP()

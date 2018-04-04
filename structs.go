@@ -78,32 +78,34 @@ type DataSet struct {
 
 // SipSet holds the SIP related fields
 type SipSet struct {
-	TimeSec   uint32
-	TimeMic   uint32
-	IntSlot   uint8
-	IntPort   uint8
-	IntVlan   uint16
-	CallIDLen uint8
-	CallID    []byte
-	CallIDEnd uint8
-	IPlen     uint16
-	VL        uint8
-	TOS       uint8
-	TLen      uint16
-	TID       uint16
-	TFlags    uint16
-	TTL       uint8
-	TProto    uint8
-	TPos      uint16
-	SrcIP     uint32
-	DstIP     uint32
-	DstPort   uint16
-	SrcPort   uint16
-	Context   uint32
-	UDPlen    uint16
-	MsgLen    uint16
-	RawMsg    []byte
-	SipMsg    *sipparser.SipMsg
+	TimeSec     uint32
+	TimeMic     uint32
+	IntSlot     uint8
+	IntPort     uint8
+	IntVlan     uint16
+	CallIDLen   uint8
+	CallID      []byte
+	CallIDEnd   uint8
+	IPlen       uint16
+	VL          uint8
+	TOS         uint8
+	TLen        uint16
+	TID         uint16
+	TFlags      uint16
+	TTL         uint8
+	TProto      uint8
+	TPos        uint16
+	SrcIP       uint32
+	SrcIPString string
+	DstIP       uint32
+	DstIPString string
+	DstPort     uint16
+	SrcPort     uint16
+	Context     uint32
+	UDPlen      uint16
+	MsgLen      uint16
+	RawMsg      []byte
+	SipMsg      *sipparser.SipMsg
 }
 
 // QosSet holds the QoS related fields

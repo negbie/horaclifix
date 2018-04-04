@@ -2,10 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net"
 	"strconv"
+
+	"github.com/valyala/bytebufferpool"
 )
 
 var gErrCnt int
@@ -18,13 +19,10 @@ func (conn *Connections) SendLog(i *IPFIX, s string) {
 
 	switch s {
 	case "SIP":
+		bb := bytebufferpool.Get()
+		defer bytebufferpool.Put(bb)
 		//gLog, err = json.Marshal(i.mapLogSIP())
-		gLog = []byte(fmt.Sprintf("{\"version\":1.1,\"host\":\"%s\",\"short_message\":%s,\"level\":5,\"_id\":\"%s\",\"_from\":\"%s\",\"_to\":\"%s\",\"_paiUser\":\"%s\",\"_paiHost\":\"%s\","+
-			"\"_method\":\"%s\",\"_response\":\"%s\",\"_ua\":\"%s\",\"_srcIP\":\"%s\",\"_dstIP\":\"%s\",\"_srcPort\":%d,\"_dstPort\":%d,\"_intVlan\":%d,\"_udpLen\":%d}",
-			*name, strconv.Quote(i.SIP.SipMsg.Msg), i.SIP.SipMsg.CallID, i.SIP.SipMsg.FromUser, i.SIP.SipMsg.ToUser, i.SIP.SipMsg.PaiUser, i.SIP.SipMsg.PaiHost,
-			i.SIP.SipMsg.StartLine.Method, i.SIP.SipMsg.StartLine.Resp, i.SIP.SipMsg.UserAgent,
-			stringIPv4(i.SIP.SrcIP), stringIPv4(i.SIP.DstIP), i.SIP.SrcPort, i.SIP.DstPort, i.SIP.IntVlan, i.SIP.UDPlen))
-
+		gLog = formGelf(bb, i)
 	case "QOS":
 		gLog, err = json.Marshal(i.mapLogQOS())
 		checkErr(err)
@@ -42,6 +40,42 @@ func (conn *Connections) SendLog(i *IPFIX, s string) {
 			reWriteGraylog(conn, data)
 		}
 	}
+}
+
+func formGelf(b *bytebufferpool.ByteBuffer, i *IPFIX) []byte {
+	b.WriteString("{")
+	b.WriteString("\"version\":1.1")
+	b.WriteString(",\"host\":\"")
+	b.WriteString(*name)
+	b.WriteString("\",\"short_message\":\"")
+	b.WriteString(i.SIP.SipMsg.Msg)
+	b.WriteString("\",\"level\":5")
+	b.WriteString(",\"_id\":\"")
+	b.WriteString(i.SIP.SipMsg.CallID)
+	b.WriteString("\",\"_from\":\"")
+	b.WriteString(i.SIP.SipMsg.FromUser)
+	b.WriteString("\",\"_to\":\"")
+	b.WriteString(i.SIP.SipMsg.ToUser)
+	b.WriteString("\",\"_paiUser\":\"")
+	b.WriteString(i.SIP.SipMsg.PaiUser)
+	b.WriteString("\",\"_paiHost\":\"")
+	b.WriteString(i.SIP.SipMsg.PaiHost)
+	b.WriteString("\",\"_method\":\"")
+	b.WriteString(i.SIP.SipMsg.StartLine.Method)
+	b.WriteString("\",\"_response\":\"")
+	b.WriteString(i.SIP.SipMsg.StartLine.Resp)
+	b.WriteString("\",\"_ua\":\"")
+	b.WriteString(i.SIP.SipMsg.UserAgent)
+	b.WriteString("\",\"_srcIP\":\"")
+	b.WriteString(i.SIP.SrcIPString)
+	b.WriteString("\",\"_dstIP\":\"")
+	b.WriteString(i.SIP.DstIPString)
+	b.WriteString("\",\"_intVlan\":")
+	b.WriteString(strconv.Itoa(int(i.SIP.IntVlan)))
+	b.WriteString(",\"_udpLen\":")
+	b.WriteString(strconv.Itoa(int(i.SIP.UDPlen)))
+	b.WriteString("}")
+	return b.Bytes()
 }
 
 func reConnectGraylog(conn *Connections) error {
