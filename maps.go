@@ -179,6 +179,7 @@ func (i *IPFIX) mapQOS() *map[string]interface{} {
 		"CALLEE_DST_PORT":     i.QOS.CalleeIncDstPort,
 		"OUT_REALM":           string(i.QOS.OutRealm),
 		"MEDIA_TYPE":          i.QOS.Type,
+		"NAME":                *name,
 	}
 	return &m
 }
