@@ -74,40 +74,33 @@ func (conn *Connections) SendMetric(i *IPFIX, s string) {
 	incRealm := string(i.QOS.IncRealm)
 	outRealm := string(i.QOS.OutRealm)
 
-	prom.GaugeVecMetrics["horaclifix_inc_rtp_mos"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncMos / 100))
-	prom.GaugeVecMetrics["horaclifix_inc_rtp_rval"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncrVal / 100))
-	prom.GaugeVecMetrics["horaclifix_inc_rtp_packets"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncRtpPackets))
-	prom.GaugeVecMetrics["horaclifix_inc_rtp_lost_packets"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncRtpLostPackets))
-	prom.GaugeVecMetrics["horaclifix_inc_rtp_avg_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncRtpAvgJitter))
-	prom.GaugeVecMetrics["horaclifix_inc_rtp_max_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncRtpMaxJitter))
-	prom.GaugeVecMetrics["horaclifix_inc_rtcp_packets"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncRtcpPackets))
-	prom.GaugeVecMetrics["horaclifix_inc_rtcp_lost_packets"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncRtcpLostPackets))
-	prom.GaugeVecMetrics["horaclifix_inc_rtcp_avg_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncRtcpAvgJitter))
-	prom.GaugeVecMetrics["horaclifix_inc_rtcp_max_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncRtcpMaxJitter))
-	prom.GaugeVecMetrics["horaclifix_inc_rtcp_avg_lat"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncRtcpAvgLat))
-	prom.GaugeVecMetrics["horaclifix_inc_rtcp_max_lat"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.IncRtcpMaxLat))
+	prom.GaugeVecMetrics["horaclifix_inc_rtp_mos"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncMos / 100))
+	prom.GaugeVecMetrics["horaclifix_inc_rtp_rval"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncrVal / 100))
+	prom.GaugeVecMetrics["horaclifix_inc_rtp_packets"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncRtpPackets))
+	prom.GaugeVecMetrics["horaclifix_inc_rtp_lost_packets"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncRtpLostPackets))
+	prom.GaugeVecMetrics["horaclifix_inc_rtp_avg_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncRtpAvgJitter))
+	prom.GaugeVecMetrics["horaclifix_inc_rtp_max_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncRtpMaxJitter))
+	prom.GaugeVecMetrics["horaclifix_inc_rtcp_packets"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncRtcpPackets))
+	prom.GaugeVecMetrics["horaclifix_inc_rtcp_lost_packets"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncRtcpLostPackets))
+	prom.GaugeVecMetrics["horaclifix_inc_rtcp_avg_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncRtcpAvgJitter))
+	prom.GaugeVecMetrics["horaclifix_inc_rtcp_max_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncRtcpMaxJitter))
+	prom.GaugeVecMetrics["horaclifix_inc_rtcp_avg_lat"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncRtcpAvgLat))
+	prom.GaugeVecMetrics["horaclifix_inc_rtcp_max_lat"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.IncRtcpMaxLat))
 
-	prom.GaugeVecMetrics["horaclifix_out_rtp_mos"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutMos / 100))
-	prom.GaugeVecMetrics["horaclifix_out_rtp_rval"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutrVal / 100))
-	prom.GaugeVecMetrics["horaclifix_out_rtp_packets"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutRtpPackets))
-	prom.GaugeVecMetrics["horaclifix_out_rtp_lost_packets"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutRtpLostPackets))
-	prom.GaugeVecMetrics["horaclifix_out_rtp_avg_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutRtpAvgJitter))
-	prom.GaugeVecMetrics["horaclifix_out_rtp_max_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutRtpMaxJitter))
-	prom.GaugeVecMetrics["horaclifix_out_rtcp_packets"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutRtcpPackets))
-	prom.GaugeVecMetrics["horaclifix_out_rtcp_lost_packets"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutRtcpLostPackets))
-	prom.GaugeVecMetrics["horaclifix_out_rtcp_avg_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutRtcpAvgJitter))
-	prom.GaugeVecMetrics["horaclifix_out_rtcp_max_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutRtcpMaxJitter))
-	prom.GaugeVecMetrics["horaclifix_out_rtcp_avg_lat"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutRtcpAvgLat))
-	prom.GaugeVecMetrics["horaclifix_out_rtcp_max_lat"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.OutRtcpMaxLat))
+	prom.GaugeVecMetrics["horaclifix_out_rtp_mos"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutMos / 100))
+	prom.GaugeVecMetrics["horaclifix_out_rtp_rval"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutrVal / 100))
+	prom.GaugeVecMetrics["horaclifix_out_rtp_packets"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutRtpPackets))
+	prom.GaugeVecMetrics["horaclifix_out_rtp_lost_packets"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutRtpLostPackets))
+	prom.GaugeVecMetrics["horaclifix_out_rtp_avg_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutRtpAvgJitter))
+	prom.GaugeVecMetrics["horaclifix_out_rtp_max_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutRtpMaxJitter))
+	prom.GaugeVecMetrics["horaclifix_out_rtcp_packets"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutRtcpPackets))
+	prom.GaugeVecMetrics["horaclifix_out_rtcp_lost_packets"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutRtcpLostPackets))
+	prom.GaugeVecMetrics["horaclifix_out_rtcp_avg_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutRtcpAvgJitter))
+	prom.GaugeVecMetrics["horaclifix_out_rtcp_max_jitter"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutRtcpMaxJitter))
+	prom.GaugeVecMetrics["horaclifix_out_rtcp_avg_lat"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutRtcpAvgLat))
+	prom.GaugeVecMetrics["horaclifix_out_rtcp_max_lat"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.OutRtcpMaxLat))
 
 	if i.QOS.EndTimeSec != 0 && i.QOS.BeginTimeSec != 0 {
-		prom.GaugeVecMetrics["horaclifix_duration"].WithLabelValues(*name, incRealm, outRealm).Set(normMax(i.QOS.EndTimeSec - i.QOS.BeginTimeSec))
+		prom.GaugeVecMetrics["horaclifix_duration"].WithLabelValues(*name, incRealm, outRealm).Set(float64(i.QOS.EndTimeSec - i.QOS.BeginTimeSec))
 	}
-}
-
-func normMax(val uint32) float64 {
-	if val > 10000000 {
-		return 0
-	}
-	return float64(val)
 }

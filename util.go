@@ -40,3 +40,10 @@ func stringIPv4(n uint32) string {
 func unsafeBytesToStr(z []byte) string {
 	return *(*string)(unsafe.Pointer(&z))
 }
+
+func normMaxQOS(val uint32) uint32 {
+	if val > 10000000 {
+		return 0
+	}
+	return val
+}

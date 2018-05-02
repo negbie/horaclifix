@@ -284,6 +284,8 @@ func ParseQosStats(msg []byte) *IPFIX {
 	i.QOS.OutCallID = make([]byte, i.QOS.OutCallIDLen)
 	r.binRead(&i.QOS.OutCallID)
 
+	i.normQOS()
+
 	return &i
 }
 
@@ -301,9 +303,33 @@ func (i *IPFIX) parseSIP() error {
 		return i.SIP.SipMsg.Error
 	} else if len(i.SIP.SipMsg.CseqMethod) < 3 {
 		return errors.New("Could not find a valid CSeq in packet")
-	} else if len(i.SIP.SipMsg.CallID) < 3 {
+	} else if len(i.SIP.SipMsg.CallID) < 1 {
 		return errors.New("Could not find a valid Call-ID in packet")
 	}
 
 	return nil
+}
+
+func (i *IPFIX) normQOS() {
+	i.QOS.IncRtpPackets = normMaxQOS(i.QOS.IncRtpPackets)
+	i.QOS.IncRtpLostPackets = normMaxQOS(i.QOS.IncRtpLostPackets)
+	i.QOS.IncRtpAvgJitter = normMaxQOS(i.QOS.IncRtpAvgJitter)
+	i.QOS.IncRtpMaxJitter = normMaxQOS(i.QOS.IncRtpMaxJitter)
+	i.QOS.IncRtcpPackets = normMaxQOS(i.QOS.IncRtcpPackets)
+	i.QOS.IncRtcpLostPackets = normMaxQOS(i.QOS.IncRtcpLostPackets)
+	i.QOS.IncRtcpAvgJitter = normMaxQOS(i.QOS.IncRtcpAvgJitter)
+	i.QOS.IncRtcpMaxJitter = normMaxQOS(i.QOS.IncRtcpMaxJitter)
+	i.QOS.IncRtcpAvgLat = normMaxQOS(i.QOS.IncRtcpAvgLat)
+	i.QOS.IncRtcpMaxLat = normMaxQOS(i.QOS.IncRtcpMaxLat)
+
+	i.QOS.OutRtpPackets = normMaxQOS(i.QOS.OutRtpPackets)
+	i.QOS.OutRtpLostPackets = normMaxQOS(i.QOS.OutRtpLostPackets)
+	i.QOS.OutRtpAvgJitter = normMaxQOS(i.QOS.OutRtpAvgJitter)
+	i.QOS.OutRtpMaxJitter = normMaxQOS(i.QOS.OutRtpMaxJitter)
+	i.QOS.OutRtcpPackets = normMaxQOS(i.QOS.OutRtcpPackets)
+	i.QOS.OutRtcpLostPackets = normMaxQOS(i.QOS.OutRtcpLostPackets)
+	i.QOS.OutRtcpAvgJitter = normMaxQOS(i.QOS.OutRtcpAvgJitter)
+	i.QOS.OutRtcpMaxJitter = normMaxQOS(i.QOS.OutRtcpMaxJitter)
+	i.QOS.OutRtcpAvgLat = normMaxQOS(i.QOS.OutRtcpAvgLat)
+	i.QOS.OutRtcpMaxLat = normMaxQOS(i.QOS.OutRtcpMaxLat)
 }
