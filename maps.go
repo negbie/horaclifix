@@ -1,5 +1,10 @@
 package main
 
+import (
+	"bytes"
+	"strconv"
+)
+
 func (i *IPFIX) mapLogSIP() *map[string]interface{} {
 	m := map[string]interface{}{
 		"version":       "1.1",
@@ -133,55 +138,102 @@ func (i *IPFIX) mapMetricQOS() map[string]interface{} {
 	return m
 }
 
-func (i *IPFIX) mapQOS() *map[string]interface{} {
-	m := map[string]interface{}{
-		"INC_ID":              string(i.QOS.IncCallID),
-		"INC_RTP_BYTE":        i.QOS.IncRtpBytes,
-		"INC_RTP_PK":          i.QOS.IncRtpPackets,
-		"INC_RTP_PK_LOSS":     i.QOS.IncRtpLostPackets,
-		"INC_RTP_AVG_JITTER":  i.QOS.IncRtpAvgJitter,
-		"INC_RTP_MAX_JITTER":  i.QOS.IncRtpMaxJitter,
-		"INC_RTCP_BYTE":       i.QOS.IncRtcpBytes,
-		"INC_RTCP_PK":         i.QOS.IncRtcpPackets,
-		"INC_RTCP_PK_LOSS":    i.QOS.IncRtcpLostPackets,
-		"INC_RTCP_AVG_JITTER": i.QOS.IncRtcpAvgJitter,
-		"INC_RTCP_MAX_JITTER": i.QOS.IncRtcpMaxJitter,
-		"INC_RTCP_AVG_LAT":    i.QOS.IncRtcpAvgLat,
-		"INC_RTCP_MAX_LAT":    i.QOS.IncRtcpMaxLat,
-		"INC_MOS":             i.QOS.IncMos,
-		"INC_RVAL":            i.QOS.IncrVal,
-		"CALLER_VLAN":         i.QOS.CallerIntVlan,
-		"CALLER_SRC_IP":       stringIPv4(i.QOS.CallerIncSrcIP),
-		"CALLER_SRC_PORT":     i.QOS.CallerIncSrcPort,
-		"CALLER_DST_IP":       stringIPv4(i.QOS.CallerOutDstIP),
-		"CALLER_DST_PORT":     i.QOS.CallerOutDstPort,
-		"INC_REALM":           string(i.QOS.IncRealm),
+func (i *IPFIX) mapQOS() []byte {
+	var b bytes.Buffer
 
-		"OUT_ID":              string(i.QOS.OutCallID),
-		"OUT_RTP_BYTE":        i.QOS.OutRtpBytes,
-		"OUT_RTP_PK":          i.QOS.OutRtpPackets,
-		"OUT_RTP_PK_LOSS":     i.QOS.OutRtpLostPackets,
-		"OUT_RTP_AVG_JITTER":  i.QOS.OutRtpAvgJitter,
-		"OUT_RTP_MAX_JITTER":  i.QOS.OutRtpMaxJitter,
-		"OUT_RTCP_BYTE":       i.QOS.OutRtcpBytes,
-		"OUT_RTCP_PK":         i.QOS.OutRtcpPackets,
-		"OUT_RTCP_PK_LOSS":    i.QOS.OutRtcpLostPackets,
-		"OUT_RTCP_AVG_JITTER": i.QOS.OutRtcpAvgJitter,
-		"OUT_RTCP_MAX_JITTER": i.QOS.OutRtcpMaxJitter,
-		"OUT_RTCP_AVG_LAT":    i.QOS.OutRtcpAvgLat,
-		"OUT_RTCP_MAX_LAT":    i.QOS.OutRtcpMaxLat,
-		"OUT_MOS":             i.QOS.OutMos,
-		"OUT_RVAL":            i.QOS.OutrVal,
-		"CALLEE_VLAN":         i.QOS.CalleeIntVlan,
-		"CALLEE_SRC_IP":       stringIPv4(i.QOS.CalleeOutSrcIP),
-		"CALLEE_SRC_PORT":     i.QOS.CalleeOutSrcPort,
-		"CALLEE_DST_IP":       stringIPv4(i.QOS.CalleeIncDstIP),
-		"CALLEE_DST_PORT":     i.QOS.CalleeIncDstPort,
-		"OUT_REALM":           string(i.QOS.OutRealm),
-		"MEDIA_TYPE":          i.QOS.Type,
-		"NAME":                *name,
-	}
-	return &m
+	b.WriteString("{")
+	b.WriteString("\"NAME\":\"")
+	b.WriteString(*name)
+	b.WriteString("\",\"INC_REALM\":\"")
+	b.WriteString(string(i.QOS.IncRealm))
+	b.WriteString("\",\"OUT_REALM\":\"")
+	b.WriteString(string(i.QOS.OutRealm))
+	b.WriteString("\",\"INC_ID\":\"")
+	b.WriteString(string(i.QOS.IncCallID))
+	b.WriteString("\",\"INC_RTP_BYTE\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtpBytes)))
+	b.WriteString(",\"INC_RTP_PK\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtpPackets)))
+	b.WriteString(",\"INC_RTP_PK_LOSS\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtpLostPackets)))
+	b.WriteString(",\"INC_RTP_AVG_JITTER\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtpAvgJitter)))
+	b.WriteString(",\"INC_RTP_MAX_JITTER\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtpMaxJitter)))
+	b.WriteString(",\"INC_RTCP_BYTE\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtcpBytes)))
+	b.WriteString(",\"INC_RTCP_PK\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtcpPackets)))
+	b.WriteString(",\"INC_RTCP_PK_LOSS\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtcpLostPackets)))
+	b.WriteString(",\"INC_RTCP_AVG_JITTER\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtcpAvgJitter)))
+	b.WriteString(",\"INC_RTCP_MAX_JITTER\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtcpMaxJitter)))
+	b.WriteString(",\"INC_RTCP_AVG_LAT\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtcpAvgLat)))
+	b.WriteString(",\"INC_RTCP_MAX_LAT\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncRtcpMaxLat)))
+	b.WriteString(",\"INC_MOS\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncMos)))
+	b.WriteString(",\"INC_RVAL\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.IncrVal)))
+	b.WriteString(",\"CALLER_VLAN\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.CallerIntVlan)))
+	b.WriteString(",\"CALLER_SRC_IP\":\"")
+	b.WriteString(stringIPv4(i.QOS.CallerIncSrcIP))
+	b.WriteString("\",\"CALLER_SRC_PORT\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.CallerIncSrcPort)))
+	b.WriteString(",\"CALLER_DST_IP\":\"")
+	b.WriteString(stringIPv4(i.QOS.CallerOutDstIP))
+	b.WriteString("\",\"CALLER_DST_PORT\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.CallerOutDstPort)))
+
+	b.WriteString(",\"OUT_ID\":\"")
+	b.WriteString(string(i.QOS.OutCallID))
+	b.WriteString("\",\"OUT_RTP_BYTE\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtpBytes)))
+	b.WriteString(",\"OUT_RTP_PK\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtpPackets)))
+	b.WriteString(",\"OUT_RTP_PK_LOSS\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtpLostPackets)))
+	b.WriteString(",\"OUT_RTP_AVG_JITTER\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtpAvgJitter)))
+	b.WriteString(",\"OUT_RTP_MAX_JITTER\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtpMaxJitter)))
+	b.WriteString(",\"OUT_RTCP_BYTE\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtcpBytes)))
+	b.WriteString(",\"OUT_RTCP_PK\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtcpPackets)))
+	b.WriteString(",\"OUT_RTCP_PK_LOSS\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtcpLostPackets)))
+	b.WriteString(",\"OUT_RTCP_AVG_JITTER\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtcpAvgJitter)))
+	b.WriteString(",\"OUT_RTCP_MAX_JITTER\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtcpMaxJitter)))
+	b.WriteString(",\"OUT_RTCP_AVG_LAT\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtcpAvgLat)))
+	b.WriteString(",\"OUT_RTCP_MAX_LAT\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutRtcpMaxLat)))
+	b.WriteString(",\"OUT_MOS\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutMos)))
+	b.WriteString(",\"OUT_RVAL\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.OutrVal)))
+	b.WriteString(",\"CALLEE_VLAN\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.CalleeIntVlan)))
+	b.WriteString(",\"CALLEE_SRC_IP\":\"")
+	b.WriteString(stringIPv4(i.QOS.CalleeOutSrcIP))
+	b.WriteString("\",\"CALLEE_SRC_PORT\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.CalleeOutSrcPort)))
+	b.WriteString(",\"CALLEE_DST_IP\":\"")
+	b.WriteString(stringIPv4(i.QOS.CalleeIncDstIP))
+	b.WriteString("\",\"CALLEE_DST_PORT\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.CalleeIncDstPort)))
+	b.WriteString(",\"MEDIA_TYPE\":")
+	b.WriteString(strconv.Itoa(int(i.QOS.Type)))
+	b.WriteString("}")
+
+	return b.Bytes()
 }
 
 func (i *IPFIX) mapIncQOS() *map[string]interface{} {

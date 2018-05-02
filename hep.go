@@ -53,8 +53,7 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 				Vlan:      uint32(i.SIP.IntVlan),
 			}
 		} else {
-			payload, err := json.Marshal(i.mapQOS())
-			checkErr(err)
+			payload := i.mapQOS()
 			hep = &HEP{
 				Version:   2,
 				Protocol:  17,
@@ -222,8 +221,7 @@ func makeHEPChuncks(i *IPFIX, payloadType string) []byte {
 			w.Write(hepLen)
 			w.Write(i.SIP.RawMsg)
 		case "QOS":
-			payload, err := json.Marshal(i.mapQOS())
-			checkErr(err)
+			payload := i.mapQOS()
 			binary.BigEndian.PutUint16(hepLen, 6+uint16(len(payload)))
 			w.Write(hepLen)
 			w.Write(payload)
