@@ -95,9 +95,9 @@ type SipSet struct {
 	TTL         uint8
 	TProto      uint8
 	TPos        uint16
-	SrcIP       uint32
+	SrcIP       net.IP
 	SrcIPString string
-	DstIP       uint32
+	DstIP       net.IP
 	DstIPString string
 	DstPort     uint16
 	SrcPort     uint16
