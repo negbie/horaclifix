@@ -36,8 +36,14 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 	var err error
 	if *protobuf {
 		if s == "SIP" {
+			var v uint32
+			if i.SIP.VL != 96 {
+				v = 2
+			} else {
+				v = 10
+			}
 			hep = &HEP{
-				Version:   2,
+				Version:   v,
 				Protocol:  uint32(i.SIP.TProto),
 				SrcIP:     i.SIP.SrcIPString,
 				DstIP:     i.SIP.DstIPString,
@@ -110,32 +116,56 @@ func makeHEPChuncks(i *IPFIX, payloadType string) []byte {
 	// Chunk IP protocol family (0x02=IPv4, 0x0a=IPv6)
 	w.Write([]byte{0x00, 0x00, 0x00, 0x01})
 	w.Write(hepLen7)
-	w.WriteByte(0x02)
+	if payloadType == "SIP" {
+		if i.SIP.VL != 96 {
+			w.WriteByte(0x02)
+		} else {
+			w.WriteByte(0x0a)
+		}
+	} else {
+		w.WriteByte(0x02)
+	}
 
 	// Chunk IP protocol ID (0x06=TCP, 0x11=UDP)
 	w.Write([]byte{0x00, 0x00, 0x00, 0x02})
 	w.Write(hepLen7)
 	w.WriteByte(0x11)
 
-	// Chunk IPv4 source address
-	w.Write([]byte{0x00, 0x00, 0x00, 0x03})
-	w.Write(hepLen10)
 	if payloadType == "SIP" {
-		binary.BigEndian.PutUint32(chunck32, i.SIP.SrcIP)
+		if i.SIP.VL != 96 {
+			// Chunk IPv4 source address
+			w.Write([]byte{0x00, 0x00, 0x00, 0x03})
+		} else {
+			// Chunk IPv6 source address
+			w.Write([]byte{0x00, 0x00, 0x00, 0x05})
+		}
+		binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.SIP.SrcIP)))
+		w.Write(hepLen)
+		w.Write(i.SIP.SrcIP)
 	} else {
+		w.Write([]byte{0x00, 0x00, 0x00, 0x03})
+		w.Write(hepLen10)
 		binary.BigEndian.PutUint32(chunck32, i.QOS.CallerIncSrcIP)
+		w.Write(chunck32)
 	}
-	w.Write(chunck32)
 
-	// Chunk IPv4 destination address
-	w.Write([]byte{0x00, 0x00, 0x00, 0x04})
-	w.Write(hepLen10)
 	if payloadType == "SIP" {
-		binary.BigEndian.PutUint32(chunck32, i.SIP.DstIP)
+		if i.SIP.VL != 96 {
+			// Chunk IPv4 destination address
+			w.Write([]byte{0x00, 0x00, 0x00, 0x04})
+		} else {
+			// Chunk IPv6 destination address
+			w.Write([]byte{0x00, 0x00, 0x00, 0x06})
+		}
+		binary.BigEndian.PutUint16(hepLen, 6+uint16(len(i.SIP.DstIP)))
+		w.Write(hepLen)
+		w.Write(i.SIP.DstIP)
 	} else {
+		w.Write([]byte{0x00, 0x00, 0x00, 0x04})
+		w.Write(hepLen10)
 		binary.BigEndian.PutUint32(chunck32, i.QOS.CallerIncDstIP)
+		w.Write(chunck32)
 	}
-	w.Write(chunck32)
 
 	// Chunk protocol source port
 	w.Write([]byte{0x00, 0x00, 0x00, 0x07})
