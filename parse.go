@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"log"
+	"net"
 	"strconv"
 
 	"github.com/negbie/sipparser"
@@ -32,19 +33,33 @@ func ParseRecSipUDP(msg []byte) *IPFIX {
 	i.SIP.TLen = binary.BigEndian.Uint16(msg[17:19])
 	i.SIP.TID = binary.BigEndian.Uint16(msg[19:21])
 	i.SIP.TFlags = binary.BigEndian.Uint16(msg[21:23])
-	i.SIP.TTL = uint8(msg[23])
-	i.SIP.TProto = uint8(msg[24])
-	i.SIP.TPos = binary.BigEndian.Uint16(msg[25:27])
-	i.SIP.SrcIP = binary.BigEndian.Uint32(msg[27:31])
-	i.SIP.DstIP = binary.BigEndian.Uint32(msg[31:35])
-	i.SIP.SrcPort = binary.BigEndian.Uint16(msg[35:37])
-	i.SIP.DstPort = binary.BigEndian.Uint16(msg[37:39])
-	i.SIP.UDPlen = binary.BigEndian.Uint16(msg[39:41])
-	i.SIP.MsgLen = binary.BigEndian.Uint16(msg[41:43])
-	i.SIP.RawMsg = msg[43:]
+	if i.SIP.VL != 96 {
+		i.SIP.TTL = uint8(msg[23])
+		i.SIP.TProto = uint8(msg[24])
+		i.SIP.TPos = binary.BigEndian.Uint16(msg[25:27])
+		i.SIP.SrcIP = net.IPv4(msg[27], msg[28], msg[29], msg[30])
+		i.SIP.DstIP = net.IPv4(msg[31], msg[32], msg[33], msg[34])
+		i.SIP.SrcPort = binary.BigEndian.Uint16(msg[35:37])
+		i.SIP.DstPort = binary.BigEndian.Uint16(msg[37:39])
+		i.SIP.UDPlen = binary.BigEndian.Uint16(msg[39:41])
+		i.SIP.MsgLen = binary.BigEndian.Uint16(msg[41:43])
+		i.SIP.RawMsg = msg[43:]
+	} else {
+		i.SIP.SrcIP = net.IP{msg[23], msg[24], msg[25], msg[26], msg[27], msg[28], msg[29],
+			msg[30], msg[31], msg[32], msg[33], msg[34], msg[35], msg[36], msg[37], msg[38]}
 
-	i.SIP.SrcIPString = stringIPv4(i.SIP.SrcIP)
-	i.SIP.DstIPString = stringIPv4(i.SIP.DstIP)
+		i.SIP.DstIP = net.IP{msg[39], msg[40], msg[41], msg[42], msg[43], msg[44], msg[45],
+			msg[46], msg[47], msg[48], msg[49], msg[50], msg[51], msg[52], msg[53], msg[54]}
+
+		i.SIP.SrcPort = binary.BigEndian.Uint16(msg[55:57])
+		i.SIP.DstPort = binary.BigEndian.Uint16(msg[57:59])
+		i.SIP.UDPlen = binary.BigEndian.Uint16(msg[59:61])
+		i.SIP.MsgLen = binary.BigEndian.Uint16(msg[61:63])
+		i.SIP.RawMsg = msg[63:]
+	}
+
+	i.SIP.SrcIPString = i.SIP.SrcIP.String()
+	i.SIP.DstIPString = i.SIP.DstIP.String()
 
 	if *gaddr != "" {
 		err := i.parseSIP()
@@ -84,19 +99,33 @@ func ParseSendSipUDP(msg []byte) *IPFIX {
 	i.SIP.TLen = binary.BigEndian.Uint16(msg[pos+5 : pos+7])
 	i.SIP.TID = binary.BigEndian.Uint16(msg[pos+7 : pos+9])
 	i.SIP.TFlags = binary.BigEndian.Uint16(msg[pos+9 : pos+11])
-	i.SIP.TTL = uint8(msg[pos+11])
-	i.SIP.TProto = uint8(msg[pos+12])
-	i.SIP.TPos = binary.BigEndian.Uint16(msg[pos+13 : pos+15])
-	i.SIP.SrcIP = binary.BigEndian.Uint32(msg[pos+15 : pos+19])
-	i.SIP.DstIP = binary.BigEndian.Uint32(msg[pos+19 : pos+23])
-	i.SIP.SrcPort = binary.BigEndian.Uint16(msg[pos+23 : pos+25])
-	i.SIP.DstPort = binary.BigEndian.Uint16(msg[pos+25 : pos+27])
-	i.SIP.UDPlen = binary.BigEndian.Uint16(msg[pos+27 : pos+29])
-	i.SIP.MsgLen = binary.BigEndian.Uint16(msg[pos+29 : pos+31])
-	i.SIP.RawMsg = []byte(msg[pos+31:])
+	if i.SIP.VL != 96 {
+		i.SIP.TTL = uint8(msg[pos+11])
+		i.SIP.TProto = uint8(msg[pos+12])
+		i.SIP.TPos = binary.BigEndian.Uint16(msg[pos+13 : pos+15])
+		i.SIP.SrcIP = net.IPv4(msg[pos+15], msg[pos+16], msg[pos+17], msg[pos+18])
+		i.SIP.DstIP = net.IPv4(msg[pos+19], msg[pos+20], msg[pos+21], msg[pos+22])
+		i.SIP.SrcPort = binary.BigEndian.Uint16(msg[pos+23 : pos+25])
+		i.SIP.DstPort = binary.BigEndian.Uint16(msg[pos+25 : pos+27])
+		i.SIP.UDPlen = binary.BigEndian.Uint16(msg[pos+27 : pos+29])
+		i.SIP.MsgLen = binary.BigEndian.Uint16(msg[pos+29 : pos+31])
+		i.SIP.RawMsg = []byte(msg[pos+31:])
+	} else {
+		i.SIP.SrcIP = net.IP{msg[pos+11], msg[pos+12], msg[pos+13], msg[pos+14], msg[pos+15], msg[pos+16], msg[pos+17],
+			msg[pos+18], msg[pos+19], msg[pos+20], msg[pos+21], msg[pos+22], msg[pos+23], msg[pos+24], msg[pos+25], msg[pos+26]}
 
-	i.SIP.SrcIPString = stringIPv4(i.SIP.SrcIP)
-	i.SIP.DstIPString = stringIPv4(i.SIP.DstIP)
+		i.SIP.DstIP = net.IP{msg[pos+27], msg[pos+28], msg[pos+29], msg[pos+30], msg[pos+31], msg[pos+32], msg[pos+33],
+			msg[pos+34], msg[pos+35], msg[pos+36], msg[pos+37], msg[pos+38], msg[pos+39], msg[pos+40], msg[pos+41], msg[pos+42]}
+
+		i.SIP.SrcPort = binary.BigEndian.Uint16(msg[pos+43 : pos+45])
+		i.SIP.DstPort = binary.BigEndian.Uint16(msg[pos+45 : pos+47])
+		i.SIP.UDPlen = binary.BigEndian.Uint16(msg[pos+47 : pos+49])
+		i.SIP.MsgLen = binary.BigEndian.Uint16(msg[pos+49 : pos+51])
+		i.SIP.RawMsg = []byte(msg[pos+51:])
+	}
+
+	i.SIP.SrcIPString = i.SIP.SrcIP.String()
+	i.SIP.DstIPString = i.SIP.DstIP.String()
 
 	if *gaddr != "" {
 		err := i.parseSIP()
@@ -120,8 +149,8 @@ func ParseRecSipTCP(msg []byte) *IPFIX {
 	i.SIP.IntSlot = uint8(msg[8])
 	i.SIP.IntPort = uint8(msg[9])
 	i.SIP.IntVlan = binary.BigEndian.Uint16(msg[10:12])
-	i.SIP.DstIP = binary.BigEndian.Uint32(msg[12:16])
-	i.SIP.SrcIP = binary.BigEndian.Uint32(msg[16:20])
+	i.SIP.DstIP = net.IPv4(msg[12], msg[13], msg[14], msg[15])
+	i.SIP.SrcIP = net.IPv4(msg[16], msg[17], msg[18], msg[19])
 	i.SIP.DstPort = binary.BigEndian.Uint16(msg[20:22])
 	i.SIP.SrcPort = binary.BigEndian.Uint16(msg[22:24])
 	i.SIP.Context = binary.BigEndian.Uint32(msg[24:28])
@@ -129,8 +158,8 @@ func ParseRecSipTCP(msg []byte) *IPFIX {
 	i.SIP.MsgLen = binary.BigEndian.Uint16(msg[29:31])
 	i.SIP.RawMsg = msg[31:]
 
-	i.SIP.SrcIPString = stringIPv4(i.SIP.SrcIP)
-	i.SIP.DstIPString = stringIPv4(i.SIP.DstIP)
+	i.SIP.SrcIPString = i.SIP.SrcIP.String()
+	i.SIP.DstIPString = i.SIP.DstIP.String()
 
 	if *gaddr != "" {
 		err := i.parseSIP()
@@ -154,8 +183,8 @@ func ParseSendSipTCP(msg []byte) *IPFIX {
 	i.SIP.IntSlot = uint8(msg[8])
 	i.SIP.IntPort = uint8(msg[9])
 	i.SIP.IntVlan = binary.BigEndian.Uint16(msg[10:12])
-	i.SIP.DstIP = binary.BigEndian.Uint32(msg[12:16])
-	i.SIP.SrcIP = binary.BigEndian.Uint32(msg[16:20])
+	i.SIP.DstIP = net.IPv4(msg[12], msg[13], msg[14], msg[15])
+	i.SIP.SrcIP = net.IPv4(msg[16], msg[17], msg[18], msg[19])
 	i.SIP.DstPort = binary.BigEndian.Uint16(msg[20:22])
 	i.SIP.SrcPort = binary.BigEndian.Uint16(msg[22:24])
 	i.SIP.Context = binary.BigEndian.Uint32(msg[24:28])
@@ -172,8 +201,8 @@ func ParseSendSipTCP(msg []byte) *IPFIX {
 	i.SIP.MsgLen = binary.BigEndian.Uint16(msg[pos+1 : pos+3])
 	i.SIP.RawMsg = []byte(msg[pos+3:])
 
-	i.SIP.SrcIPString = stringIPv4(i.SIP.SrcIP)
-	i.SIP.DstIPString = stringIPv4(i.SIP.DstIP)
+	i.SIP.SrcIPString = i.SIP.SrcIP.String()
+	i.SIP.DstIPString = i.SIP.DstIP.String()
 
 	if *gaddr != "" {
 		err := i.parseSIP()
