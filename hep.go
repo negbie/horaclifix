@@ -37,7 +37,7 @@ func (conn *Connections) SendHep(i *IPFIX, s string) {
 	if *protobuf {
 		if s == "SIP" {
 			var v uint32
-			if i.SIP.VL != 96 {
+			if i.SIP.VL != 6 {
 				v = 2
 			} else {
 				v = 10
@@ -117,7 +117,7 @@ func makeHEPChuncks(i *IPFIX, payloadType string) []byte {
 	w.Write([]byte{0x00, 0x00, 0x00, 0x01})
 	w.Write(hepLen7)
 	if payloadType == "SIP" {
-		if i.SIP.VL != 96 {
+		if i.SIP.VL != 6 {
 			w.WriteByte(0x02)
 		} else {
 			w.WriteByte(0x0a)
@@ -132,7 +132,7 @@ func makeHEPChuncks(i *IPFIX, payloadType string) []byte {
 	w.WriteByte(0x11)
 
 	if payloadType == "SIP" {
-		if i.SIP.VL != 96 {
+		if i.SIP.VL != 6 {
 			// Chunk IPv4 source address
 			w.Write([]byte{0x00, 0x00, 0x00, 0x03})
 		} else {
@@ -150,7 +150,7 @@ func makeHEPChuncks(i *IPFIX, payloadType string) []byte {
 	}
 
 	if payloadType == "SIP" {
-		if i.SIP.VL != 96 {
+		if i.SIP.VL != 6 {
 			// Chunk IPv4 destination address
 			w.Write([]byte{0x00, 0x00, 0x00, 0x04})
 		} else {

@@ -28,12 +28,12 @@ func ParseRecSipUDP(msg []byte) *IPFIX {
 	i.SIP.IntVlan = binary.BigEndian.Uint16(msg[10:12])
 	i.SIP.CallIDEnd = uint8(msg[12])
 	i.SIP.IPlen = binary.BigEndian.Uint16(msg[13:15])
-	i.SIP.VL = uint8(msg[15])
+	i.SIP.VL = uint8(msg[15] >> 4)
 	i.SIP.TOS = uint8(msg[16])
 	i.SIP.TLen = binary.BigEndian.Uint16(msg[17:19])
 	i.SIP.TID = binary.BigEndian.Uint16(msg[19:21])
 	i.SIP.TFlags = binary.BigEndian.Uint16(msg[21:23])
-	if i.SIP.VL != 96 {
+	if i.SIP.VL != 6 {
 		i.SIP.TTL = uint8(msg[23])
 		i.SIP.TProto = uint8(msg[24])
 		i.SIP.TPos = binary.BigEndian.Uint16(msg[25:27])
@@ -94,12 +94,12 @@ func ParseSendSipUDP(msg []byte) *IPFIX {
 	}
 	i.SIP.CallIDEnd = uint8(msg[pos])
 	i.SIP.IPlen = binary.BigEndian.Uint16(msg[pos+1 : pos+3])
-	i.SIP.VL = uint8(msg[pos+3])
+	i.SIP.VL = uint8(msg[pos+3] >> 4)
 	i.SIP.TOS = uint8(msg[pos+4])
 	i.SIP.TLen = binary.BigEndian.Uint16(msg[pos+5 : pos+7])
 	i.SIP.TID = binary.BigEndian.Uint16(msg[pos+7 : pos+9])
 	i.SIP.TFlags = binary.BigEndian.Uint16(msg[pos+9 : pos+11])
-	if i.SIP.VL != 96 {
+	if i.SIP.VL != 6 {
 		i.SIP.TTL = uint8(msg[pos+11])
 		i.SIP.TProto = uint8(msg[pos+12])
 		i.SIP.TPos = binary.BigEndian.Uint16(msg[pos+13 : pos+15])
