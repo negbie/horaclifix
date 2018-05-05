@@ -45,6 +45,8 @@ func ParseRecSipUDP(msg []byte) *IPFIX {
 		i.SIP.MsgLen = binary.BigEndian.Uint16(msg[41:43])
 		i.SIP.RawMsg = msg[43:]
 	} else {
+		i.SIP.TProto = 17
+
 		i.SIP.SrcIP = net.IP{msg[23], msg[24], msg[25], msg[26], msg[27], msg[28], msg[29],
 			msg[30], msg[31], msg[32], msg[33], msg[34], msg[35], msg[36], msg[37], msg[38]}
 
@@ -111,6 +113,8 @@ func ParseSendSipUDP(msg []byte) *IPFIX {
 		i.SIP.MsgLen = binary.BigEndian.Uint16(msg[pos+29 : pos+31])
 		i.SIP.RawMsg = []byte(msg[pos+31:])
 	} else {
+		i.SIP.TProto = 17
+
 		i.SIP.SrcIP = net.IP{msg[pos+11], msg[pos+12], msg[pos+13], msg[pos+14], msg[pos+15], msg[pos+16], msg[pos+17],
 			msg[pos+18], msg[pos+19], msg[pos+20], msg[pos+21], msg[pos+22], msg[pos+23], msg[pos+24], msg[pos+25], msg[pos+26]}
 
