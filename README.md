@@ -23,27 +23,35 @@ Or if you have go installed:
 
 ```bash
   -H string
-        Homer UDP server address
-  -HQ
-        Send hepic QOS Stats
+    	Homer capture server address
   -I string
-        InfluxDB HTTP server address
+    	InfluxDB HTTP server address
+  -N int
+    	HEP capture node ID (default 2004)
   -P string
-        HEP capture password (default "myhep")
+    	HEP capture password (default "myhep")
+  -di string
+    	Discard SIP method
   -g string
-        Graylog gelf TCP server address
+    	Graylog gelf TCP server address
   -l string
-        IPFIX TCP listen address (default ":4739")
+    	IPFIX TCP listen address (default ":4739")
   -m string
-        MySQL TCP server address
+    	MySQL TCP server address
   -mp string
-        MySQL password
+    	MySQL password
   -mu string
-        MySQL user
+    	MySQL user
   -n string
-        SBC name (default "sbc")
+    	SBC name (default "sbc")
+  -nt string
+    	Network types are [udp, tcp, tls] (default "udp")
+  -p string
+    	Prometheus address
+  -protobuf
+    	Use Protobuf on wire
   -s string
-        StatsD UDP server address
+    	StatsD UDP server address
 
   -v    Verbose output to stdout
   -d    Debug output to stdout
@@ -51,10 +59,10 @@ Or if you have go installed:
 
   
 ################################################################
+./horaclifix -h
 ./horaclifix -d -v
-./horaclifix -H 192.168.2.22:9060&
-./horaclifix -H 192.168.2.22:9060 -I 192.168.2.22:8086&
-./horaclifix -H 192.168.2.22:9060 -g 192.168.2.22:4488 -s 127.0.0.1:8125&
+./horaclifix -H 192.168.2.22:9060 &
+./horaclifix -H 192.168.2.22:9060 -nt tls &
+./horaclifix -H 192.168.2.22:9060 -n labsbc -p 192.168.2.22:9096 &
 
-The last command will send HEP messages to Homer, plain UDP logs to Graylog, plain UDP metrics to StatsD.
 ```
