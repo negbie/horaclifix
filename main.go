@@ -7,13 +7,14 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+
 	//"net"
 	//_ "net/http/pprof"
 
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
-const version = "horaclifix 1.1.3"
+const version = "horaclifix 1.1.4"
 
 var (
 	addr        = flag.String("l", ":4739", "IPFIX TCP listen address")
