@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	influx "github.com/influxdata/influxdb/client/v2"
+	influx "github.com/influxdata/influxdb1-client/v2"
 )
 
 func NewMetric(measurement string, tags map[string]string, fields map[string]interface{}) *InfluxMetric {

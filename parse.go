@@ -324,14 +324,6 @@ func ParseQosStats(msg []byte) *IPFIX {
 
 func (i *IPFIX) parseSIP() error {
 	i.SIP.SipMsg = sipparser.ParseMsg(string(i.SIP.RawMsg))
-
-	if i.SIP.SipMsg.StartLine == nil {
-		i.SIP.SipMsg.StartLine = new(sipparser.StartLine)
-	}
-	if i.SIP.SipMsg.StartLine.URI == nil {
-		i.SIP.SipMsg.StartLine.URI = new(sipparser.URI)
-	}
-
 	if i.SIP.SipMsg.Error != nil {
 		return i.SIP.SipMsg.Error
 	} else if len(i.SIP.SipMsg.CseqMethod) < 3 {
