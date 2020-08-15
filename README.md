@@ -51,7 +51,7 @@ Or if you have go installed:
   -protobuf
     	Use Protobuf on wire
   -s string
-    	StatsD UDP server address
+    	Syslog UDP server address
 
   -v    Verbose output to stdout
   -d    Debug output to stdout

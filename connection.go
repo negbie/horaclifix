@@ -69,7 +69,7 @@ func NewExtConns() *Connections {
 
 		sconn, err := net.DialUDP("udp", nil, udpSAddr)
 		checkCritErr(err)
-		conn.StatsD = sconn
+		conn.Syslog = sconn
 	}
 
 	return conn
@@ -100,8 +100,8 @@ func CloseExtConns(conn *Connections) {
 		}
 	}
 	if *saddr != "" {
-		log.Printf("Close StatsD connection.\n")
-		err := conn.StatsD.Close()
+		log.Printf("Close Syslog connection.\n")
+		err := conn.Syslog.Close()
 		checkErr(err)
 	}
 }

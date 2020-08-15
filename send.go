@@ -32,7 +32,7 @@ func (conn *Connections) Send(i *IPFIX) {
 			conn.SendMetric(i, "QOS")
 		}
 		if *saddr != "" {
-			conn.SendStatsD(i, "QOS")
+			conn.SendSyslog(i, "QOS")
 		}
 		if *gaddr != "" {
 			conn.SendLog(i, "QOS")

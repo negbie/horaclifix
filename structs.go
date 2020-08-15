@@ -211,7 +211,7 @@ type QosSet struct {
 type Connections struct {
 	Graylog
 	Homer
-	StatsD *net.UDPConn
+	Syslog *net.UDPConn
 	MySQL  *mysqlDB
 	Influx *InfluxClient
 }

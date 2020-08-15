@@ -25,7 +25,7 @@ var (
 	haddr       = flag.String("H", "", "Homer UDP server address")
 	hepicQOS    = flag.Bool("HQ", false, "Send hepic QOS Stats")
 	iaddr       = flag.String("I", "", "InfluxDB HTTP server address")
-	saddr       = flag.String("s", "", "StatsD UDP server address")
+	saddr       = flag.String("s", "", "Syslog UDP server address")
 	paddr       = flag.String("p", "", "Prometheus address")
 	name        = flag.String("n", "sbc", "SBC name")
 	network     = flag.String("nt", "udp", "Network types are [udp, tcp, tls]")
